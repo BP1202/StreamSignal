@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -20,11 +19,8 @@ def create_report(
     report_in: ReportCreate,
     db: Session = Depends(get_db),
 ) -> Report:
-    """Create a new citizen evidence report with default SUBMITTED status."""
+    """Create a new citizen evidence report with server-managed SUBMITTED status."""
     report_data = report_in.model_dump()
-    if report_data.get("observed_at") is None:
-        report_data["observed_at"] = datetime.now(timezone.utc)
-
     db_report = Report(**report_data, status="SUBMITTED")
     db.add(db_report)
     db.commit()

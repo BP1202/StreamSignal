@@ -1,15 +1,15 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class ReportBase(BaseModel):
-    """Shared fields for report creation and representation."""
+    """Shared fields for report representation and common attributes."""
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude between -90 and 90 degrees")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude between -180 and 180 degrees")
-    description: str = Field(..., min_length=3, description="Detailed description of the observation")
-    observed_at: Optional[datetime] = Field(default=None, description="Timestamp of when observation occurred")
+    description: str = Field(..., min_length=3, max_length=5000, description="Detailed description of observation")
+    observed_at: datetime = Field(..., description="Timestamp of when observation occurred")
     water_appearance: Optional[str] = Field(default=None, max_length=100, description="Visual description of water")
     odor: Optional[str] = Field(default=None, max_length=100, description="Smell or odor observed")
     flow_condition: Optional[str] = Field(default=None, max_length=50, description="Flow rate or stagnation state")
@@ -27,8 +27,11 @@ class ReportBase(BaseModel):
 
 
 class ReportCreate(ReportBase):
-    """Schema for incoming citizen report submissions."""
-    pass
+    """
+    Schema for incoming citizen report submissions.
+    Strictly forbids client from controlling server-managed fields like id, status, timestamps.
+    """
+    model_config = ConfigDict(extra="forbid")
 
 
 class ReportResponse(ReportBase):

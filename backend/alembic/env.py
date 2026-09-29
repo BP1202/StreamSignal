@@ -38,30 +38,53 @@ config.set_main_option(
     settings.DATABASE_URL.replace("%", "%%")
 )
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def include_object(object, name, type_, reflected, compare_to):
+    """
+    Exclude PostGIS and Tiger spatial extension tables from migrations.
+    This ensures Alembic does not attempt to drop or alter database extension tables.
+    """
+    if type_ == "table" and name in [
+        "spatial_ref_sys",
+        "geometry_columns",
+        "geography_columns",
+        "raster_columns",
+        "raster_overviews",
+    ]:
+        return False
+
+    schema = getattr(object, "schema", None)
+    if schema in ["tiger", "topology", "tiger_data"]:
+        return False
+
+    if type_ == "table" and (
+        name.startswith("tiger")
+        or name.startswith("pagc_")
+        or name in [
+            "addr", "addrfeat", "bg", "county", "county_lookup", "cousub",
+            "countysub_lookup", "direction_lookup", "edges", "faces",
+            "featnames", "geocode_settings", "geocode_settings_default",
+            "layer", "loader_lookuptables", "loader_platform", "loader_variables",
+            "place", "place_lookup", "secondary_unit_lookup", "state",
+            "state_lookup", "street_type_lookup", "tabblock", "tabblock20",
+            "topology", "tract", "zcta5", "zip_lookup", "zip_lookup_all",
+            "zip_lookup_base", "zip_state", "zip_state_loc"
+        ]
+    ):
+        return False
+
+    return True
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -69,12 +92,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -83,7 +101,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -41,5 +41,15 @@ class ReportResponse(ReportBase):
     observed_at: datetime
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReportListResponse(BaseModel):
+    """Schema for paginated list of citizen reports."""
+    items: List[ReportResponse]
+    limit: int
+    offset: int
+    total: int
 
     model_config = ConfigDict(from_attributes=True)

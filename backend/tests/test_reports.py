@@ -1,5 +1,6 @@
 import pytest
 import uuid
+import time
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from app.core.database import SessionLocal
@@ -227,3 +228,109 @@ def test_get_report_not_found(client: TestClient):
     res = client.get(f"/api/v1/reports/{random_uuid}")
     assert res.status_code == 404
     assert f"Report with id '{random_uuid}' not found" in res.json()["detail"]
+
+
+def test_get_report_invalid_uuid(client: TestClient):
+    """Requesting an invalid UUID format must return 422 Unprocessable Entity."""
+    res = client.get("/api/v1/reports/not-a-valid-uuid")
+    assert res.status_code == 422
+
+
+def test_list_reports_default_pagination(client: TestClient):
+    """GET /api/v1/reports returns default paginated response with metadata."""
+    res = client.get("/api/v1/reports")
+    assert res.status_code == 200
+    data = res.json()
+    assert "items" in data
+    assert "total" in data
+    assert data["limit"] == 20
+    assert data["offset"] == 0
+    assert isinstance(data["items"], list)
+    assert data["total"] >= len(data["items"])
+
+
+def test_list_reports_pagination_slicing(client: TestClient):
+    """Pagination query params limit and offset correctly slice report batches."""
+    # Ensure at least 4 reports exist
+    for i in range(4):
+        client.post("/api/v1/reports", json={
+            "observed_at": datetime.now(timezone.utc).isoformat(),
+            "latitude": 10.0 + i,
+            "longitude": 20.0 + i,
+            "description": f"Batch pagination test report {i} {uuid.uuid4()}",
+        })
+
+    # Fetch page 1 (limit 2, offset 0)
+    page1_res = client.get("/api/v1/reports?limit=2&offset=0")
+    assert page1_res.status_code == 200
+    page1 = page1_res.json()
+    assert len(page1["items"]) == 2
+    assert page1["limit"] == 2
+    assert page1["offset"] == 0
+
+    # Fetch page 2 (limit 2, offset 2)
+    page2_res = client.get("/api/v1/reports?limit=2&offset=2")
+    assert page2_res.status_code == 200
+    page2 = page2_res.json()
+    assert len(page2["items"]) == 2
+    assert page2["limit"] == 2
+    assert page2["offset"] == 2
+
+    # Ensure items on page 1 and page 2 are distinct
+    page1_ids = {item["id"] for item in page1["items"]}
+    page2_ids = {item["id"] for item in page2["items"]}
+    assert page1_ids.isdisjoint(page2_ids)
+
+
+def test_list_reports_ordering(client: TestClient):
+    """Reports must be returned in deterministic newest-first order (created_at DESC, id DESC)."""
+    # Create two reports in sequence
+    first_res = client.post("/api/v1/reports", json={
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "description": f"Ordering test first report {uuid.uuid4()}",
+    })
+    assert first_res.status_code == 201
+    first_id = first_res.json()["id"]
+
+    second_res = client.post("/api/v1/reports", json={
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "description": f"Ordering test second report {uuid.uuid4()}",
+    })
+    assert second_res.status_code == 201
+    second_id = second_res.json()["id"]
+
+    # List reports
+    list_res = client.get("/api/v1/reports?limit=20&offset=0")
+    assert list_res.status_code == 200
+    items = list_res.json()["items"]
+
+    # Locate positions
+    item_ids = [item["id"] for item in items]
+    assert second_id in item_ids
+    assert first_id in item_ids
+    assert item_ids.index(second_id) < item_ids.index(first_id)
+
+
+def test_list_reports_invalid_limit(client: TestClient):
+    """Limit parameter must reject 0, negative values, and values above 100."""
+    # limit = 0
+    res1 = client.get("/api/v1/reports?limit=0")
+    assert res1.status_code == 422
+
+    # limit = -1
+    res2 = client.get("/api/v1/reports?limit=-1")
+    assert res2.status_code == 422
+
+    # limit > 100
+    res3 = client.get("/api/v1/reports?limit=101")
+    assert res3.status_code == 422
+
+
+def test_list_reports_invalid_offset(client: TestClient):
+    """Offset parameter must reject negative values."""
+    res = client.get("/api/v1/reports?offset=-1")
+    assert res.status_code == 422

@@ -1,23 +1,49 @@
+from typing import Dict, Any
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import check_db_health, engine
-from sqlalchemy import text
 
-router = APIRouter(prefix="", tags=["Health"])
+router = APIRouter()
 settings = get_settings()
 
 
-@router.get("/health")
-def health_check():
+class HealthResponse(BaseModel):
+    """Standard health check response model."""
+    status: str = Field(..., examples=["healthy"])
+    app_name: str = Field(..., examples=["StreamSignal Backend"])
+    environment: str = Field(..., examples=["development"])
+    version: str = Field(..., examples=["0.1.0"])
+
+
+class DatabaseHealthResponse(BaseModel):
+    """Database connectivity and extension status response model."""
+    status: str = Field(..., examples=["healthy"])
+    message: str = Field(..., examples=["Database reachable with PostGIS and pgvector enabled"])
+    details: Dict[str, Any]
+
+
+class ExtensionVerifyResponse(BaseModel):
+    """Response verifying query execution of geospatial and vector extensions."""
+    status: str = Field(..., examples=["verified"])
+    postgis_result: str = Field(..., examples=["POINT(12.34 56.78)"])
+    pgvector_distance: float = Field(..., examples=[5.196152422706632])
+
+
+@router.get("", response_model=HealthResponse, summary="Basic Health Check")
+@router.get("/", response_model=HealthResponse, include_in_schema=False)
+def health_check() -> HealthResponse:
     """Basic health check endpoint for container orchestrators and load balancers."""
-    return {
-        "status": "healthy",
-        "app_name": settings.APP_NAME,
-        "environment": settings.ENVIRONMENT,
-    }
+    return HealthResponse(
+        status="healthy",
+        app_name=settings.APP_NAME,
+        environment=settings.ENVIRONMENT,
+        version=settings.VERSION,
+    )
 
 
-@router.get("/health/db")
+@router.get("/db", summary="Database Health Check")
 def database_health_check():
     """
     Comprehensive database health check.
@@ -46,8 +72,8 @@ def database_health_check():
         )
 
 
-@router.get("/health/extensions/verify")
-def verify_extensions_execution():
+@router.get("/extensions/verify", response_model=ExtensionVerifyResponse, summary="Verify Spatial and Vector Execution")
+def verify_extensions_execution() -> ExtensionVerifyResponse:
     """
     Directly execute test queries using PostGIS and pgvector features to confirm
     full functional support.
@@ -62,11 +88,11 @@ def verify_extensions_execution():
                 text("SELECT '[1,2,3]'::vector <-> '[4,5,6]'::vector AS distance;")
             ).scalar()
 
-            return {
-                "status": "verified",
-                "postgis_result": gis_res,
-                "pgvector_distance": float(vector_res),
-            }
+            return ExtensionVerifyResponse(
+                status="verified",
+                postgis_result=str(gis_res),
+                pgvector_distance=float(vector_res),
+            )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

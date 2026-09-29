@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
+from app.schemas.evidence_quality import EvidenceQualityResponse
+from app.services.evidence_quality import assess_evidence_quality
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -83,3 +85,27 @@ def get_report(
             detail=f"Report with id '{report_id}' not found",
         )
     return db_report
+
+
+@router.get(
+    "/{report_id}/evidence-quality",
+    response_model=EvidenceQualityResponse,
+    summary="Assess Report Evidence Quality",
+    description=(
+        "Deterministically evaluates the evidence completeness of a citizen report. "
+        "Provides explainable completeness metrics and actionable recommendations without "
+        "making environmental health, pollution, or diagnostic claims."
+    ),
+)
+def get_report_evidence_quality(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> EvidenceQualityResponse:
+    """Evaluate and return the evidence completeness assessment for a report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return assess_evidence_quality(db_report)

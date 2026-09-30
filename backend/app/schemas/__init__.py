@@ -18,6 +18,14 @@ from app.schemas.evidence_case import (
     EvidenceCaseProvenance,
     EvidenceCaseResponse,
 )
+from app.schemas.evidence_contract import (
+    EvidenceClass,
+    AllowedAction,
+    ProhibitedInterpretation,
+    EvidenceClaim,
+    EvidenceContractProvenance,
+    EvidenceContractResponse,
+)
 
 __all__ = [
     "ReportCreate",
@@ -39,4 +47,10 @@ __all__ = [
     "HumanDecisionSection",
     "EvidenceCaseProvenance",
     "EvidenceCaseResponse",
+    "EvidenceClass",
+    "AllowedAction",
+    "ProhibitedInterpretation",
+    "EvidenceClaim",
+    "EvidenceContractProvenance",
+    "EvidenceContractResponse",
 ]

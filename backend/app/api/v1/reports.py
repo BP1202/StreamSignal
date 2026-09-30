@@ -12,6 +12,7 @@ from app.schemas.evidence_interview import (
     EvidenceInterviewAnswersResponse,
 )
 from app.schemas.evidence_case import EvidenceCaseResponse
+from app.schemas.evidence_contract import EvidenceContractResponse
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
 from app.services.evidence_interview import (
@@ -19,6 +20,7 @@ from app.services.evidence_interview import (
     apply_interview_answers,
 )
 from app.services.evidence_case import assemble_evidence_case
+from app.services.evidence_contract import assemble_evidence_contract
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -234,3 +236,28 @@ def get_report_evidence_case(
             detail=f"Report with id '{report_id}' not found",
         )
     return assemble_evidence_case(db_report)
+
+
+@router.get(
+    "/{report_id}/evidence-contract",
+    response_model=EvidenceContractResponse,
+    summary="Retrieve SignalGuard Evidence Contract",
+    description=(
+        "Returns the deterministic SignalGuard Evidence Trust Contract. "
+        "Separates evidence classes (E1-E5), sources, explicit uncertainties, "
+        "allowed follow-up actions, and strictly prohibited interpretations without "
+        "making unsupported scientific or diagnostic assertions."
+    ),
+)
+def get_report_evidence_contract(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> EvidenceContractResponse:
+    """Retrieve deterministic SignalGuard Evidence Trust Contract for a report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return assemble_evidence_contract(db_report)

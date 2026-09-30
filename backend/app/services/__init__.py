@@ -8,6 +8,7 @@ from app.services.evidence_interview import (
     INTERVIEW_PRIORITY_ORDER,
 )
 from app.services.evidence_case import assemble_evidence_case
+from app.services.evidence_contract import assemble_evidence_contract
 
 __all__ = [
     "assess_evidence_quality",
@@ -21,4 +22,5 @@ __all__ = [
     "QUESTION_CATALOG",
     "INTERVIEW_PRIORITY_ORDER",
     "assemble_evidence_case",
+    "assemble_evidence_contract",
 ]

@@ -51,6 +51,7 @@ postgres_data/
 # Uploaded citizen media
 media_storage/
 media/
+scratch/
 
 # IDE / Editor
 .vscode/

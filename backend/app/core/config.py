@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     # CORS configuration
     CORS_ORIGINS: Union[str, List[str]] = ["*"]
 
+    # Media Evidence Storage configuration
+    MEDIA_STORAGE_PATH: str = "media_storage"
+    MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit
+    ALLOWED_IMAGE_FORMATS: List[str] = ["JPEG", "PNG", "WEBP"]
+    MAX_IMAGE_PIXELS: int = 25_000_000  # 25 MP decompression bomb safeguard
+
     # PostgreSQL configuration
     POSTGRES_USER: str = "streamsignal_user"
     POSTGRES_PASSWORD: str = "streamsignal_dev_password"

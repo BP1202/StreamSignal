@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Text, Float, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
@@ -31,3 +32,6 @@ class Report(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+    # Relationships
+    media = relationship("ReportMedia", back_populates="report", cascade="all, delete-orphan")

@@ -48,6 +48,10 @@ coverage.xml
 # Database data (if mounted locally)
 postgres_data/
 
+# Uploaded citizen media
+media_storage/
+media/
+
 # IDE / Editor
 .vscode/
 .idea/

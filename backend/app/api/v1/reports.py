@@ -1,11 +1,13 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
 from app.schemas.evidence_quality import EvidenceQualityResponse
+from app.schemas.media import ReportMediaResponse
 from app.services.evidence_quality import assess_evidence_quality
+from app.services.media import ingest_report_media
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -109,3 +111,30 @@ def get_report_evidence_quality(
             detail=f"Report with id '{report_id}' not found",
         )
     return assess_evidence_quality(db_report)
+
+
+@router.post(
+    "/{report_id}/media",
+    response_model=ReportMediaResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload Citizen Media Evidence",
+    description=(
+        "Securely ingests image evidence (JPEG, PNG, WebP up to 10MB) for an existing report. "
+        "Validates actual binary content, verifies pixel decodability, enforces decompression limits, "
+        "calculates a SHA-256 checksum, and persists structured metadata in PostgreSQL."
+    ),
+)
+async def upload_report_media(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    file: UploadFile = File(..., description="Image evidence file (JPEG, PNG, WebP)"),
+    db: Session = Depends(get_db),
+) -> ReportMediaResponse:
+    """Upload and attach validated image evidence to an observation report."""
+    file_bytes = await file.read()
+    media_record = ingest_report_media(
+        report_id=report_id,
+        file_bytes=file_bytes,
+        original_filename=file.filename,
+        db=db,
+    )
+    return media_record

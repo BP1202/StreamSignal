@@ -6,8 +6,17 @@ from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
 from app.schemas.evidence_quality import EvidenceQualityResponse
 from app.schemas.media import ReportMediaResponse
+from app.schemas.evidence_interview import (
+    EvidenceInterviewResponse,
+    EvidenceInterviewAnswersRequest,
+    EvidenceInterviewAnswersResponse,
+)
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
+from app.services.evidence_interview import (
+    generate_interview_questions,
+    apply_interview_answers,
+)
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -138,3 +147,65 @@ async def upload_report_media(
         db=db,
     )
     return media_record
+
+
+@router.get(
+    "/{report_id}/evidence-interview",
+    response_model=EvidenceInterviewResponse,
+    summary="Generate Targeted Follow-Up Questions",
+    description=(
+        "Deterministically generates up to 2 targeted follow-up questions to help the citizen "
+        "document missing observational evidence without speculative diagnoses."
+    ),
+)
+def get_report_evidence_interview(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> EvidenceInterviewResponse:
+    """Retrieve prioritized follow-up interview questions for an observation report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return generate_interview_questions(db_report)
+
+
+@router.post(
+    "/{report_id}/evidence-interview/answers",
+    response_model=EvidenceInterviewAnswersResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Submit Evidence Interview Answers",
+    description=(
+        "Validates citizen follow-up answers, updates the report's observational fields, "
+        "and recalculates the resulting evidence completeness."
+    ),
+)
+def submit_report_evidence_interview_answers(
+    request: EvidenceInterviewAnswersRequest,
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> EvidenceInterviewAnswersResponse:
+    """Validate citizen answers, update report fields, and return recalculated evidence quality."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+
+    updated_report, updated_fields = apply_interview_answers(
+        report=db_report,
+        answers=request.answers,
+        db=db,
+    )
+
+    recalculated_quality = assess_evidence_quality(updated_report)
+
+    return EvidenceInterviewAnswersResponse(
+        report_id=updated_report.id,
+        updated_fields=updated_fields,
+        message="Evidence interview answers successfully recorded.",
+        evidence_quality=recalculated_quality,
+    )

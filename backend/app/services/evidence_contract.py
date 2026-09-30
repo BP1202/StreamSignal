@@ -10,6 +10,7 @@ from app.schemas.evidence_contract import (
     EvidenceContractResponse,
     ProhibitedInterpretation,
 )
+from app.services.media_observation import extract_media_observations
 
 STANDARD_PROHIBITED = [
     ProhibitedInterpretation.POLLUTION_CONFIRMED,
@@ -176,6 +177,25 @@ def assemble_evidence_contract(report: Report) -> EvidenceContractResponse:
                 prohibited_interpretations=STANDARD_PROHIBITED,
             )
         )
+        # Derived visual observations (strictly E2_OBSERVED)
+        visual_obs = extract_media_observations(media)
+        for obs in visual_obs:
+            claims.append(
+                EvidenceClaim(
+                    claim_id=f"{report.id}-media-{media.id}-{obs.observation_type.value.lower()}",
+                    claim=f"Visual media observation: {obs.description}",
+                    evidence_class=EvidenceClass.E2_OBSERVED,
+                    source="report_media.visual_observation",
+                    support=[
+                        f"media_id:{media.id}",
+                        f"sha256:{media.sha256}",
+                        f"observation_type:{obs.observation_type.value}",
+                    ],
+                    uncertainty=[obs.uncertainty],
+                    allowed_actions=STANDARD_E1_ACTIONS,
+                    prohibited_interpretations=STANDARD_PROHIBITED,
+                )
+            )
 
     return EvidenceContractResponse(
         report_id=report.id,

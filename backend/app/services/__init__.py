@@ -9,6 +9,10 @@ from app.services.evidence_interview import (
 )
 from app.services.evidence_case import assemble_evidence_case
 from app.services.evidence_contract import assemble_evidence_contract
+from app.services.media_observation import (
+    extract_media_observations,
+    extract_report_media_observations,
+)
 
 __all__ = [
     "assess_evidence_quality",
@@ -23,4 +27,6 @@ __all__ = [
     "INTERVIEW_PRIORITY_ORDER",
     "assemble_evidence_case",
     "assemble_evidence_contract",
+    "extract_media_observations",
+    "extract_report_media_observations",
 ]

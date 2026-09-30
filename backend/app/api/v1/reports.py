@@ -13,6 +13,7 @@ from app.schemas.evidence_interview import (
 )
 from app.schemas.evidence_case import EvidenceCaseResponse
 from app.schemas.evidence_contract import EvidenceContractResponse
+from app.schemas.media_observation import ReportMediaObservationsResponse
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
 from app.services.evidence_interview import (
@@ -21,6 +22,7 @@ from app.services.evidence_interview import (
 )
 from app.services.evidence_case import assemble_evidence_case
 from app.services.evidence_contract import assemble_evidence_contract
+from app.services.media_observation import extract_report_media_observations
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -261,3 +263,27 @@ def get_report_evidence_contract(
             detail=f"Report with id '{report_id}' not found",
         )
     return assemble_evidence_contract(db_report)
+
+
+@router.get(
+    "/{report_id}/media-observations",
+    response_model=ReportMediaObservationsResponse,
+    summary="Extract Media Visual Observations",
+    description=(
+        "Extracts observable, non-diagnostic visual signals from attached media evidence. "
+        "Observations are classified strictly as E2_OBSERVED with explicit uncertainty "
+        "boundaries without asserting environmental or diagnostic conclusions."
+    ),
+)
+def get_report_media_observations(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> ReportMediaObservationsResponse:
+    """Retrieve structured visual observations for all media attached to an observation report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return extract_report_media_observations(db_report)

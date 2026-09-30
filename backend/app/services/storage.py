@@ -31,6 +31,11 @@ class StorageBackend(ABC):
         """Return the absolute path for local files, ensuring path confinement."""
         pass
 
+    @abstractmethod
+    def read(self, storage_key: str) -> bytes:
+        """Read data bytes stored under the specified storage key."""
+        pass
+
 
 class LocalFileStorage(StorageBackend):
     """
@@ -92,6 +97,13 @@ class LocalFileStorage(StorageBackend):
     def get_path(self, storage_key: str) -> Path:
         """Return safe resolved path."""
         return self._resolve_safe_path(storage_key)
+
+    def read(self, storage_key: str) -> bytes:
+        """Safely read and return bytes for a storage key."""
+        target_path = self._resolve_safe_path(storage_key)
+        if not target_path.is_file():
+            raise FileNotFoundError(f"Storage key '{storage_key}' not found on disk")
+        return target_path.read_bytes()
 
 
 _default_storage: Union[StorageBackend, None] = None

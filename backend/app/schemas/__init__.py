@@ -26,6 +26,13 @@ from app.schemas.evidence_contract import (
     EvidenceContractProvenance,
     EvidenceContractResponse,
 )
+from app.schemas.media_observation import (
+    VisualObservationType,
+    MediaObservationSupport,
+    VisualObservation,
+    MediaVisualObservations,
+    ReportMediaObservationsResponse,
+)
 
 __all__ = [
     "ReportCreate",
@@ -53,4 +60,9 @@ __all__ = [
     "EvidenceClaim",
     "EvidenceContractProvenance",
     "EvidenceContractResponse",
+    "VisualObservationType",
+    "MediaObservationSupport",
+    "VisualObservation",
+    "MediaVisualObservations",
+    "ReportMediaObservationsResponse",
 ]

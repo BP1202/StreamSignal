@@ -11,12 +11,14 @@ from app.schemas.evidence_interview import (
     EvidenceInterviewAnswersRequest,
     EvidenceInterviewAnswersResponse,
 )
+from app.schemas.evidence_case import EvidenceCaseResponse
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
 from app.services.evidence_interview import (
     generate_interview_questions,
     apply_interview_answers,
 )
+from app.services.evidence_case import assemble_evidence_case
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -209,3 +211,26 @@ def submit_report_evidence_interview_answers(
         message="Evidence interview answers successfully recorded.",
         evidence_quality=recalculated_quality,
     )
+
+
+@router.get(
+    "/{report_id}/evidence-case",
+    response_model=EvidenceCaseResponse,
+    summary="Retrieve Structured Evidence Case",
+    description=(
+        "Aggregates citizen observations, visual media metadata, evidence quality completeness, "
+        "interview updates, and provenance into a single transparent Evidence Case."
+    ),
+)
+def get_report_evidence_case(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> EvidenceCaseResponse:
+    """Retrieve aggregated Evidence Case representation for a report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return assemble_evidence_case(db_report)

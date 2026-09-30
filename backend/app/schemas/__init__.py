@@ -9,6 +9,15 @@ from app.schemas.evidence_interview import (
     EvidenceInterviewAnswersRequest,
     EvidenceInterviewAnswersResponse,
 )
+from app.schemas.evidence_case import (
+    LocationData,
+    CitizenEvidence,
+    MachineAssistanceSection,
+    ContextualEvidenceSection,
+    HumanDecisionSection,
+    EvidenceCaseProvenance,
+    EvidenceCaseResponse,
+)
 
 __all__ = [
     "ReportCreate",
@@ -23,4 +32,11 @@ __all__ = [
     "InterviewAnswerSubmission",
     "EvidenceInterviewAnswersRequest",
     "EvidenceInterviewAnswersResponse",
+    "LocationData",
+    "CitizenEvidence",
+    "MachineAssistanceSection",
+    "ContextualEvidenceSection",
+    "HumanDecisionSection",
+    "EvidenceCaseProvenance",
+    "EvidenceCaseResponse",
 ]

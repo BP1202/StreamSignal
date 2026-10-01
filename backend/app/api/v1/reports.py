@@ -14,6 +14,7 @@ from app.schemas.evidence_interview import (
 from app.schemas.evidence_case import EvidenceCaseResponse
 from app.schemas.evidence_contract import EvidenceContractResponse
 from app.schemas.media_observation import ReportMediaObservationsResponse
+from app.schemas.contextual_evidence import PatternEchoResponse
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
 from app.services.evidence_interview import (
@@ -23,6 +24,7 @@ from app.services.evidence_interview import (
 from app.services.evidence_case import assemble_evidence_case
 from app.services.evidence_contract import assemble_evidence_contract
 from app.services.media_observation import extract_report_media_observations
+from app.services.contextual_evidence import evaluate_pattern_echo
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -287,3 +289,51 @@ def get_report_media_observations(
             detail=f"Report with id '{report_id}' not found",
         )
     return extract_report_media_observations(db_report)
+
+
+@router.get(
+    "/{report_id}/contextual-evidence",
+    response_model=PatternEchoResponse,
+    summary="Retrieve Pattern Echo Contextual Evidence",
+    description=(
+        "Retrieves nearby historical freshwater observation reports with similar "
+        "characteristics based on bounded spatial and temporal proximity. "
+        "Strictly provides transparent historical context without claiming environmental causation."
+    ),
+)
+def get_report_contextual_evidence(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    radius_meters: float = Query(
+        default=1000.0,
+        ge=10.0,
+        le=50000.0,
+        description="Spatial search radius in meters",
+    ),
+    window_days: int = Query(
+        default=30,
+        ge=1,
+        le=365,
+        description="Historical search window in days",
+    ),
+    limit: int = Query(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of matching historical cases to return",
+    ),
+    db: Session = Depends(get_db),
+) -> PatternEchoResponse:
+    """Retrieve deterministic Pattern Echo historical contextual evidence for a report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return evaluate_pattern_echo(
+        report=db_report,
+        db=db,
+        search_radius_meters=radius_meters,
+        historical_window_days=window_days,
+        max_cases=limit,
+    )

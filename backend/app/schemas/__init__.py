@@ -33,6 +33,11 @@ from app.schemas.media_observation import (
     MediaVisualObservations,
     ReportMediaObservationsResponse,
 )
+from app.schemas.contextual_evidence import (
+    PatternEchoStatus,
+    PatternEchoMatch,
+    PatternEchoResponse,
+)
 
 __all__ = [
     "ReportCreate",
@@ -65,4 +70,7 @@ __all__ = [
     "VisualObservation",
     "MediaVisualObservations",
     "ReportMediaObservationsResponse",
+    "PatternEchoStatus",
+    "PatternEchoMatch",
+    "PatternEchoResponse",
 ]

@@ -14,6 +14,7 @@ from app.services.media_observation import (
     extract_report_media_observations,
 )
 from app.services.contextual_evidence import evaluate_pattern_echo
+from app.services.triage import evaluate_evidence_triage
 
 __all__ = [
     "assess_evidence_quality",
@@ -31,4 +32,5 @@ __all__ = [
     "extract_media_observations",
     "extract_report_media_observations",
     "evaluate_pattern_echo",
+    "evaluate_evidence_triage",
 ]

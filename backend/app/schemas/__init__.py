@@ -38,6 +38,12 @@ from app.schemas.contextual_evidence import (
     PatternEchoMatch,
     PatternEchoResponse,
 )
+from app.schemas.triage import (
+    TriageAction,
+    TriageReasonCode,
+    TriageEvidenceSummary,
+    TriageResponse,
+)
 
 __all__ = [
     "ReportCreate",
@@ -73,4 +79,8 @@ __all__ = [
     "PatternEchoStatus",
     "PatternEchoMatch",
     "PatternEchoResponse",
+    "TriageAction",
+    "TriageReasonCode",
+    "TriageEvidenceSummary",
+    "TriageResponse",
 ]

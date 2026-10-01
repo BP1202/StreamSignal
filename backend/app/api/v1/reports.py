@@ -15,6 +15,7 @@ from app.schemas.evidence_case import EvidenceCaseResponse
 from app.schemas.evidence_contract import EvidenceContractResponse
 from app.schemas.media_observation import ReportMediaObservationsResponse
 from app.schemas.contextual_evidence import PatternEchoResponse
+from app.schemas.triage import TriageResponse
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.media import ingest_report_media
 from app.services.evidence_interview import (
@@ -25,6 +26,7 @@ from app.services.evidence_case import assemble_evidence_case
 from app.services.evidence_contract import assemble_evidence_contract
 from app.services.media_observation import extract_report_media_observations
 from app.services.contextual_evidence import evaluate_pattern_echo
+from app.services.triage import evaluate_evidence_triage
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -337,3 +339,27 @@ def get_report_contextual_evidence(
         historical_window_days=window_days,
         max_cases=limit,
     )
+
+
+@router.get(
+    "/{report_id}/triage",
+    response_model=TriageResponse,
+    summary="Retrieve Evidence Triage Recommendation",
+    description=(
+        "Deterministically evaluates available multi-source evidence (completeness, visual observations, "
+        "historical context, and review status) and recommends the next evidence-handling action. "
+        "Strictly provides workflow guidance without asserting environmental diagnosis, causation, or contamination."
+    ),
+)
+def get_report_evidence_triage(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> TriageResponse:
+    """Retrieve deterministic evidence triage next-action recommendation for an observation report."""
+    db_report = db.query(Report).filter(Report.id == report_id).first()
+    if not db_report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id '{report_id}' not found",
+        )
+    return evaluate_evidence_triage(report=db_report, db=db)

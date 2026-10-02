@@ -2,122 +2,174 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "./App";
-import { ObservationForm } from "./components/observation/ObservationForm";
+import { HeroLanding } from "./components/journey/HeroLanding";
+import { PhotoCaptureStep } from "./components/journey/PhotoCaptureStep";
+import { ObservationSignalsStep } from "./components/journey/ObservationSignalsStep";
+import { LocationTimeStep } from "./components/journey/LocationTimeStep";
 import { InterviewModal } from "./components/interview/InterviewModal";
 import { EvidenceCaseView } from "./components/evidence/EvidenceCaseView";
 import * as api from "./api/reports";
 import { EvidenceCaseResponse, TriageResponse } from "./types/evidence_case";
 
-describe("ObservationForm Component", () => {
-  it("renders all form elements, guidance, and controlled options", () => {
+describe("HeroLanding Component", () => {
+  it("renders human-centric entry heading and action buttons", () => {
+    const handlePhoto = vi.fn();
+    const handleNoPhoto = vi.fn();
+
     render(
-      <ObservationForm
-        onSubmit={vi.fn()}
-        isSubmitting={false}
+      <HeroLanding
+        onStartWithPhoto={handlePhoto}
+        onStartWithoutPhoto={handleNoPhoto}
       />
     );
 
-    expect(screen.getByText("Submit Freshwater Observation")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Observation Time/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Latitude/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Longitude/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Observation Description/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Water Appearance/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Flow Condition/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Odor \/ Smell/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unnatural Foam Observed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Visible Litter \/ Debris/i)).toBeInTheDocument();
-    expect(screen.getByText(/Dead Wildlife Observed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Click to select photo evidence/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Notice something unusual in a stream?")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Capture what you see")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Or start without a photo/i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Capture what you see"));
+    expect(handlePhoto).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText(/Or start without a photo/i));
+    expect(handleNoPhoto).toHaveBeenCalled();
   });
+});
 
-  it("validates required description min length", async () => {
-    const handleSubmit = vi.fn();
-    render(<ObservationForm onSubmit={handleSubmit} isSubmitting={false} />);
-
-    // Enter coordinates but short description
-    fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: "24.5" } });
-    fireEvent.change(screen.getByLabelText(/Longitude/i), { target: { value: "73.5" } });
-    fireEvent.change(screen.getByLabelText(/Observation Description/i), { target: { value: "ab" } });
-
-    fireEvent.click(screen.getByRole("button", { name: /Submit Citizen Observation/i }));
-
-    expect(await screen.findByText(/Description must be at least 3 characters long/i)).toBeInTheDocument();
-    expect(handleSubmit).not.toHaveBeenCalled();
-  });
-
-  it("validates latitude and longitude ranges", async () => {
-    const handleSubmit = vi.fn();
-    render(<ObservationForm onSubmit={handleSubmit} isSubmitting={false} />);
-
-    fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: "95.0" } });
-    fireEvent.change(screen.getByLabelText(/Longitude/i), { target: { value: "-190.0" } });
-    fireEvent.change(screen.getByLabelText(/Observation Description/i), { target: { value: "Valid description here" } });
-
-    fireEvent.click(screen.getByRole("button", { name: /Submit Citizen Observation/i }));
-
-    expect(await screen.findByText(/Latitude must be a valid number between -90 and 90/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Longitude must be a valid number between -180 and 180/i)).toBeInTheDocument();
-    expect(handleSubmit).not.toHaveBeenCalled();
-  });
-
-  it("allows selecting a photo and shows preview thumbnail and file details", () => {
-    window.URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-image-preview");
+describe("PhotoCaptureStep Component", () => {
+  it("renders photo capture options, preview, and educational rationale", () => {
+    window.URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-preview");
     window.URL.revokeObjectURL = vi.fn();
 
-    render(<ObservationForm onSubmit={vi.fn()} isSubmitting={false} />);
+    const handleSelect = vi.fn();
+    const handleNext = vi.fn();
+    const handleBack = vi.fn();
 
-    const file = new File(["dummy content"], "evidence_photo.jpg", { type: "image/jpeg" });
+    render(
+      <PhotoCaptureStep
+        mediaFile={null}
+        onSelectMedia={handleSelect}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+    );
+
+    expect(screen.getByText("Show us what you saw")).toBeInTheDocument();
+    expect(screen.getByText(/Why photo matters\?/i)).toBeInTheDocument();
+
+    // Toggle why photo matters
+    fireEvent.click(screen.getByText(/Why photo matters\?/i));
+    expect(
+      screen.getByText(/Your original image becomes part of the permanent evidence record/i)
+    ).toBeInTheDocument();
+
+    // Select file
+    const file = new File(["dummy content"], "river_foam.jpg", { type: "image/jpeg" });
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(screen.getByText("evidence_photo.jpg")).toBeInTheDocument();
-    expect(screen.getByText(/Remove photo/i)).toBeInTheDocument();
+    expect(handleSelect).toHaveBeenCalledWith(file);
   });
+});
 
-  it("disables submit button and shows loading text while submitting", () => {
+describe("ObservationSignalsStep Component", () => {
+  it("renders visual signal cards and validates description", () => {
+    const handleNext = vi.fn();
+    const handleBack = vi.fn();
+    const handleChangeDesc = vi.fn();
+
     render(
-      <ObservationForm
-        onSubmit={vi.fn()}
-        isSubmitting={true}
-        submittingMessage="Uploading photographic evidence..."
+      <ObservationSignalsStep
+        description=""
+        onChangeDescription={handleChangeDesc}
+        waterAppearance=""
+        onChangeWaterAppearance={vi.fn()}
+        flowCondition=""
+        onChangeFlowCondition={vi.fn()}
+        odor=""
+        onChangeOdor={vi.fn()}
+        foamObserved={false}
+        onToggleFoam={vi.fn()}
+        litterObserved={false}
+        onToggleLitter={vi.fn()}
+        deadWildlifeObserved={false}
+        onToggleWildlife={vi.fn()}
+        onNext={handleNext}
+        onBack={handleBack}
       />
     );
 
-    const submitBtn = screen.getByRole("button", { name: /Uploading photographic evidence.../i });
-    expect(submitBtn).toBeDisabled();
-    expect(screen.getByText("Uploading photographic evidence...")).toBeInTheDocument();
-  });
+    expect(screen.getByText("What caught your attention?")).toBeInTheDocument();
+    expect(screen.getByText("Unusual Color")).toBeInTheDocument();
+    expect(screen.getByText("Foam or Suds")).toBeInTheDocument();
+    expect(screen.getByText("Surface Sheen")).toBeInTheDocument();
+    expect(screen.getByText("Visible Litter")).toBeInTheDocument();
 
-  it("displays submission error banner when errorMessage is provided", () => {
+    // Attempt continue with empty description
+    fireEvent.click(screen.getByRole("button", { name: /Continue to location/i }));
+    expect(
+      screen.getByText(/Please describe what you observed \(at least 3 characters\)/i)
+    ).toBeInTheDocument();
+    expect(handleNext).not.toHaveBeenCalled();
+  });
+});
+
+describe("LocationTimeStep Component", () => {
+  it("renders GPS button, manual coordinate inputs, and validates ranges", async () => {
+    const handleSubmit = vi.fn();
+
     render(
-      <ObservationForm
-        onSubmit={vi.fn()}
+      <LocationTimeStep
+        latitude="95.0"
+        onChangeLatitude={vi.fn()}
+        longitude="190.0"
+        onChangeLongitude={vi.fn()}
+        observedAt="2026-10-02T12:00"
+        onChangeObservedAt={vi.fn()}
+        hasMedia={true}
+        hasDescription={true}
+        hasCharacteristics={true}
         isSubmitting={false}
-        errorMessage="Database connection failed"
+        onSubmit={handleSubmit}
+        onBack={vi.fn()}
       />
     );
 
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByText("Database connection failed")).toBeInTheDocument();
+    expect(screen.getByText("Where & when did you see it?")).toBeInTheDocument();
+    expect(screen.getByText(/Use Current Browser Location/i)).toBeInTheDocument();
+    expect(screen.getByText(/Evidence Completeness/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Create my Evidence Case/i }));
+
+    expect(
+      await screen.findByText(/Latitude must be a valid number between -90 and 90/i)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Longitude must be a valid number between -180 and 180/i)
+    ).toBeInTheDocument();
+    expect(handleSubmit).not.toHaveBeenCalled();
   });
 });
 
 describe("InterviewModal Component", () => {
-  it("renders backend questions dynamically and submits answers", async () => {
+  it("renders dynamic questions with why-we-ask explanations and submits answers", () => {
     const handleSubmit = vi.fn();
     const handleSkip = vi.fn();
 
     const mockQuestions = [
       {
-        question_id: "water_appearance",
-        field: "water_appearance",
-        question: "What did the water look like?",
+        question_id: "flow_condition",
+        field: "flow_condition",
+        question: "How was the water moving?",
         answer_type: "single_choice",
         options: [
-          { label: "Clear", value: "clear" },
-          { label: "Green material", value: "green_surface_material" },
+          { label: "Flowing normally", value: "flowing" },
+          { label: "Stagnant", value: "stagnant" },
         ],
       },
     ];
@@ -131,17 +183,22 @@ describe("InterviewModal Component", () => {
       />
     );
 
-    expect(screen.getByText("Evidence Interview — Targeted Follow-Up")).toBeInTheDocument();
-    expect(screen.getByText("What did the water look like?")).toBeInTheDocument();
-    expect(screen.getByText("Clear")).toBeInTheDocument();
-    expect(screen.getByText("Green material")).toBeInTheDocument();
+    expect(screen.getByText("A couple of quick questions")).toBeInTheDocument();
+    expect(screen.getByText("How was the water moving?")).toBeInTheDocument();
+    expect(screen.getByText("Why this question?")).toBeInTheDocument();
 
-    // Select Green material
-    fireEvent.click(screen.getByText("Green material"));
+    // Toggle why
+    fireEvent.click(screen.getByText("Why this question?"));
+    expect(
+      screen.getByText(/Knowing whether water was flowing or stagnant helps researchers/i)
+    ).toBeInTheDocument();
+
+    // Select stagnant
+    fireEvent.click(screen.getByText("Stagnant"));
     fireEvent.click(screen.getByRole("button", { name: /Save Answers/i }));
 
     expect(handleSubmit).toHaveBeenCalledWith([
-      { question_id: "water_appearance", value: "green_surface_material" },
+      { question_id: "flow_condition", value: "stagnant" },
     ]);
   });
 });
@@ -225,8 +282,8 @@ const mockTriage: TriageResponse = {
   ],
 };
 
-describe("EvidenceCaseView Component", () => {
-  it("renders distinct citizen evidence, quality assessment, and provenance", () => {
+describe("EvidenceCaseView Component (SignalCase)", () => {
+  it("renders reward framing, distinct evidence layers, and provenance", () => {
     render(
       <EvidenceCaseView
         evidenceCase={mockCase}
@@ -235,16 +292,15 @@ describe("EvidenceCaseView Component", () => {
       />
     );
 
-    expect(screen.getByText("Urban Freshwater Evidence Case")).toBeInTheDocument();
-    expect(screen.getByText("Observed thick green layer on stream surface.")).toBeInTheDocument();
+    expect(screen.getByText(/Your observation is recorded/i)).toBeInTheDocument();
+    expect(screen.getByText("#123E4567")).toBeInTheDocument();
+    expect(screen.getByText(/Observed thick green layer on stream surface/i)).toBeInTheDocument();
     expect(screen.getByText("sample_water.jpg")).toBeInTheDocument();
-    expect(screen.getByText(/Quality: COMPLETE/i)).toBeInTheDocument();
-    expect(screen.getByText(/100% Complete/i)).toBeInTheDocument();
-    expect(screen.getByText("Awaiting human review")).toBeInTheDocument();
-    expect(screen.getByText("No machine assistance has been generated yet.")).toBeInTheDocument();
+    expect(screen.getByText(/Evidence Quality: COMPLETE/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Awaiting human review").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("strictly enforces non-diagnostic boundaries and limitations", () => {
+  it("strictly preserves scientific boundaries and non-diagnostic conclusions", () => {
     render(
       <EvidenceCaseView
         evidenceCase={mockCase}
@@ -266,17 +322,17 @@ describe("EvidenceCaseView Component", () => {
   });
 });
 
-describe("App State Machine Integration", () => {
-  it("transitions from form submission through interview to evidence case view", async () => {
-    window.URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-image-preview");
+describe("Complete Guided Journey Integration", () => {
+  it("orchestrates user from landing through capture, signals, location, interview, to SignalCase", async () => {
+    window.URL.createObjectURL = vi.fn(() => "blob:http://localhost/fake-preview");
     window.URL.revokeObjectURL = vi.fn();
 
     vi.spyOn(api, "createReport").mockResolvedValue({
       id: "test-report-uuid",
       status: "SUBMITTED",
-      latitude: 24.5,
-      longitude: 73.5,
-      description: "Observed green water near canal",
+      latitude: 24.5854,
+      longitude: 73.7125,
+      description: "I noticed green material along the canal bank",
       observed_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -314,26 +370,36 @@ describe("App State Machine Integration", () => {
 
     render(<App />);
 
-    // Fill form
-    fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: "24.5" } });
-    fireEvent.change(screen.getByLabelText(/Longitude/i), { target: { value: "73.5" } });
-    fireEvent.change(screen.getByLabelText(/Observation Description/i), {
-      target: { value: "Observed green water near canal" },
+    // 1. Landing: click "Capture what you see"
+    expect(screen.getByText("Notice something unusual in a stream?")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Capture what you see"));
+
+    // 2. Photo Capture Step: Click "Continue to observation"
+    expect(await screen.findByText("Show us what you saw")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Continue to observation/i }));
+
+    // 3. Observation Signals Step: Select "Unusual Color" card & enter description
+    expect(await screen.findByText("What caught your attention?")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Unusual Color"));
+    fireEvent.change(screen.getByLabelText(/Tell us what you noticed/i), {
+      target: { value: "I noticed green material along the canal bank" },
     });
+    fireEvent.click(screen.getByRole("button", { name: /Continue to location/i }));
 
-    // Submit form
-    fireEvent.click(screen.getByRole("button", { name: /Submit Citizen Observation/i }));
+    // 4. Location & Time Step: Enter coordinates and submit
+    expect(await screen.findByText("Where & when did you see it?")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Latitude/i), { target: { value: "24.5854" } });
+    fireEvent.change(screen.getByLabelText(/Longitude/i), { target: { value: "73.7125" } });
+    fireEvent.click(screen.getByRole("button", { name: /Create my Evidence Case/i }));
 
-    // Interview step should appear
-    expect(await screen.findByText("Evidence Interview — Targeted Follow-Up")).toBeInTheDocument();
+    // 5. Adaptive Interview Step: Answer question
+    expect(await screen.findByText("A couple of quick questions")).toBeInTheDocument();
     expect(screen.getByText("How was the water moving?")).toBeInTheDocument();
-
-    // Select answer and submit interview
     fireEvent.click(screen.getByText("Stagnant"));
-    fireEvent.click(screen.getByRole("button", { name: /Save Answers/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Save Answers & View Evidence Case/i }));
 
-    // Case view should appear
-    expect(await screen.findByText("Urban Freshwater Evidence Case")).toBeInTheDocument();
-    expect(screen.getByText(/Quality: COMPLETE/i)).toBeInTheDocument();
+    // 6. SignalCase View
+    expect(await screen.findByText(/Your observation is recorded/i)).toBeInTheDocument();
+    expect(screen.getByText("#123E4567")).toBeInTheDocument();
   });
 });

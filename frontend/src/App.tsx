@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Header } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
-import { ObservationForm } from "./components/observation/ObservationForm";
+import { JourneyProgress } from "./components/journey/JourneyProgress";
+import { HeroLanding } from "./components/journey/HeroLanding";
+import { PhotoCaptureStep } from "./components/journey/PhotoCaptureStep";
+import { ObservationSignalsStep } from "./components/journey/ObservationSignalsStep";
+import { LocationTimeStep } from "./components/journey/LocationTimeStep";
 import { InterviewModal } from "./components/interview/InterviewModal";
 import { EvidenceCaseView } from "./components/evidence/EvidenceCaseView";
 import {
@@ -19,32 +23,56 @@ import {
   InterviewAnswerSubmission,
 } from "./types/interview";
 import { EvidenceCaseResponse, TriageResponse } from "./types/evidence_case";
+import { JourneyStep } from "./types/journey";
 import { ApiError } from "./api/client";
 import { AlertCircle, RotateCcw } from "lucide-react";
 
-type Stage = "form" | "interview" | "case" | "error";
-
 export const App: React.FC = () => {
-  const [stage, setStage] = useState<Stage>("form");
+  const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittingMessage, setSubmittingMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Active workflow data
+  // Citizen observation journey state
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [description, setDescription] = useState<string>("");
+  const [waterAppearance, setWaterAppearance] = useState<string>("");
+  const [flowCondition, setFlowCondition] = useState<string>("");
+  const [odor, setOdor] = useState<string>("");
+  const [foamObserved, setFoamObserved] = useState<boolean>(false);
+  const [litterObserved, setLitterObserved] = useState<boolean>(false);
+  const [deadWildlifeObserved, setDeadWildlifeObserved] = useState<boolean>(false);
+
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
+  const [observedAt, setObservedAt] = useState<string>(() => {
+    return new Date().toISOString().slice(0, 16);
+  });
+
+  // Backend state
   const [activeReport, setActiveReport] = useState<ReportResponse | null>(null);
   const [activeMedia, setActiveMedia] = useState<ReportMediaResponse | null>(null);
   const [interviewQuestions, setInterviewQuestions] = useState<EvidenceInterviewQuestion[]>([]);
   const [isSubmittingAnswers, setIsSubmittingAnswers] = useState<boolean>(false);
-
-  // Final Results
   const [evidenceCase, setEvidenceCase] = useState<EvidenceCaseResponse | null>(null);
   const [triage, setTriage] = useState<TriageResponse | null>(null);
 
-  const resetToForm = () => {
-    setStage("form");
+  const resetJourney = () => {
+    setCurrentStep("landing");
     setIsSubmitting(false);
     setSubmittingMessage("");
     setErrorMessage(null);
+    setMediaFile(null);
+    setDescription("");
+    setWaterAppearance("");
+    setFlowCondition("");
+    setOdor("");
+    setFoamObserved(false);
+    setLitterObserved(false);
+    setDeadWildlifeObserved(false);
+    setLatitude("");
+    setLongitude("");
+    setObservedAt(new Date().toISOString().slice(0, 16));
     setActiveReport(null);
     setActiveMedia(null);
     setInterviewQuestions([]);
@@ -62,24 +90,40 @@ export const App: React.FC = () => {
       ]);
       setEvidenceCase(caseData);
       setTriage(triageData);
-      setStage("case");
+      setCurrentStep("case");
     } catch (err: unknown) {
       const msg = err instanceof ApiError ? err.message : "Failed to load evidence case.";
       setErrorMessage(msg);
-      setStage("error");
+      setCurrentStep("error");
     } finally {
       setIsSubmitting(false);
       setIsSubmittingAnswers(false);
     }
   };
 
-  const handleFormSubmit = async (reportData: ReportCreate, mediaFile: File | null) => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    const latNum = parseFloat(latitude);
+    const lonNum = parseFloat(longitude);
+
+    const reportData: ReportCreate = {
+      observed_at: new Date(observedAt).toISOString(),
+      latitude: latNum,
+      longitude: lonNum,
+      description: description.trim(),
+      water_appearance: waterAppearance || null,
+      flow_condition: flowCondition || null,
+      odor: odor || null,
+      foam_observed: foamObserved,
+      litter_observed: litterObserved,
+      dead_wildlife_observed: deadWildlifeObserved,
+    };
+
     let createdReport: ReportResponse;
     try {
-      setSubmittingMessage("Creating citizen observation report...");
+      setSubmittingMessage("Recording citizen observation report...");
       createdReport = await createReport(reportData);
       setActiveReport(createdReport);
     } catch (err: unknown) {
@@ -89,10 +133,10 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Media upload if selected
+    // Media upload if attached
     if (mediaFile) {
       try {
-        setSubmittingMessage("Uploading photographic evidence...");
+        setSubmittingMessage("Uploading original photo evidence...");
         const mediaRecord = await uploadReportMedia(createdReport.id, mediaFile);
         setActiveMedia(mediaRecord);
       } catch (err: unknown) {
@@ -103,21 +147,19 @@ export const App: React.FC = () => {
       }
     }
 
-    // Evidence Interview step
+    // Evidence interview
     try {
-      setSubmittingMessage("Assessing evidence completeness & interview...");
+      setSubmittingMessage("Evaluating evidence completeness...");
       const interviewData = await getEvidenceInterview(createdReport.id);
 
       if (interviewData.questions && interviewData.questions.length > 0) {
         setInterviewQuestions(interviewData.questions);
-        setStage("interview");
+        setCurrentStep("interview");
         setIsSubmitting(false);
       } else {
-        // No questions needed, proceed straight to evidence case
         await loadCaseAndTriage(createdReport.id);
       }
     } catch (err: unknown) {
-      // Fallback: If interview fails, still load evidence case
       await loadCaseAndTriage(createdReport.id);
     }
   };
@@ -131,7 +173,6 @@ export const App: React.FC = () => {
       await submitEvidenceInterviewAnswers(activeReport.id, answers);
     } catch (err: unknown) {
       console.warn("Interview submission error:", err);
-      // Even if saving some answers fails, still attempt to view case
     }
 
     await loadCaseAndTriage(activeReport.id);
@@ -146,21 +187,70 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg">
       <Header
-        onNewObservation={resetToForm}
-        showNewButton={stage === "case" || stage === "error"}
+        onNewObservation={resetJourney}
+        showNewButton={currentStep !== "landing"}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {stage === "form" && (
-          <ObservationForm
-            onSubmit={handleFormSubmit}
-            isSubmitting={isSubmitting}
-            submittingMessage={submittingMessage}
-            errorMessage={errorMessage}
+        <JourneyProgress currentStep={currentStep} />
+
+        {currentStep === "landing" && (
+          <HeroLanding
+            onStartWithPhoto={() => setCurrentStep("capture")}
+            onStartWithoutPhoto={() => setCurrentStep("signals")}
           />
         )}
 
-        {stage === "interview" && (
+        {currentStep === "capture" && (
+          <PhotoCaptureStep
+            mediaFile={mediaFile}
+            onSelectMedia={(file) => setMediaFile(file)}
+            onNext={() => setCurrentStep("signals")}
+            onBack={() => setCurrentStep("landing")}
+          />
+        )}
+
+        {currentStep === "signals" && (
+          <ObservationSignalsStep
+            description={description}
+            onChangeDescription={setDescription}
+            waterAppearance={waterAppearance}
+            onChangeWaterAppearance={setWaterAppearance}
+            flowCondition={flowCondition}
+            onChangeFlowCondition={setFlowCondition}
+            odor={odor}
+            onChangeOdor={setOdor}
+            foamObserved={foamObserved}
+            onToggleFoam={setFoamObserved}
+            litterObserved={litterObserved}
+            onToggleLitter={setLitterObserved}
+            deadWildlifeObserved={deadWildlifeObserved}
+            onToggleWildlife={setDeadWildlifeObserved}
+            onNext={() => setCurrentStep("location")}
+            onBack={() => (mediaFile ? setCurrentStep("capture") : setCurrentStep("landing"))}
+          />
+        )}
+
+        {currentStep === "location" && (
+          <LocationTimeStep
+            latitude={latitude}
+            onChangeLatitude={setLatitude}
+            longitude={longitude}
+            onChangeLongitude={setLongitude}
+            observedAt={observedAt}
+            onChangeObservedAt={setObservedAt}
+            hasMedia={Boolean(mediaFile)}
+            hasDescription={Boolean(description.trim())}
+            hasCharacteristics={Boolean(waterAppearance || flowCondition || odor || foamObserved || litterObserved || deadWildlifeObserved)}
+            isSubmitting={isSubmitting}
+            submittingMessage={submittingMessage}
+            errorMessage={errorMessage}
+            onSubmit={handleFinalSubmit}
+            onBack={() => setCurrentStep("signals")}
+          />
+        )}
+
+        {currentStep === "interview" && (
           <InterviewModal
             questions={interviewQuestions}
             onSubmitAnswers={handleInterviewSubmit}
@@ -169,31 +259,31 @@ export const App: React.FC = () => {
           />
         )}
 
-        {stage === "case" && evidenceCase && (
+        {currentStep === "case" && evidenceCase && (
           <EvidenceCaseView
             evidenceCase={evidenceCase}
             triage={triage}
-            onNewObservation={resetToForm}
+            onNewObservation={resetJourney}
           />
         )}
 
-        {stage === "error" && (
-          <div className="bg-brand-surface rounded-xl border border-brand-border p-8 text-center space-y-4 shadow-xs">
+        {currentStep === "error" && (
+          <div className="bg-brand-surface rounded-2xl border border-brand-border p-8 text-center space-y-4 shadow-xs">
             <div className="w-12 h-12 rounded-full bg-red-100 text-brand-error flex items-center justify-center mx-auto">
               <AlertCircle className="w-6 h-6" />
             </div>
             <h2 className="text-lg font-bold text-brand-text">Workflow Interrupted</h2>
             <p className="text-sm text-brand-secondary max-w-md mx-auto">
-              {errorMessage || "An unexpected error occurred while processing your request."}
+              {errorMessage || "An unexpected error occurred while processing your observation."}
             </p>
             <div className="pt-2">
               <button
                 type="button"
-                onClick={resetToForm}
+                onClick={resetJourney}
                 className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-brand-teal hover:bg-brand-dark transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Return to Observation Form</span>
+                <span>Start Anew</span>
               </button>
             </div>
           </div>

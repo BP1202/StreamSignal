@@ -24,10 +24,16 @@ import {
 } from "./types/interview";
 import { EvidenceCaseResponse, TriageResponse } from "./types/evidence_case";
 import { JourneyStep } from "./types/journey";
+import { EvidenceInboxView } from "./components/research/EvidenceInboxView";
+import { SignalCaseInvestigationView } from "./components/research/SignalCaseInvestigationView";
 import { ApiError } from "./api/client";
 import { AlertCircle, RotateCcw } from "lucide-react";
 
 export const App: React.FC = () => {
+  // Top-level workspace mode: "citizen" (reporting journey) vs "research" (Research Evidence Workspace)
+  const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "research">("citizen");
+  const [researchCaseId, setResearchCaseId] = useState<string | null>(null);
+
   const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittingMessage, setSubmittingMessage] = useState<string>("");
@@ -188,18 +194,38 @@ export const App: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-brand-bg">
       <Header
         onNewObservation={resetJourney}
-        showNewButton={currentStep !== "landing"}
+        showNewButton={workspaceMode === "citizen" && currentStep !== "landing"}
+        mode={workspaceMode}
+        onSwitchMode={(mode) => {
+          setWorkspaceMode(mode);
+          if (mode === "research") {
+            setResearchCaseId(null);
+          }
+        }}
       />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <JourneyProgress currentStep={currentStep} />
+      <main className="flex-1 w-full mx-auto">
+        {workspaceMode === "research" ? (
+          researchCaseId ? (
+            <SignalCaseInvestigationView
+              caseId={researchCaseId}
+              onBackToInbox={() => setResearchCaseId(null)}
+            />
+          ) : (
+            <EvidenceInboxView
+              onSelectCase={(caseId) => setResearchCaseId(caseId)}
+            />
+          )
+        ) : (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <JourneyProgress currentStep={currentStep} />
 
-        {currentStep === "landing" && (
-          <HeroLanding
-            onStartWithPhoto={() => setCurrentStep("capture")}
-            onStartWithoutPhoto={() => setCurrentStep("signals")}
-          />
-        )}
+            {currentStep === "landing" && (
+              <HeroLanding
+                onStartWithPhoto={() => setCurrentStep("capture")}
+                onStartWithoutPhoto={() => setCurrentStep("signals")}
+              />
+            )}
 
         {currentStep === "capture" && (
           <PhotoCaptureStep
@@ -286,6 +312,8 @@ export const App: React.FC = () => {
                 <span>Start Anew</span>
               </button>
             </div>
+          </div>
+        )}
           </div>
         )}
       </main>

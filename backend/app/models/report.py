@@ -35,3 +35,5 @@ class Report(Base):
 
     # Relationships
     media = relationship("ReportMedia", back_populates="report", cascade="all, delete-orphan")
+    reviews = relationship("HumanReview", back_populates="report", cascade="all, delete-orphan", foreign_keys="HumanReview.report_id")
+    lineage_events = relationship("EvidenceLineageEvent", back_populates="report", cascade="all, delete-orphan", foreign_keys="EvidenceLineageEvent.signal_case_id")

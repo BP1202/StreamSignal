@@ -27,6 +27,8 @@ from app.services.evidence_contract import assemble_evidence_contract
 from app.services.media_observation import extract_report_media_observations
 from app.services.contextual_evidence import evaluate_pattern_echo
 from app.services.triage import evaluate_evidence_triage
+from app.schemas.research import CitizenImpactStatusResponse
+from app.services.review import get_citizen_impact_status
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -363,3 +365,20 @@ def get_report_evidence_triage(
             detail=f"Report with id '{report_id}' not found",
         )
     return evaluate_evidence_triage(report=db_report, db=db)
+
+
+@router.get(
+    "/{report_id}/impact-status",
+    response_model=CitizenImpactStatusResponse,
+    summary="Retrieve Non-Sensitive Citizen Impact Status",
+    description=(
+        "Returns non-sensitive impact status suitable for citizen tracking. "
+        "Strictly excludes researcher identity, internal reviewer rationales, and private case linkages."
+    ),
+)
+def get_report_impact_status(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> CitizenImpactStatusResponse:
+    """Retrieve safe, non-sensitive impact status for a citizen observation report."""
+    return get_citizen_impact_status(db=db, case_id=report_id)

@@ -28,6 +28,8 @@ OBSERVATION_ORDER = [
     VisualObservationType.VISIBLE_LITTER,
 ]
 
+_OBSERVATION_CACHE = {}
+
 
 def extract_media_observations(
     media: ReportMedia,
@@ -38,6 +40,10 @@ def extract_media_observations(
     Ensures that observations describe only directly observable characteristics (E2_OBSERVED)
     with explicit uncertainty boundaries and zero diagnostic/causal overclaiming.
     """
+    cache_key = (media.id, getattr(media, "sha256", None))
+    if cache_key in _OBSERVATION_CACHE:
+        return _OBSERVATION_CACHE[cache_key]
+
     if storage is None:
         storage = get_storage()
 
@@ -212,6 +218,7 @@ def extract_media_observations(
 
     # Sort observations deterministically according to controlled order
     observations.sort(key=lambda o: OBSERVATION_ORDER.index(o.observation_type))
+    _OBSERVATION_CACHE[cache_key] = observations
     return observations
 
 

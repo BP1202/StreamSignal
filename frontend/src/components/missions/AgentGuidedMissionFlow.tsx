@@ -43,6 +43,14 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
   const [photoUploaded, setPhotoUploaded] = useState<boolean>(
     Boolean(mission.collected_evidence?.photo)
   );
+  const [mediaId, setMediaId] = useState<string | null>(() => {
+    const existing =
+      mission.collected_evidence?.media_id || mission.collected_evidence?.photo;
+    if (typeof existing === "string" && existing.length === 36) {
+      return existing;
+    }
+    return null;
+  });
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,16 +60,37 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
     mission.status === "READY_FOR_SUBMISSION" ||
     (nextAction && nextAction.action_type === "READY_FOR_SUBMISSION");
 
-  const buildSubmission = (): MissionEvidenceSubmission => ({
-    description: description.trim() || undefined,
-    water_appearance: waterAppearance.trim() || undefined,
-    flow_condition: flowCondition.trim() || undefined,
-    foam_observed: foamObserved,
-    additional_notes: additionalNotes.trim() || undefined,
-    media_id: photoUploaded ? "mock-mission-media-uuid" : undefined,
-    latitude: mission.target_latitude || 41.1579,
-    longitude: mission.target_longitude || -8.6291,
-  });
+  const generateUUID = (): string => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
+
+  const buildSubmission = (): MissionEvidenceSubmission => {
+    let resolvedMediaId: string | undefined = undefined;
+    if (photoUploaded) {
+      resolvedMediaId = mediaId || generateUUID();
+      if (!mediaId) {
+        setMediaId(resolvedMediaId);
+      }
+    }
+
+    return {
+      description: description.trim() || undefined,
+      water_appearance: waterAppearance.trim() || undefined,
+      flow_condition: flowCondition.trim() || undefined,
+      foam_observed: foamObserved,
+      additional_notes: additionalNotes.trim() || undefined,
+      media_id: resolvedMediaId,
+      latitude: mission.target_latitude || 41.1579,
+      longitude: mission.target_longitude || -8.6291,
+    };
+  };
 
   const handleValidate = async () => {
     try {
@@ -104,6 +133,9 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
   const handlePhotoSimulated = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setPhotoUploaded(true);
+      if (!mediaId) {
+        setMediaId(generateUUID());
+      }
     }
   };
 

@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MissionType(str, Enum):
@@ -62,6 +62,18 @@ class MissionEvidenceSubmission(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     observed_at: Optional[datetime] = None
+
+    @field_validator("media_id", mode="before")
+    @classmethod
+    def parse_media_id(cls, v: Any) -> Optional[UUID]:
+        if v is None or v == "":
+            return None
+        if isinstance(v, UUID):
+            return v
+        try:
+            return UUID(str(v).strip())
+        except (ValueError, AttributeError):
+            return None
 
     model_config = ConfigDict(extra="ignore")
 

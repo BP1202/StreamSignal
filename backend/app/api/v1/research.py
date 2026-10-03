@@ -6,7 +6,7 @@ human review decision recording, and immutable evidence lineage audit retrieval.
 
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -108,6 +108,7 @@ def get_research_case(
 def record_human_review(
     case_id: UUID,
     review_in: HumanReviewCreate,
+    x_reviewer_id: Optional[str] = Header(default="R-042", alias="X-Reviewer-Id"),
     db: Session = Depends(get_db),
 ) -> HumanReviewResponse:
     """
@@ -117,7 +118,7 @@ def record_human_review(
         db=db,
         case_id=case_id,
         review_in=review_in,
-        reviewer_id="R-042",
+        reviewer_id=x_reviewer_id or "R-042",
     )
 
 

@@ -31,6 +31,7 @@ from app.schemas.research import (
 from app.services.contextual_evidence import evaluate_pattern_echo
 from app.services.media_observation import extract_report_media_observations
 from app.services.storage import get_storage
+from app.services.realtime import connection_manager, RealtimeEventType
 
 
 def determine_current_evidence_state(db: Session, report: Report) -> str:
@@ -160,6 +161,38 @@ def create_human_review(
 
         db.commit()
         db.refresh(review)
+
+        # 1. Publish HUMAN_REVIEW_RECORDED to research workspace
+        connection_manager.publish_event(
+            event_type=RealtimeEventType.HUMAN_REVIEW_RECORDED,
+            case_id=report.id,
+            report_id=report.id,
+            payload={
+                "outcome": outcome.value,
+                "workflow_status": new_workflow_status.value,
+                "previous_status": prev_status,
+                "evidence_state_before": evidence_state_before,
+                "evidence_state_after": evidence_state_after,
+            },
+        )
+
+        # 2. Targeted CITIZEN_IMPACT_UPDATED to citizen socket (strictly safe citizen-facing payload)
+        status_key = new_workflow_status.value
+        status_label = status_key.replace("_", " ").title()
+        safe_description = CITIZEN_IMPACT_DESCRIPTIONS.get(
+            status_key,
+            "Your observation was reviewed as part of a research evidence workflow.",
+        )
+        connection_manager.publish_event(
+            event_type=RealtimeEventType.CITIZEN_IMPACT_UPDATED,
+            case_id=report.id,
+            report_id=report.id,
+            payload={
+                "workflow_status": status_key,
+                "citizen_label": status_label,
+                "safe_description": safe_description,
+            },
+        )
 
         return HumanReviewResponse(
             id=review.id,

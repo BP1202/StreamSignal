@@ -29,6 +29,7 @@ from app.services.contextual_evidence import evaluate_pattern_echo
 from app.services.triage import evaluate_evidence_triage
 from app.schemas.research import CitizenImpactStatusResponse
 from app.services.review import get_citizen_impact_status
+from app.services.realtime import connection_manager, RealtimeEventType
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -50,6 +51,19 @@ def create_report(
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
+
+    # Publish SIGNAL_CASE_CREATED to research workspace strictly post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.SIGNAL_CASE_CREATED,
+        case_id=db_report.id,
+        report_id=db_report.id,
+        payload={
+            "title": f"Observation #{str(db_report.id)[:8].upper()}",
+            "description": db_report.description,
+            "media_count": len(db_report.media) if db_report.media else 0,
+        },
+    )
+
     return db_report
 
 
@@ -158,6 +172,15 @@ async def upload_report_media(
         original_filename=file.filename,
         db=db,
     )
+
+    # Publish EVIDENCE_UPDATED event post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.EVIDENCE_UPDATED,
+        case_id=report_id,
+        report_id=report_id,
+        payload={"update_type": "MEDIA_UPLOADED", "media_id": str(media_record.id)},
+    )
+
     return media_record
 
 
@@ -214,6 +237,14 @@ def submit_report_evidence_interview_answers(
     )
 
     recalculated_quality = assess_evidence_quality(updated_report)
+
+    # Publish EVIDENCE_UPDATED event post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.EVIDENCE_UPDATED,
+        case_id=updated_report.id,
+        report_id=updated_report.id,
+        payload={"update_type": "INTERVIEW_ANSWERED", "updated_fields": updated_fields},
+    )
 
     return EvidenceInterviewAnswersResponse(
         report_id=updated_report.id,

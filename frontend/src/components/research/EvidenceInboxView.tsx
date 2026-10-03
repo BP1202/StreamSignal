@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ResearchInboxItem,
   ResearchInboxResponse,
@@ -7,6 +7,11 @@ import {
 } from "../../types/research";
 import { fetchResearchInbox } from "../../api/research";
 import { ApiError } from "../../api/client";
+import {
+  useResearchRealtime,
+  RealtimeEvent,
+  SignalCaseCreatedPayload,
+} from "../../api/websocket";
 import {
   Inbox,
   Filter,
@@ -21,6 +26,9 @@ import {
   ArrowRight,
   ShieldCheck,
   Eye,
+  Bell,
+  Radio,
+  X,
 } from "lucide-react";
 
 interface EvidenceInboxViewProps {
@@ -33,6 +41,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   const [inboxData, setInboxData] = useState<ResearchInboxResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [newCaseAlert, setNewCaseAlert] = useState<RealtimeEvent<SignalCaseCreatedPayload> | null>(null);
 
   // Filters
   const [actionFilter, setActionFilter] = useState<string>("ALL");
@@ -41,8 +50,8 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   const [hasPatternEcho, setHasPatternEcho] = useState<boolean | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const loadInbox = async () => {
-    setIsLoading(true);
+  const loadInbox = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setIsLoading(true);
     setError(null);
     try {
       const params: any = { limit: 50, offset: 0 };
@@ -52,7 +61,15 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
       if (hasPatternEcho !== undefined) params.has_pattern_echo = hasPatternEcho;
 
       const data = await fetchResearchInbox(params);
-      setInboxData(data);
+
+      // Deduplicate items deterministically by case_id
+      const seen = new Set<string>();
+      const uniqueItems = data.items.filter((item) => {
+        if (seen.has(item.case_id)) return false;
+        seen.add(item.case_id);
+        return true;
+      });
+      setInboxData({ ...data, items: uniqueItems, total: uniqueItems.length });
     } catch (err: unknown) {
       const msg =
         err instanceof ApiError
@@ -60,13 +77,30 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           : "Failed to load research evidence inbox.";
       setError(msg);
     } finally {
-      setIsLoading(false);
+      if (showSpinner) setIsLoading(false);
     }
-  };
+  }, [actionFilter, qualityFilter, hasMedia, hasPatternEcho]);
+
+  // Realtime Live Evidence Bridge hook
+  const { connectionStatus } = useResearchRealtime({
+    onSignalCaseCreated: (event) => {
+      setNewCaseAlert(event);
+      loadInbox(false);
+    },
+    onEvidenceUpdated: () => {
+      loadInbox(false);
+    },
+    onHumanReviewRecorded: () => {
+      loadInbox(false);
+    },
+    onReconnect: () => {
+      loadInbox(false);
+    },
+  });
 
   useEffect(() => {
-    loadInbox();
-  }, [actionFilter, qualityFilter, hasMedia, hasPatternEcho]);
+    loadInbox(true);
+  }, [loadInbox]);
 
   // Client-side text search within fetched batch
   const filteredItems = (inboxData?.items || []).filter((item) => {
@@ -157,8 +191,39 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Realtime Live Connection Indicator */}
+          <div
+            data-testid="live-indicator"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold bg-white shadow-2xs"
+          >
+            {connectionStatus === "CONNECTED" && (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-emerald-700">● Live</span>
+              </>
+            )}
+            {connectionStatus === "RECONNECTING" && (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                <span className="text-amber-700">○ Reconnecting...</span>
+              </>
+            )}
+            {connectionStatus === "CONNECTING" && (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
+                <span className="text-blue-700">○ Connecting...</span>
+              </>
+            )}
+            {connectionStatus === "DISCONNECTED" && (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
+                <span className="text-gray-600">○ Offline</span>
+              </>
+            )}
+          </div>
+
           <button
-            onClick={loadInbox}
+            onClick={() => loadInbox(true)}
             disabled={isLoading}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-secondary hover:text-brand-text bg-gray-50 hover:bg-gray-100 border border-brand-border px-3 py-1.5 rounded-lg transition-colors"
           >
@@ -167,6 +232,56 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Live New SignalCase Notification Card */}
+      {newCaseAlert && (
+        <div
+          data-testid="new-evidence-alert"
+          className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all"
+        >
+          <div className="flex items-start gap-3">
+            <span className="p-2 bg-emerald-100 rounded-lg text-emerald-700 mt-0.5">
+              <Bell className="w-5 h-5 animate-bounce" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-emerald-700 text-white px-2 py-0.5 rounded">
+                  NEW EVIDENCE
+                </span>
+                <span className="font-mono text-xs font-bold text-emerald-950">
+                  SS-{newCaseAlert.case_id.slice(0, 8).toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs text-brand-text font-semibold mt-1">
+                A new SignalCase was received: {newCaseAlert.payload.title}
+              </p>
+              <p className="text-[11px] text-brand-secondary">
+                Completeness:{" "}
+                {newCaseAlert.payload.completeness_score != null
+                  ? `${Math.round(newCaseAlert.payload.completeness_score * 100)}%`
+                  : "Assessing"}{" "}
+                • Media: {newCaseAlert.payload.media_count ?? 0} photo evidence attached
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <button
+              onClick={() => onSelectCase(newCaseAlert.case_id)}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors shadow-xs"
+            >
+              Open Case
+            </button>
+            <button
+              onClick={() => setNewCaseAlert(null)}
+              className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg"
+              title="Dismiss alert"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-xl border border-brand-border p-4 shadow-xs space-y-4">
@@ -307,7 +422,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           </h3>
           <p className="text-xs text-red-700 max-w-md mx-auto">{error}</p>
           <button
-            onClick={loadInbox}
+            onClick={() => loadInbox(true)}
             className="text-xs font-semibold text-white bg-red-700 hover:bg-red-800 px-4 py-2 rounded-lg transition-colors"
           >
             Try Again

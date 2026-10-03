@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ShieldCheck,
   CheckCircle,
@@ -13,12 +13,17 @@ import {
   RotateCcw,
   Sparkles,
   ExternalLink,
+  Radio,
 } from "lucide-react";
 import {
   EvidenceCaseResponse,
   TriageResponse,
   EvidenceQualityLevel,
 } from "../../types/evidence_case";
+import {
+  useCitizenRealtime,
+  CitizenImpactUpdatedPayload,
+} from "../../api/websocket";
 
 interface EvidenceCaseViewProps {
   evidenceCase: EvidenceCaseResponse;
@@ -31,6 +36,18 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
   triage,
   onNewObservation,
 }) => {
+  const [liveCitizenImpact, setLiveCitizenImpact] = useState<CitizenImpactUpdatedPayload | null>(null);
+
+  // Scoped Citizen WebSocket connection
+  const { connectionStatus: citizenWsStatus } = useCitizenRealtime(
+    evidenceCase.case_id,
+    {
+      onCitizenImpactUpdated: (event) => {
+        setLiveCitizenImpact(event.payload);
+      },
+    }
+  );
+
   const { citizen_evidence, evidence_quality, machine_assistance, contextual_evidence, human_decision, provenance } = evidenceCase;
 
   const getQualityBadgeColor = (level: EvidenceQualityLevel) => {
@@ -92,10 +109,20 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
             >
               Evidence Quality: {evidence_quality.quality} ({(evidence_quality.score * 100).toFixed(0)}%)
             </span>
-            <span className="text-xs font-bold px-3 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span>Awaiting human review</span>
-            </span>
+            {liveCitizenImpact ? (
+              <span
+                data-testid="citizen-live-status-badge"
+                className="text-xs font-bold px-3 py-1 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-200 flex items-center space-x-1.5"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{liveCitizenImpact.citizen_label}</span>
+              </span>
+            ) : (
+              <span className="text-xs font-bold px-3 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Awaiting human review</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -109,6 +136,35 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Realtime Citizen Status Card */}
+        {liveCitizenImpact && (
+          <div
+            data-testid="citizen-live-impact-card"
+            className="p-4 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-2 animate-fadeIn"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-emerald-700 text-white px-2 py-0.5 rounded">
+                  Live Research Update
+                </span>
+                <span className="text-xs font-bold text-emerald-950">
+                  {liveCitizenImpact.citizen_label}
+                </span>
+              </div>
+              <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live update received
+              </span>
+            </div>
+            <p className="text-xs text-brand-text font-medium leading-relaxed">
+              {liveCitizenImpact.safe_description}
+            </p>
+            <p className="text-[11px] text-brand-secondary border-t border-emerald-100 pt-1.5">
+              One Health Notice: Your observation contributed to a research workflow for deciding whether professional field verification is warranted. This does not establish pollution, toxicity, health risk, or environmental cause.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Grid of Evidence Layers */}
@@ -199,9 +255,9 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
             <div className="pt-2 border-t border-brand-border">
               <span className="font-bold text-brand-secondary flex items-center space-x-1 mb-2">
                 <Camera className="w-3.5 h-3.5 text-brand-teal" />
-                <span>Original Photographic Evidence ({citizen_evidence.media.length})</span>
+                <span>Original Photographic Evidence ({(citizen_evidence.media?.length || 0)})</span>
               </span>
-              {citizen_evidence.media.length > 0 ? (
+              {(citizen_evidence.media?.length || 0) > 0 ? (
                 <div className="space-y-2">
                   {citizen_evidence.media.map((m) => (
                     <div
@@ -253,10 +309,10 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
 
             <div>
               <span className="font-bold text-emerald-800 block mb-1.5">
-                Documented Dimensions ({evidence_quality.present.length})
+                Documented Dimensions ({(evidence_quality.present?.length || 0)})
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {evidence_quality.present.map((item) => (
+                {(evidence_quality.present || []).map((item) => (
                   <span
                     key={item}
                     className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[11px] font-semibold border border-emerald-200"
@@ -268,13 +324,13 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
               </div>
             </div>
 
-            {evidence_quality.missing.length > 0 && (
+            {(evidence_quality.missing?.length || 0) > 0 && (
               <div>
                 <span className="font-bold text-amber-800 block mb-1.5">
-                  Missing Dimensions ({evidence_quality.missing.length})
+                  Missing Dimensions ({(evidence_quality.missing?.length || 0)})
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {evidence_quality.missing.map((item) => (
+                  {(evidence_quality.missing || []).map((item) => (
                     <span
                       key={item}
                       className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md text-[11px] font-semibold border border-amber-200"
@@ -286,11 +342,11 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
               </div>
             )}
 
-            {evidence_quality.recommendations.length > 0 && (
+            {(evidence_quality.recommendations?.length || 0) > 0 && (
               <div className="pt-2 border-t border-brand-border">
                 <span className="font-bold text-brand-secondary block mb-1">Researcher Value Recommendations:</span>
                 <ul className="list-disc pl-4 space-y-1 text-brand-secondary text-[11px]">
-                  {evidence_quality.recommendations.map((rec, i) => (
+                  {(evidence_quality.recommendations || []).map((rec, i) => (
                     <li key={i}>{rec}</li>
                   ))}
                 </ul>
@@ -309,9 +365,9 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
           <div className="space-y-4 text-xs">
             <div>
               <span className="font-bold text-brand-secondary block mb-1">Automated Media Visual Signals:</span>
-              {machine_assistance.items.length > 0 ? (
+              {(machine_assistance.items?.length || 0) > 0 ? (
                 <div className="space-y-1">
-                  {machine_assistance.items.map((item, idx) => (
+                  {(machine_assistance.items || []).map((item, idx) => (
                     <p key={idx} className="text-brand-text bg-gray-50 p-2.5 rounded-lg border border-brand-border font-medium">
                       {JSON.stringify(item)}
                     </p>
@@ -328,7 +384,7 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
               <span className="font-bold text-brand-secondary block mb-1">
                 Contextual Intelligence (Historical Matches):
               </span>
-              {contextual_evidence.items.length > 0 ? (
+              {(contextual_evidence.items?.length || 0) > 0 ? (
                 <div className="space-y-2 p-3 bg-gray-50 rounded-xl border border-brand-border">
                   <p className="text-brand-text font-bold text-xs">
                     Similar historical observations were found nearby.
@@ -358,12 +414,17 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
               <span className="font-bold text-brand-secondary block mb-1">Authorized Review State:</span>
               <div className="p-3 bg-gray-50 rounded-xl border border-brand-border space-y-1">
                 <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
-                  {human_decision.status === "pending" || human_decision.status === "pending_review"
+                  {liveCitizenImpact
+                    ? liveCitizenImpact.citizen_label
+                    : human_decision.status === "pending" || human_decision.status === "pending_review"
                     ? "Awaiting human review"
                     : human_decision.status}
                 </span>
                 <p className="text-[11px] text-brand-secondary mt-1">
-                  {human_decision.notes || "No human expert verification has been recorded yet. The observation is queued for workflow triage."}
+                  {liveCitizenImpact
+                    ? liveCitizenImpact.safe_description
+                    : human_decision.notes ||
+                      "No human expert verification has been recorded yet. The observation is queued for workflow triage."}
                 </p>
               </div>
             </div>

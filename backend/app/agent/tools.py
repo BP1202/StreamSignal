@@ -221,6 +221,12 @@ def tool_start_mission(db: Session, mission_id: UUID, contributor_id: UUID) -> M
             detail=f"Mission '{mission_id}' not found.",
         )
 
+    if mission.contributor_id and mission.contributor_id != contributor_id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Mission is already assigned to another contributor.",
+        )
+
     current_status = MissionStatus(mission.status)
     enforce_transition(current_status, MissionStatus.COLLECTING_EVIDENCE)
 
@@ -378,6 +384,12 @@ def tool_submit_mission_evidence(
             contributor_id=contributor_id,
         )
         db.refresh(mission)
+
+    # Idempotent return if already finalized into a SignalCase
+    if mission.status in [MissionStatus.SUBMITTED.value, MissionStatus.RESEARCH_REVIEW.value] and mission.signal_case_id:
+        existing_report = db.query(Report).filter(Report.id == mission.signal_case_id).first()
+        if existing_report:
+            return existing_report
 
     # Validate readiness
     if mission.status != MissionStatus.READY_FOR_SUBMISSION.value:

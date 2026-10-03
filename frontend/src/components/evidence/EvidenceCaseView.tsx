@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ShieldCheck,
   CheckCircle,
@@ -24,6 +24,7 @@ import {
   useCitizenRealtime,
   CitizenImpactUpdatedPayload,
 } from "../../api/websocket";
+import { getReportImpactStatus } from "../../api/reports";
 
 interface EvidenceCaseViewProps {
   evidenceCase: EvidenceCaseResponse;
@@ -38,15 +39,41 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
 }) => {
   const [liveCitizenImpact, setLiveCitizenImpact] = useState<CitizenImpactUpdatedPayload | null>(null);
 
+  const reportId = evidenceCase.report_id || evidenceCase.case_id;
+
+  // Initial load of authoritative impact status from database
+  useEffect(() => {
+    if (!reportId) return;
+    let isMounted = true;
+    getReportImpactStatus(reportId)
+      .then((res) => {
+        if (isMounted && res) {
+          setLiveCitizenImpact({
+            workflow_status: res.status,
+            citizen_label: res.status_label,
+            safe_description: res.description,
+          });
+        }
+      })
+      .catch(() => {
+        // Fall back gracefully to human_decision in evidenceCase
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reportId]);
+
   // Scoped Citizen WebSocket connection
   const { connectionStatus: citizenWsStatus } = useCitizenRealtime(
-    evidenceCase.case_id,
+    reportId,
     {
       onCitizenImpactUpdated: (event) => {
         setLiveCitizenImpact(event.payload);
       },
     }
   );
+
 
   const { citizen_evidence, evidence_quality, machine_assistance, contextual_evidence, human_decision, provenance } = evidenceCase;
 

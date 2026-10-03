@@ -12,3 +12,28 @@ def client() -> Generator[TestClient, None, None]:
     """
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_database_after_tests():
+    """
+    Session-level teardown ensuring tests never leak test records
+    into the development/demo database.
+    """
+    yield
+    from app.core.database import SessionLocal
+    from app.models.evidence_lineage import EvidenceLineageEvent
+    from app.models.human_review import HumanReview
+    from app.models.media import ReportMedia
+    from app.models.report import Report
+
+    db = SessionLocal()
+    try:
+        db.query(EvidenceLineageEvent).delete()
+        db.query(HumanReview).delete()
+        db.query(ReportMedia).delete()
+        db.query(Report).delete()
+        db.commit()
+    finally:
+        db.close()
+

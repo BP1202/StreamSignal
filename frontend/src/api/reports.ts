@@ -82,3 +82,23 @@ export async function getEvidenceTriage(
     method: "GET",
   });
 }
+
+export interface CitizenImpactStatusResponse {
+  case_id: string;
+  status: string;
+  status_label: string;
+  description: string;
+  updated_at: string;
+}
+
+export async function getReportImpactStatus(
+  reportId: string
+): Promise<CitizenImpactStatusResponse> {
+  return request<CitizenImpactStatusResponse>(
+    `/api/v1/reports/${reportId}/impact-status`,
+    {
+      method: "GET",
+    }
+  );
+}
+

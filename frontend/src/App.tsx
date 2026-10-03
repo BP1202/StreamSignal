@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 import { JourneyProgress } from "./components/journey/JourneyProgress";
@@ -28,11 +28,13 @@ import { EvidenceInboxView } from "./components/research/EvidenceInboxView";
 import { SignalCaseInvestigationView } from "./components/research/SignalCaseInvestigationView";
 import { ApiError } from "./api/client";
 import { AlertCircle, RotateCcw } from "lucide-react";
+import { getRouteState, navigateTo } from "./utils/routing";
 
 export const App: React.FC = () => {
   // Top-level workspace mode: "citizen" (reporting journey) vs "research" (Research Evidence Workspace)
-  const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "research">("citizen");
-  const [researchCaseId, setResearchCaseId] = useState<string | null>(null);
+  const initialRoute = getRouteState();
+  const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "research">(initialRoute.mode);
+  const [researchCaseId, setResearchCaseId] = useState<string | null>(initialRoute.caseId);
 
   const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -63,7 +65,62 @@ export const App: React.FC = () => {
   const [evidenceCase, setEvidenceCase] = useState<EvidenceCaseResponse | null>(null);
   const [triage, setTriage] = useState<TriageResponse | null>(null);
 
+  const loadCaseAndTriage = useCallback(async (reportId: string, updateUrl: boolean = true) => {
+    setIsSubmitting(true);
+    setSubmittingMessage("Assembling transparent Evidence Case...");
+    try {
+      const [caseData, triageData] = await Promise.all([
+        getEvidenceCase(reportId),
+        getEvidenceTriage(reportId).catch(() => null),
+      ]);
+      setEvidenceCase(caseData);
+      setTriage(triageData);
+      setCurrentStep("case");
+      if (updateUrl) {
+        navigateTo("citizen", reportId);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof ApiError ? err.message : "Failed to load evidence case.";
+      setErrorMessage(msg);
+      setCurrentStep("error");
+    } finally {
+      setIsSubmitting(false);
+      setIsSubmittingAnswers(false);
+    }
+  }, []);
+
+  // Listen to popstate for browser back/forward and URL navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = getRouteState();
+      setWorkspaceMode(route.mode);
+      if (route.mode === "research") {
+        setResearchCaseId(route.caseId);
+      } else {
+        setResearchCaseId(null);
+        if (route.caseId) {
+          loadCaseAndTriage(route.caseId, false);
+        } else {
+          setCurrentStep("landing");
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    // Initial load: if URL is /citizen?caseId=..., fetch case immediately
+    const route = getRouteState();
+    if (route.mode === "citizen" && route.caseId) {
+      loadCaseAndTriage(route.caseId, false);
+    }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [loadCaseAndTriage]);
+
   const resetJourney = () => {
+    navigateTo("citizen", null);
     setCurrentStep("landing");
     setIsSubmitting(false);
     setSubmittingMessage("");
@@ -87,25 +144,6 @@ export const App: React.FC = () => {
     setTriage(null);
   };
 
-  const loadCaseAndTriage = async (reportId: string) => {
-    setSubmittingMessage("Assembling transparent Evidence Case...");
-    try {
-      const [caseData, triageData] = await Promise.all([
-        getEvidenceCase(reportId),
-        getEvidenceTriage(reportId).catch(() => null),
-      ]);
-      setEvidenceCase(caseData);
-      setTriage(triageData);
-      setCurrentStep("case");
-    } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : "Failed to load evidence case.";
-      setErrorMessage(msg);
-      setCurrentStep("error");
-    } finally {
-      setIsSubmitting(false);
-      setIsSubmittingAnswers(false);
-    }
-  };
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
@@ -200,6 +238,9 @@ export const App: React.FC = () => {
           setWorkspaceMode(mode);
           if (mode === "research") {
             setResearchCaseId(null);
+            navigateTo("research", null);
+          } else {
+            navigateTo("citizen", null);
           }
         }}
       />
@@ -209,11 +250,17 @@ export const App: React.FC = () => {
           researchCaseId ? (
             <SignalCaseInvestigationView
               caseId={researchCaseId}
-              onBackToInbox={() => setResearchCaseId(null)}
+              onBackToInbox={() => {
+                setResearchCaseId(null);
+                navigateTo("research", null);
+              }}
             />
           ) : (
             <EvidenceInboxView
-              onSelectCase={(caseId) => setResearchCaseId(caseId)}
+              onSelectCase={(caseId) => {
+                setResearchCaseId(caseId);
+                navigateTo("research", caseId);
+              }}
             />
           )
         ) : (

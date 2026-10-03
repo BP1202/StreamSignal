@@ -4,8 +4,8 @@ import { Droplets, ShieldCheck } from "lucide-react";
 interface HeaderProps {
   onNewObservation?: () => void;
   showNewButton?: boolean;
-  mode?: "citizen" | "research";
-  onSwitchMode?: (mode: "citizen" | "research") => void;
+  mode?: "citizen" | "missions" | "research";
+  onSwitchMode?: (mode: "citizen" | "missions" | "research") => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Workspace Mode Navigation */}
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-brand-border">
+        <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-lg border border-brand-border">
           <button
             type="button"
             onClick={() => onSwitchMode?.("citizen")}
@@ -52,6 +52,17 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             Citizen Observe
+          </button>
+          <button
+            type="button"
+            onClick={() => onSwitchMode?.("missions")}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+              mode === "missions"
+                ? "bg-white text-brand-text shadow-xs"
+                : "text-brand-secondary hover:text-brand-text"
+            }`}
+          >
+            <span>🎯 Citizen Missions</span>
           </button>
           <button
             type="button"

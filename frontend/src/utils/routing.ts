@@ -10,7 +10,7 @@
  */
 
 export interface AppRouteState {
-  mode: "citizen" | "research";
+  mode: "citizen" | "missions" | "research";
   caseId: string | null;
 }
 
@@ -36,6 +36,11 @@ export function getRouteState(): AppRouteState {
     return { mode: "research", caseId: queryCaseId };
   }
 
+  // Missions route
+  if (pathname === "/missions" || pathname === "/citizen/missions") {
+    return { mode: "missions", caseId: null };
+  }
+
   // Citizen routes
   if (pathname.startsWith("/citizen/")) {
     const caseId = pathname.slice("/citizen/".length);
@@ -58,7 +63,7 @@ export function getRouteState(): AppRouteState {
 /**
  * Navigates to a specific route using window.history.pushState and dispatches popstate event.
  */
-export function navigateTo(mode: "citizen" | "research", caseId?: string | null): void {
+export function navigateTo(mode: "citizen" | "missions" | "research", caseId?: string | null): void {
   if (typeof window === "undefined") return;
 
   let targetUrl = "/";
@@ -68,6 +73,8 @@ export function navigateTo(mode: "citizen" | "research", caseId?: string | null)
     } else {
       targetUrl = "/research";
     }
+  } else if (mode === "missions") {
+    targetUrl = "/missions";
   } else {
     if (caseId) {
       targetUrl = `/citizen?caseId=${encodeURIComponent(caseId)}`;

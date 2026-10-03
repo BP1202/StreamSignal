@@ -26,14 +26,15 @@ import { EvidenceCaseResponse, TriageResponse } from "./types/evidence_case";
 import { JourneyStep } from "./types/journey";
 import { EvidenceInboxView } from "./components/research/EvidenceInboxView";
 import { SignalCaseInvestigationView } from "./components/research/SignalCaseInvestigationView";
+import { CitizenMissionPortal } from "./components/missions/CitizenMissionPortal";
 import { ApiError } from "./api/client";
 import { AlertCircle, RotateCcw } from "lucide-react";
 import { getRouteState, navigateTo } from "./utils/routing";
 
 export const App: React.FC = () => {
-  // Top-level workspace mode: "citizen" (reporting journey) vs "research" (Research Evidence Workspace)
+  // Top-level workspace mode: "citizen" (reporting journey) vs "missions" (Mission Agent) vs "research" (Research Workspace)
   const initialRoute = getRouteState();
-  const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "research">(initialRoute.mode);
+  const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "missions" | "research">(initialRoute.mode);
   const [researchCaseId, setResearchCaseId] = useState<string | null>(initialRoute.caseId);
 
   const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
@@ -239,6 +240,9 @@ export const App: React.FC = () => {
           if (mode === "research") {
             setResearchCaseId(null);
             navigateTo("research", null);
+          } else if (mode === "missions") {
+            setResearchCaseId(null);
+            navigateTo("missions", null);
           } else {
             navigateTo("citizen", null);
           }
@@ -246,7 +250,17 @@ export const App: React.FC = () => {
       />
 
       <main className="flex-1 w-full mx-auto">
-        {workspaceMode === "research" ? (
+        {workspaceMode === "missions" ? (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <CitizenMissionPortal
+              onCaseCreated={(caseId) => {
+                setWorkspaceMode("research");
+                setResearchCaseId(caseId);
+                navigateTo("research", caseId);
+              }}
+            />
+          </div>
+        ) : workspaceMode === "research" ? (
           researchCaseId ? (
             <SignalCaseInvestigationView
               caseId={researchCaseId}

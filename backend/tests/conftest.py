@@ -25,10 +25,15 @@ def cleanup_database_after_tests():
     from app.models.evidence_lineage import EvidenceLineageEvent
     from app.models.human_review import HumanReview
     from app.models.media import ReportMedia
+    from app.models.mission import AgentActionAudit, Mission
+    from app.models.contributor import Contributor
     from app.models.report import Report
 
     db = SessionLocal()
     try:
+        db.query(AgentActionAudit).delete()
+        db.query(Mission).delete()
+        db.query(Contributor).delete()
         db.query(EvidenceLineageEvent).delete()
         db.query(HumanReview).delete()
         db.query(ReportMedia).delete()

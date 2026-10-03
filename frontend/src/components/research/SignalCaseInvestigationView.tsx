@@ -5,6 +5,7 @@ import { SignalGuardClaimInspector } from "./SignalGuardClaimInspector";
 import { HumanReviewPanel } from "./HumanReviewPanel";
 import { EvidenceLineageTimeline } from "./EvidenceLineageTimeline";
 import { InteroperabilitySection } from "./InteroperabilitySection";
+import { ResearcherMissionTracker } from "./ResearcherMissionTracker";
 import { ApiError } from "../../api/client";
 import {
   ArrowLeft,
@@ -567,6 +568,9 @@ export const SignalCaseInvestigationView: React.FC<
         caseId={caseDetail.case_id}
         refreshTrigger={lineageRefreshTrigger}
       />
+
+      {/* Citizen Evidence Missions & Collaboration */}
+      <ResearcherMissionTracker caseId={caseDetail.case_id} />
 
       {/* Bottom Review Action Bar */}
       <div className="bg-white rounded-xl border border-brand-border p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">

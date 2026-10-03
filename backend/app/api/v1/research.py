@@ -221,3 +221,37 @@ def get_fhir_bundle(
             detail=f"SignalCase with id '{case_id}' not found.",
         )
     return bundle
+
+
+@router.get(
+    "/evidence-cases/{case_id}/mission-needs",
+    status_code=status.HTTP_200_OK,
+    summary="Inspect Case Evidence Gaps for Mission Planning",
+)
+def get_case_mission_needs(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Exposes real evidence gaps of a SignalCase to discover targeted mission opportunities."""
+    from app.agent.tools import tool_get_evidence_gap
+    return tool_get_evidence_gap(db=db, case_id=case_id)
+
+
+@router.get(
+    "/missions",
+    status_code=status.HTTP_200_OK,
+    summary="List All Research Missions",
+)
+def list_research_missions(
+    case_id: Optional[UUID] = Query(None, description="Filter by linked SignalCase ID"),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Returns missions and their evidence collection status for researcher oversight."""
+    from app.models.mission import Mission
+    from app.api.v1.citizen_missions import serialize_mission
+    query = db.query(Mission).order_by(Mission.created_at.desc())
+    if case_id:
+        query = query.filter(Mission.signal_case_id == case_id)
+    missions = query.all()
+    serialized = [serialize_mission(m).model_dump() for m in missions]
+    return {"missions": serialized, "total": len(serialized)}

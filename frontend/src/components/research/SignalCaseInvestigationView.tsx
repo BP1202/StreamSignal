@@ -4,6 +4,7 @@ import { fetchResearchCaseDetail } from "../../api/research";
 import { SignalGuardClaimInspector } from "./SignalGuardClaimInspector";
 import { HumanReviewPanel } from "./HumanReviewPanel";
 import { EvidenceLineageTimeline } from "./EvidenceLineageTimeline";
+import { InteroperabilitySection } from "./InteroperabilitySection";
 import { ApiError } from "../../api/client";
 import {
   ArrowLeft,
@@ -557,6 +558,12 @@ export const SignalCaseInvestigationView: React.FC<
 
       {/* Persistent Audit Evidence Lineage Section */}
       <EvidenceLineageTimeline
+        caseId={caseDetail.case_id}
+        refreshTrigger={lineageRefreshTrigger}
+      />
+
+      {/* Track 7 Evidence Passport & FHIR R4 Provenance Gateway */}
+      <InteroperabilitySection
         caseId={caseDetail.case_id}
         refreshTrigger={lineageRefreshTrigger}
       />

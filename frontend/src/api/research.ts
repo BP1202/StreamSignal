@@ -13,6 +13,10 @@ import {
   EvidenceLineageListResponse,
   CitizenImpactStatus,
 } from "../types/research";
+import {
+  EvidencePassportResponse,
+  FHIRBundle,
+} from "../types/interoperability";
 
 export interface ResearchInboxParams {
   action?: string;
@@ -84,6 +88,24 @@ export async function fetchCitizenImpactStatus(
 ): Promise<CitizenImpactStatus> {
   return request<CitizenImpactStatus>(
     `/api/v1/reports/${caseId}/impact-status`,
+    { method: "GET" }
+  );
+}
+
+export async function fetchEvidencePassport(
+  caseId: string
+): Promise<EvidencePassportResponse> {
+  return request<EvidencePassportResponse>(
+    `/api/v1/research/evidence-cases/${caseId}/evidence-passport`,
+    { method: "GET" }
+  );
+}
+
+export async function fetchFHIRBundle(
+  caseId: string
+): Promise<FHIRBundle> {
+  return request<FHIRBundle>(
+    `/api/v1/research/evidence-cases/${caseId}/fhir`,
     { method: "GET" }
   );
 }

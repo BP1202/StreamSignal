@@ -10,7 +10,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.evidence_passport import EvidencePassportResponse
 from app.schemas.evidence_quality import EvidenceQualityLevel
+from app.schemas.fhir import FHIRBundle
 from app.schemas.triage import TriageAction
 from app.schemas.research import (
     ResearchInboxResponse,
@@ -21,6 +23,8 @@ from app.schemas.research import (
     EvidenceLineageListResponse,
     CitizenImpactStatusResponse,
 )
+from app.services.evidence_passport import generate_evidence_passport
+from app.services.fhir_export import generate_fhir_bundle
 from app.services.research import get_research_inbox, get_research_case_detail
 from app.services.review import (
     create_human_review,
@@ -171,3 +175,49 @@ def get_case_impact_status(
     Returns non-sensitive impact status for an evidence case.
     """
     return get_citizen_impact_status(db=db, case_id=case_id)
+
+
+@router.get(
+    "/evidence-cases/{case_id}/evidence-passport",
+    response_model=EvidencePassportResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve Evidence Passport",
+    description="Returns an immutable, provenance-rich Evidence Passport for a SignalCase (Track 7 Interoperability).",
+)
+def get_evidence_passport(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+) -> EvidencePassportResponse:
+    """
+    Returns the comprehensive, provenance-preserving Evidence Passport.
+    """
+    passport = generate_evidence_passport(db=db, case_id=case_id)
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SignalCase with id '{case_id}' not found.",
+        )
+    return passport
+
+
+@router.get(
+    "/evidence-cases/{case_id}/fhir",
+    response_model=FHIRBundle,
+    status_code=status.HTTP_200_OK,
+    summary="Export FHIR R4 Bundle",
+    description="Returns a deterministic, standards-aligned FHIR R4 collection bundle for a SignalCase.",
+)
+def get_fhir_bundle(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+) -> FHIRBundle:
+    """
+    Exports SignalCase data into a deterministic FHIR R4 Bundle.
+    """
+    bundle = generate_fhir_bundle(db=db, case_id=case_id)
+    if not bundle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SignalCase with id '{case_id}' not found.",
+        )
+    return bundle

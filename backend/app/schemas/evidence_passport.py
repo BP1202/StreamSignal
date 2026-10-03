@@ -1,5 +1,5 @@
 """
-StreamSignal — Evidence Passport Schemas (Track 7 Interoperability)
+StreamSignal — Evidence Passport Schemas (One Health Interoperability)
 Exposes an immutable, provenance-rich Evidence Passport for a SignalCase.
 Strictly separates:
 1. Citizen observation (CITIZEN_REPORTED)
@@ -24,8 +24,8 @@ class PassportMetadata(BaseModel):
     passport_id: UUID = Field(..., description="Deterministic unique identifier for this evidence passport")
     schema_version: str = Field(default="1.0.0", description="Evidence Passport schema specification version")
     generated_at: datetime = Field(..., description="Timestamp when this passport export was assembled")
-    system_source: str = Field(default="StreamSignal Track 7 Interoperability Gateway")
-    governance_standard: str = Field(default="IEEE OneAquaHealth One Health Evidence Standard")
+    system_source: str = Field(default="StreamSignal Interoperability Gateway")
+    governance_standard: str = Field(default="StreamSignal One Health Evidence Model")
 
 
 class SignalCaseIdentity(BaseModel):

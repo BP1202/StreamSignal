@@ -13,8 +13,8 @@ const mockPassport: EvidencePassportResponse = {
     passport_id: "55555555-5555-5555-5555-555555555555",
     schema_version: "1.0.0",
     generated_at: "2026-10-03T12:00:00Z",
-    system_source: "StreamSignal Track 7 Interoperability Gateway",
-    governance_standard: "IEEE OneAquaHealth One Health Evidence Standard",
+    system_source: "StreamSignal Interoperability Gateway",
+    governance_standard: "StreamSignal One Health Evidence Model",
   },
   identity: {
     case_id: "11111111-1111-1111-1111-111111111111",
@@ -186,7 +186,7 @@ const mockBundle: FHIRBundle = {
   ],
 };
 
-describe("Track 7 InteroperabilitySection", () => {
+describe("One Health InteroperabilitySection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(researchApi, "fetchEvidencePassport").mockResolvedValue(mockPassport);
@@ -199,11 +199,11 @@ describe("Track 7 InteroperabilitySection", () => {
     );
 
     // Initial loading state
-    expect(screen.queryByText(/Track 7 Evidence Interoperability/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/One Health Evidence Interoperability/i)).not.toBeInTheDocument();
 
     // Resolves and displays title
     await waitFor(() => {
-      expect(screen.getByText(/Track 7 Evidence Interoperability/i)).toBeInTheDocument();
+      expect(screen.getByText(/One Health Evidence Interoperability/i)).toBeInTheDocument();
       expect(screen.getByText(/Evidence Passport & FHIR R4 Provenance Gateway/i)).toBeInTheDocument();
     });
 
@@ -228,7 +228,7 @@ describe("Track 7 InteroperabilitySection", () => {
 
     // Modal appears
     expect(screen.getByText(/SignalCase Evidence Passport/i)).toBeInTheDocument();
-    expect(screen.getByText(/IEEE OneAquaHealth One Health Evidence Standard/i)).toBeInTheDocument();
+    expect(screen.getByText(/StreamSignal One Health Evidence Model/i)).toBeInTheDocument();
     expect(screen.getByText(/Thick green layer floating near concrete culvert discharge./i)).toBeInTheDocument();
     expect(screen.getByText(/POLLUTION_CONFIRMED/i)).toBeInTheDocument();
     expect(screen.getByText(/TOXICITY_CONFIRMED/i)).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe("Track 7 InteroperabilitySection", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Track 7 Interoperability Gateway Unavailable/i)
+        screen.getByText(/Interoperability Gateway Unavailable/i)
       ).toBeInTheDocument();
       expect(
         screen.getByText(/Gateway connection timeout/i)

@@ -2,11 +2,9 @@
 
 ---
 
-## 🧭 Executive Summary for Hackathon Judges
+## 🧭 Architectural Overview
 
-Most hackathon "AI agents" are brittle prompt wrappers: a generic chatbot prompted to "act like an expert" that hallucinates chemical parameters, invents diagnostic claims ("the water is 94% toxic"), and allows prompt injections to hijack backend tools.
-
-**StreamSignal's Evidence Mission Agent is fundamentally different.**
+Unlike unconstrained chatbot demos or blind LLM wrappers that hallucinate chemical parameters, invent diagnostic claims ("the water is 94% toxic"), and allow prompt injections to hijack backend tools, **StreamSignal's Evidence Mission Agent is fundamentally different.**
 
 It is an **autonomous, bounded, state-machine-driven orchestrator** designed specifically for scientific evidence collection in urban freshwater ecosystems:
 
@@ -176,7 +174,7 @@ The agent operates strictly under the StreamSignal Evidence Model:
 
 ## 🧠 Local-First Dual Model Provider (`app/agent/providers.py`)
 
-Judges can run and verify StreamSignal without any paid API keys or cloud dependencies:
+StreamSignal runs and verifies locally without any paid API keys or cloud dependencies:
 
 1. **Ollama Provider (`OllamaProvider`)**:
    - Sends requests to local Ollama daemon (`http://localhost:11434`).
@@ -195,19 +193,19 @@ Judges can run and verify StreamSignal without any paid API keys or cloud depend
 |---|---|---|
 | [`registry.py`](./registry.py) | **Allowlisted Mission Templates** | Curated catalog of scientifically grounded missions (`AFTER_RAIN_STREAM_CHECK`, `EVIDENCE_CLARIFICATION`, `PLACE_EVIDENCE_SNAPSHOT`). Prevents arbitrary mission invention. |
 | [`state_machine.py`](./state_machine.py) | **Finite State Machine** | Mathematically enforces valid transitions ($S_0 \to S_7$). Rejects illegal jumps with HTTP 400. |
-| [`providers.py`](./providers.py) | **Model Provider Abstraction** | Pluggable reasoning layer: Ollama (local JSON schema) + Gemini + Deterministic Rule Engine fallback. |
-| [`tools.py`](./tools.py) | **Execution Firewall & Tools** | The 5 approved agent tools with strict parameter validation and PostgreSQL persistence. |
+| [`providers.py`](./providers.py) | **Model Provider Abstraction** | Pluggable reasoning layer: Ollama (local JSON schema) + Deterministic Rule Engine fallback. |
+| [`tools.py`](./tools.py) | **Execution Firewall & Tools** | The 7 allowlisted agent tools with strict parameter validation and PostgreSQL persistence. |
 | [`orchestrator.py`](./orchestrator.py) | **Evidence Mission Agent** | High-level coordinator linking research evidence gaps to citizen mission execution. |
 | [`__init__.py`](./__init__.py) | **Package Export** | Public API surface for the agent package. |
 
 ---
 
-## 🎯 Alignment with IEEE OneAquaHealth Hackathon Evaluation Criteria
+## 🎯 One Health Architectural Alignment
 
-| Hackathon Criterion | How StreamSignal Evidence Mission Agent Delivers |
+| Principle | How StreamSignal Evidence Mission Agent Delivers |
 |---|---|
 | **Scientific Rigor & One Health Relevance** | Evidence gap-driven missions target specific missing physical dimensions (flow rate, water clarity, foam) to augment longitudinal ecological monitoring. |
-| **Safety & Ethical AI** | The agent cannot hallucinate medical or environmental claims. Strict state machine boundaries prevent autonomous runaway behavior. |
-| **Interoperability (Track 7)** | Missions feed into FHIR R4 resources (`Observation`, `Media`, `Task`, `Provenance`) ready for health and environmental data exchange. |
+| **Safety & Bounded AI** | The agent cannot hallucinate medical or environmental claims. Strict state machine boundaries prevent autonomous runaway behavior. |
+| **Standards Interoperability** | Missions feed into FHIR R4 resources (`Observation`, `Media`, `Task`, `Provenance`) ready for health and environmental data exchange. |
 | **Zero-Cost & Open Science** | Designed to run completely on open-source, local infrastructure (PostgreSQL + PostGIS + pgvector + Ollama) without commercial API lock-in. |
-| **Real Provenance** | Immutable audit log records every agent decision, citizen contribution, and evidence transformation. |
+| **Cryptographic Provenance** | Immutable audit log records every agent decision, citizen contribution, and evidence transformation in PostgreSQL. |

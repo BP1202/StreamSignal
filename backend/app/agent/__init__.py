@@ -1,6 +1,6 @@
 """
 StreamSignal — Evidence Mission Agent Architecture
-IEEE OneAquaHealth Global Hackathon 2026 (Track 7)
+Urban Freshwater Evidence Collection & Provenance System
 
 A bounded, state-machine-driven autonomous agent architecture for targeted
 citizen evidence collection in urban freshwater ecosystems.

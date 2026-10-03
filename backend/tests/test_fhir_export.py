@@ -1,5 +1,5 @@
 """
-StreamSignal — FHIR R4 Export Unit & Integration Tests (Track 7 Interoperability)
+StreamSignal — FHIR R4 Export Unit & Integration Tests (One Health Interoperability)
 Validates standards compliance, reference integrity, separation of tiers,
 absence of server disk leaks, and independent third-party consumer compatibility.
 """
@@ -143,7 +143,7 @@ def test_fhir_bundle_export_and_validation(client: TestClient):
 def test_fhir_bundle_independent_external_consumer(client: TestClient):
     """
     Test 3: External Consumer Test.
-    Simulates a 3rd party Track 7 interoperability consumer that ingests the raw
+    Simulates a 3rd party One Health interoperability consumer that ingests the raw
     HTTP JSON response using standard library json.loads(), parses each resourceType,
     and independently verifies the One Health evidence contract without using any
     internal StreamSignal classes.

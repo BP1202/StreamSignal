@@ -1,6 +1,6 @@
 /**
  * StreamSignal — Mission & Contributor Types
- * IEEE OneAquaHealth Global Hackathon 2026 (Track 7)
+ * Urban Freshwater Evidence Collection & Provenance
  */
 
 export interface ContributorProfile {

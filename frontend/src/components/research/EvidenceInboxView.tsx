@@ -275,9 +275,6 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         >
           <Compass className="w-4 h-4 text-sky-400" />
           <span>Evidence Gap Intelligence & Mission Needs</span>
-          <span className="bg-sky-500/20 text-sky-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
-            Issue 17
-          </span>
         </button>
       </div>
 

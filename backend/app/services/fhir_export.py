@@ -1,5 +1,5 @@
 """
-StreamSignal — FHIR R4 Bundle Export Service (Track 7 Interoperability)
+StreamSignal — FHIR R4 Bundle Export Service (One Health Interoperability)
 Maps authentic StreamSignal SignalCases into a standards-compliant FHIR R4 Bundle.
 Preserves strict scientific and semantic boundaries:
 1. Citizen observation is isolated as QuestionnaireResponse and E1 Observation.

@@ -1,6 +1,6 @@
 /**
  * StreamSignal — Mission & Contributor API Client
- * IEEE OneAquaHealth Global Hackathon 2026 (Track 7)
+ * Urban Freshwater Evidence Collection & Provenance
  */
 
 import { request } from "./client";

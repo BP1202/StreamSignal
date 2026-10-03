@@ -139,7 +139,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       <div className="bg-white rounded-xl border border-rose-200 p-6 shadow-xs">
         <div className="flex items-center gap-2 text-rose-700">
           <AlertTriangle className="w-5 h-5" />
-          <h3 className="text-sm font-semibold">Track 7 Interoperability Gateway Unavailable</h3>
+          <h3 className="text-sm font-semibold">Interoperability Gateway Unavailable</h3>
         </div>
         <p className="text-xs text-rose-600 mt-1">
           {error || "Unable to retrieve evidence passport and FHIR bundle."}
@@ -156,10 +156,10 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-sm flex items-center gap-1">
               <Share2 className="w-3 h-3" />
-              Track 7 Evidence Interoperability
+              One Health Evidence Interoperability
             </span>
             <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">
-              IEEE OneAquaHealth Compatible
+              FHIR R4 Compatible
             </span>
           </div>
           <h3 className="text-base font-bold text-brand-text mt-1.5 flex items-center gap-2">

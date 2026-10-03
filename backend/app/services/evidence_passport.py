@@ -1,5 +1,5 @@
 """
-StreamSignal — Evidence Passport Service (Track 7 Interoperability)
+StreamSignal — Evidence Passport Service (One Health Interoperability)
 Produces an authoritative, tamper-evident Evidence Passport for a SignalCase.
 Strictly separates:
 1. Citizen observation (CITIZEN_REPORTED)
@@ -202,8 +202,8 @@ def generate_evidence_passport(db: Session, case_id: UUID) -> Optional[EvidenceP
             passport_id=passport_id,
             schema_version="1.0.0",
             generated_at=now_utc,
-            system_source="StreamSignal Track 7 Interoperability Gateway",
-            governance_standard="IEEE OneAquaHealth One Health Evidence Standard",
+            system_source="StreamSignal Interoperability Gateway",
+            governance_standard="StreamSignal One Health Evidence Model",
         ),
         identity=SignalCaseIdentity(
             case_id=report.id,

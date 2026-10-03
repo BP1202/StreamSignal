@@ -1,5 +1,5 @@
 /**
- * StreamSignal — Track 7 Interoperability Types
+ * StreamSignal — One Health Interoperability Types
  * Typed contracts for Evidence Passport and FHIR R4 Bundle exports.
  */
 

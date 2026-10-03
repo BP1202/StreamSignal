@@ -563,7 +563,7 @@ export const SignalCaseInvestigationView: React.FC<
         refreshTrigger={lineageRefreshTrigger}
       />
 
-      {/* Track 7 Evidence Passport & FHIR R4 Provenance Gateway */}
+      {/* One Health Evidence Passport & FHIR R4 Provenance Gateway */}
       <InteroperabilitySection
         caseId={caseDetail.case_id}
         refreshTrigger={lineageRefreshTrigger}

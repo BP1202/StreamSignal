@@ -1,7 +1,7 @@
 """
-StreamSignal — Evidence Passport Unit & Integration Tests (Track 7 Interoperability)
+StreamSignal — Evidence Passport Unit & Integration Tests (One Health Interoperability)
 Validates the generation, separation, provenance preservation, and security boundaries
-of the Track 7 Evidence Passport.
+of the Evidence Passport.
 """
 
 import io
@@ -77,8 +77,8 @@ def test_evidence_passport_comprehensive_structure(client: TestClient):
     # Verify Metadata
     assert "metadata" in passport
     assert passport["metadata"]["schema_version"] == "1.0.0"
-    assert "IEEE OneAquaHealth" in passport["metadata"]["governance_standard"]
-    assert passport["metadata"]["system_source"] == "StreamSignal Track 7 Interoperability Gateway"
+    assert "StreamSignal One Health Evidence Model" in passport["metadata"]["governance_standard"]
+    assert passport["metadata"]["system_source"] == "StreamSignal Interoperability Gateway"
 
     # Verify Identity
     assert passport["identity"]["case_id"] == case_id

@@ -182,7 +182,7 @@ def get_case_impact_status(
     response_model=EvidencePassportResponse,
     status_code=status.HTTP_200_OK,
     summary="Retrieve Evidence Passport",
-    description="Returns an immutable, provenance-rich Evidence Passport for a SignalCase (Track 7 Interoperability).",
+    description="Returns an immutable, provenance-rich Evidence Passport for a SignalCase (One Health Interoperability).",
 )
 def get_evidence_passport(
     case_id: UUID,

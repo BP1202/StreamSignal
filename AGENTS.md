@@ -20,7 +20,7 @@ StreamSignal
 
 StreamSignal turns a citizen's uncertain urban freshwater observation into a transparent, reviewable, provenance-rich, standards-ready One Health evidence case.
 
-The project is being developed for the IEEE OneAquaHealth Global Hackathon 2026.
+The project is developed for urban freshwater surveillance and One Health evidence interoperability.
 
 ## Core product principle
 

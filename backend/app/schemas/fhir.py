@@ -1,5 +1,5 @@
 """
-StreamSignal — FHIR R4 Bundle & Resource Schemas (Track 7 Interoperability)
+StreamSignal — FHIR R4 Bundle & Resource Schemas (One Health Interoperability)
 Defines deterministic, standards-aligned models for FHIR R4 Bundle exports.
 Strictly maps real StreamSignal evidence to:
 - Location

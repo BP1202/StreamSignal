@@ -122,7 +122,19 @@ ALLOWED_AGENT_TOOLS = {
     "start_mission",
     "validate_evidence",
     "submit_mission_evidence",
+    "list_approved_mission_needs",  # Issue 17: Read-only access to researcher-approved needs
 }
+```
+
+### 🔬 Issue 17: Researcher Authority Boundary & Mission Needs
+
+The Evidence Mission Agent cannot unilaterally decide research priorities:
+
+1. **Evidence Gap Intelligence** analyzes real PostgreSQL SignalCases to discover recurring missing dimensions.
+2. **Researchers Author Mission Needs** with mandatory substantive scientific rationale (placeholders rejected).
+3. **Researcher Approval Gate**: Needs progress through `IDENTIFIED` $\to$ `REVIEWED` $\to$ `APPROVED`.
+4. **Agent Read-Only Access**: The agent can only see `APPROVED` needs (`tool_list_approved_mission_needs`). It has zero permission to create, approve, or close needs.
+5. **Traceable Provenance**: When `tool_plan_mission` executes, it links the mission to the originating `mission_need_id`, establishing complete traceability from citizen contribution $\to$ mission $\to$ researcher need $\to$ empirical evidence gap.
 
 def assert_tool_allowed(tool_name: str) -> None:
     if tool_name not in ALLOWED_AGENT_TOOLS:

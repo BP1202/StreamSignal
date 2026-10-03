@@ -29,7 +29,10 @@ import {
   Bell,
   Radio,
   X,
+  Compass,
 } from "lucide-react";
+import { EvidenceGapIntelligencePanel } from "./EvidenceGapIntelligencePanel";
+import { MissionNeedsTracker } from "./MissionNeedsTracker";
 
 interface EvidenceInboxViewProps {
   onSelectCase: (caseId: string) => void;
@@ -42,6 +45,10 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [newCaseAlert, setNewCaseAlert] = useState<RealtimeEvent<SignalCaseCreatedPayload> | null>(null);
+
+  // Sub-tabs
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"inbox" | "gaps_and_needs">("inbox");
+  const [needsRefreshTrigger, setNeedsRefreshTrigger] = useState<number>(0);
 
   // Filters
   const [actionFilter, setActionFilter] = useState<string>("ALL");
@@ -232,6 +239,61 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Workspace Sub-Tab Navigation */}
+      <div className="flex items-center gap-3 border-b border-brand-border pb-3">
+        <button
+          onClick={() => setActiveWorkspaceTab("inbox")}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+            activeWorkspaceTab === "inbox"
+              ? "bg-brand-dark text-white shadow-xs"
+              : "bg-white text-brand-secondary hover:text-brand-text border border-brand-border"
+          }`}
+        >
+          <Inbox className="w-4 h-4" />
+          <span>SignalCase Inbox</span>
+          {inboxData && (
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                activeWorkspaceTab === "inbox"
+                  ? "bg-brand-teal text-white"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {inboxData.total}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveWorkspaceTab("gaps_and_needs")}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+            activeWorkspaceTab === "gaps_and_needs"
+              ? "bg-brand-dark text-white shadow-xs"
+              : "bg-white text-brand-secondary hover:text-brand-text border border-brand-border"
+          }`}
+        >
+          <Compass className="w-4 h-4 text-sky-400" />
+          <span>Evidence Gap Intelligence & Mission Needs</span>
+          <span className="bg-sky-500/20 text-sky-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
+            Issue 17
+          </span>
+        </button>
+      </div>
+
+      {/* TAB 2: Evidence Gap Intelligence & Mission Needs */}
+      {activeWorkspaceTab === "gaps_and_needs" && (
+        <div className="space-y-6">
+          <EvidenceGapIntelligencePanel
+            onNeedCreated={() => setNeedsRefreshTrigger((prev) => prev + 1)}
+          />
+          <MissionNeedsTracker refreshTrigger={needsRefreshTrigger} />
+        </div>
+      )}
+
+      {/* TAB 1: SignalCase Inbox View */}
+      {activeWorkspaceTab === "inbox" && (
+        <>
 
       {/* Live New SignalCase Notification Card */}
       {newCaseAlert && (
@@ -581,6 +643,8 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
             );
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );

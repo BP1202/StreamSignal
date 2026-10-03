@@ -28,6 +28,12 @@ class Mission(Base):
         nullable=True,
         index=True,
     )
+    mission_need_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("mission_needs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     contributor_id = Column(
         UUID(as_uuid=True),
         ForeignKey("contributors.id", ondelete="SET NULL"),
@@ -82,6 +88,11 @@ class Mission(Base):
     # Relationships
     contributor = relationship("Contributor", back_populates="missions")
     signal_case = relationship("Report")
+    mission_need = relationship(
+        "MissionNeed",
+        back_populates="missions",
+        foreign_keys=[mission_need_id],
+    )
     agent_audits = relationship(
         "AgentActionAudit",
         back_populates="mission",

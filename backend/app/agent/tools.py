@@ -17,6 +17,7 @@ from app.agent.state_machine import enforce_transition
 from app.models.contributor import Contributor
 from app.models.media import ReportMedia
 from app.models.mission import AgentActionAudit, Mission
+from app.models.mission_need import MissionNeed
 from app.models.report import Report
 from app.schemas.mission import (
     MissionAgentAction,
@@ -24,6 +25,7 @@ from app.schemas.mission import (
     MissionStatus,
     MissionType,
 )
+from app.schemas.mission_need import MissionNeedStatus
 from app.services.evidence_quality import assess_evidence_quality
 from app.services.realtime import connection_manager, RealtimeEventType
 
@@ -34,6 +36,7 @@ ALLOWED_AGENT_TOOLS = {
     "start_mission",
     "validate_evidence",
     "submit_mission_evidence",
+    "list_approved_mission_needs",
 }
 
 
@@ -80,6 +83,48 @@ def tool_get_evidence_gap(db: Session, case_id: UUID) -> Dict[str, Any]:
     }
 
 
+def tool_list_approved_mission_needs(
+    db: Session,
+    dimension: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    READ-ONLY: Returns all researcher-APPROVED MissionNeeds from PostgreSQL.
+    The agent uses this to seed mission planning with researcher-defined priorities.
+    The agent may NOT approve, modify, or close MissionNeeds through this tool.
+    Only APPROVED records are accessible — IDENTIFIED and REVIEWED needs are invisible to the agent.
+    """
+    assert_tool_allowed("list_approved_mission_needs")
+
+    q = db.query(MissionNeed).filter(
+        MissionNeed.status == MissionNeedStatus.APPROVED.value
+    ).order_by(MissionNeed.created_at.asc())
+
+    if dimension:
+        q = q.filter(MissionNeed.evidence_gap_dimension == dimension)
+
+    needs = q.all()
+
+    return [
+        {
+            "mission_need_id": str(n.id),
+            "evidence_gap_dimension": n.evidence_gap_dimension,
+            "title": n.title,
+            "description": n.description,
+            "rationale": n.rationale,
+            "source_case_ids": n.source_case_ids,
+            "target_stream_segments": n.target_stream_segments,
+            "required_evidence": n.required_evidence,
+            "created_by_researcher": n.created_by_researcher,
+            "approved_at": n.approved_at.isoformat() if n.approved_at else None,
+            "epistemic_note": (
+                "This is a researcher-approved evidence collection request. "
+                "It describes a data availability gap only. "
+                "No environmental condition is asserted or implied."
+            ),
+        }
+        for n in needs
+    ]
+
 def tool_plan_mission(
     db: Session,
     mission_type: MissionType,
@@ -87,12 +132,15 @@ def tool_plan_mission(
     research_need_source: str = "TEMPLATE",
     research_need_reference: Optional[str] = None,
     signal_case_id: Optional[UUID] = None,
+    mission_need_id: Optional[UUID] = None,
     target_latitude: Optional[float] = None,
     target_longitude: Optional[float] = None,
     title: Optional[str] = None,
 ) -> Mission:
     """
     Plans and persists a targeted citizen evidence mission derived from approved templates.
+    When mission_need_id is provided, the mission is linked to a researcher-approved MissionNeed
+    for full evidence provenance.
     """
     assert_tool_allowed("plan_mission")
     template = get_template_for_type(mission_type)
@@ -106,6 +154,19 @@ def tool_plan_mission(
         MissionStatus.NEEDS_CLARIFICATION.value,
         MissionStatus.READY_FOR_SUBMISSION.value,
     ]
+
+    # Idempotency check 0: If already linked to a specific MissionNeed, don't duplicate
+    if mission_need_id:
+        existing_for_need = (
+            db.query(Mission)
+            .filter(
+                Mission.mission_need_id == mission_need_id,
+                Mission.status.in_(active_statuses),
+            )
+            .first()
+        )
+        if existing_for_need:
+            return existing_for_need
 
     # Idempotency check 1: If mission is linked to a specific SignalCase evidence gap
     if signal_case_id:
@@ -152,6 +213,7 @@ def tool_plan_mission(
         research_need_source=research_need_source,
         research_need_reference=research_need_reference,
         signal_case_id=signal_case_id,
+        mission_need_id=mission_need_id,
         target_latitude=target_latitude,
         target_longitude=target_longitude,
         required_evidence=template["required_evidence"],

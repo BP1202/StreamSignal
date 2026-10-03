@@ -151,11 +151,13 @@ The agent operates strictly under the StreamSignal Evidence Model:
       |
 [E3: INFERRED]                   Machine-assisted visual cue segmentation
       |
-[E4: CONTEXTUAL]                 Rainfall correlation, historical sensor context
+[E4: CONTEXTUALLY CORROBORATED]  Pattern Echo, rainfall correlation, historical sensor context
       |
 [E5: VERIFIED]                   Authorized researcher human review outcome
 ```
 
+> **EPISTEMIC BOUNDARY**: Evidence classes ($E_1$ to $E_5$) represent **provenance and epistemic status**, NOT machine confidence or quality scores ($E_4$ is NOT "80% confidence" and $E_5$ is NOT "100% AI confidence").
+>
 > **CRITICAL RULE**: $E_4 \ne E_5$. Contextual pattern correlation is **never** conflated with human scientific confirmation. The agent coordinates evidence through $E_1 \to E_2 \to E_4$; only authorized human reviewers can sign off on $E_5$.
 
 ---

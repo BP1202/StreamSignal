@@ -301,3 +301,57 @@ def test_contributor_authorization_isolation(db: Session):
     db.delete(c1)
     db.delete(c2)
     db.commit()
+
+
+def test_mission_planning_idempotency_prevents_duplicates(db: Session):
+    """
+    Verifies that calling tool_plan_mission multiple times for the same mission
+    or case returns the existing active mission and does not create duplicate rows.
+    """
+    # 1. Unassigned template mission idempotency
+    m1 = tool_plan_mission(
+        db=db,
+        mission_type=MissionType.AFTER_RAIN_STREAM_CHECK,
+        target_latitude=41.15,
+        target_longitude=-8.62,
+    )
+    m2 = tool_plan_mission(
+        db=db,
+        mission_type=MissionType.AFTER_RAIN_STREAM_CHECK,
+        target_latitude=41.15,
+        target_longitude=-8.62,
+    )
+    assert m1.id == m2.id
+
+    # 2. Case-gap mission idempotency (requires real Report row for foreign key)
+    from datetime import datetime, timezone
+    report = Report(
+        observed_at=datetime.now(timezone.utc),
+        latitude=41.15,
+        longitude=-8.62,
+        description="Idempotency test case report",
+        status="SUBMITTED",
+    )
+    db.add(report)
+    db.commit()
+
+    m_case1 = tool_plan_mission(
+        db=db,
+        mission_type=MissionType.EVIDENCE_CLARIFICATION,
+        signal_case_id=report.id,
+    )
+    m_case2 = tool_plan_mission(
+        db=db,
+        mission_type=MissionType.EVIDENCE_CLARIFICATION,
+        signal_case_id=report.id,
+    )
+    assert m_case1.id == m_case2.id
+
+    # Clean up
+    db.query(AgentActionAudit).filter(
+        AgentActionAudit.mission_id.in_([m1.id, m_case1.id])
+    ).delete()
+    db.delete(m1)
+    db.delete(m_case1)
+    db.delete(report)
+    db.commit()

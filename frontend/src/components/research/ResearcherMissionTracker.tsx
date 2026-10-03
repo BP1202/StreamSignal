@@ -50,6 +50,10 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
     }
   };
 
+  const hasActiveMission = missions.some(
+    (m) => m.status !== "RESEARCH_REVIEW" && m.status !== "SUBMITTED"
+  );
+
   return (
     <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -65,10 +69,18 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
         {caseId && (
           <button
             onClick={handlePlanFromGap}
-            disabled={planning}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 transition-colors disabled:opacity-50"
+            disabled={planning || hasActiveMission}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              hasActiveMission
+                ? "bg-slate-800 text-slate-400 border-slate-700 cursor-not-allowed"
+                : "bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40"
+            }`}
           >
-            {planning ? "Agent Planning..." : "+ Plan Mission from Evidence Gap"}
+            {planning
+              ? "Agent Planning..."
+              : hasActiveMission
+              ? "✓ Active Mission Open"
+              : "+ Plan Mission from Evidence Gap"}
           </button>
         )}
       </div>

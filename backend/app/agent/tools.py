@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.agent.providers import get_agent_provider
@@ -95,6 +96,52 @@ def tool_plan_mission(
     """
     assert_tool_allowed("plan_mission")
     template = get_template_for_type(mission_type)
+
+    active_statuses = [
+        MissionStatus.DISCOVERING.value,
+        MissionStatus.MISSION_PLANNED.value,
+        MissionStatus.WAITING_FOR_CITIZEN.value,
+        MissionStatus.COLLECTING_EVIDENCE.value,
+        MissionStatus.VALIDATING_EVIDENCE.value,
+        MissionStatus.NEEDS_CLARIFICATION.value,
+        MissionStatus.READY_FOR_SUBMISSION.value,
+    ]
+
+    # Idempotency check 1: If mission is linked to a specific SignalCase evidence gap
+    if signal_case_id:
+        existing = (
+            db.query(Mission)
+            .filter(
+                Mission.signal_case_id == signal_case_id,
+                Mission.status.in_(active_statuses),
+            )
+            .first()
+        )
+        if existing:
+            return existing
+
+    # Idempotency check 2: If an identical unassigned mission is already open and waiting for citizens
+    else:
+        existing_query = db.query(Mission).filter(
+            Mission.mission_type == mission_type.value,
+            Mission.status.in_([
+                MissionStatus.DISCOVERING.value,
+                MissionStatus.MISSION_PLANNED.value,
+                MissionStatus.WAITING_FOR_CITIZEN.value,
+            ]),
+            Mission.contributor_id.is_(None),
+            Mission.signal_case_id.is_(None),
+        )
+        if title:
+            existing_query = existing_query.filter(Mission.title == title)
+        if target_latitude is not None and target_longitude is not None:
+            existing_query = existing_query.filter(
+                func.abs(Mission.target_latitude - target_latitude) < 0.001,
+                func.abs(Mission.target_longitude - target_longitude) < 0.001,
+            )
+        existing = existing_query.first()
+        if existing:
+            return existing
 
     mission = Mission(
         mission_type=mission_type.value,

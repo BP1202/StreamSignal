@@ -6,6 +6,7 @@ import { WaterSignalHome } from "./components/citizen/WaterSignalHome";
 import { CitizenImpactView } from "./components/citizen/CitizenImpactView";
 import * as impactApi from "./api/impact";
 import * as researchApi from "./api/research";
+import * as missionsApi from "./api/missions";
 import { ContributorImpactResponse, EvidenceCoverageInfo } from "./types/impact";
 
 const mockCoverage: EvidenceCoverageInfo = {
@@ -76,6 +77,31 @@ describe("Citizen Experience & Product Coherence Components", () => {
 
   it("renders WaterSignalHome with evidence coverage and non-claim disclaimer", async () => {
     vi.spyOn(impactApi, "fetchEvidenceCoverage").mockResolvedValue(mockCoverage);
+    vi.spyOn(missionsApi, "fetchMissionRecommendations").mockResolvedValue({
+      recommendations: [
+        {
+          id: "mission-fc-1",
+          mission_type: "EVIDENCE_CLARIFICATION",
+          status: "WAITING_FOR_CITIZEN",
+          title: "Document Flow Condition",
+          purpose: "Targeted verification of flow condition in urban stream.",
+          research_need: "Hydrological baseline missing flow evidence.",
+          research_need_source: "RESEARCHER_REQUIREMENT",
+          required_evidence: ["flow_condition"],
+          collected_evidence: {},
+          missing_evidence: ["flow_condition"],
+          created_at: new Date().toISOString(),
+          is_recommended: true,
+          why_this_mission: [
+            "FLOW_CONDITION is missing",
+            "This research need is approved",
+            "Your selected area matches",
+            "You have not recently submitted this evidence",
+          ],
+        },
+      ],
+      total: 1,
+    });
 
     const onPhoto = vi.fn();
     const onNoPhoto = vi.fn();
@@ -96,12 +122,39 @@ describe("Citizen Experience & Product Coherence Components", () => {
     expect(screen.getByText(/Catchment Evidence Coverage/i)).toBeInTheDocument();
     expect(screen.getByText(/not a drinking-water safety or chemical toxicity assessment/i)).toBeInTheDocument();
     expect(screen.getByText(/What would improve this evidence\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Document Flow Condition/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Document Flow Condition/i)).toBeInTheDocument();
+    expect(screen.getByText(/FLOW_CONDITION is missing/i)).toBeInTheDocument();
+    expect(screen.getByText(/This research need is approved/i)).toBeInTheDocument();
 
     // Click mission CTA
     const missionBtn = screen.getByRole("button", { name: /Participate in Mission/i });
     fireEvent.click(missionBtn);
     expect(onMissions).toHaveBeenCalled();
+  });
+
+  it("renders WaterSignalHome with empty state and Make an Observation CTA when no recommendations exist", async () => {
+    vi.spyOn(impactApi, "fetchEvidenceCoverage").mockResolvedValue(mockCoverage);
+    vi.spyOn(missionsApi, "fetchMissionRecommendations").mockResolvedValue({
+      recommendations: [],
+      total: 0,
+    });
+
+    const onPhoto = vi.fn();
+    const onNoPhoto = vi.fn();
+    const onMissions = vi.fn();
+    const onImpact = vi.fn();
+
+    render(
+      <WaterSignalHome
+        onStartWithPhoto={onPhoto}
+        onStartWithoutPhoto={onNoPhoto}
+        onGoToMissions={onMissions}
+        onGoToImpact={onImpact}
+      />
+    );
+
+    expect(await screen.findByText(/No targeted missions are currently available/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Make an Observation/i })).toBeInTheDocument();
   });
 
   it("renders CitizenImpactView with coverage delta and contribution provenance", async () => {

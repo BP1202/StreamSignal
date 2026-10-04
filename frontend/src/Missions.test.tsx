@@ -106,7 +106,7 @@ describe("Citizen Missions & Contributor Loop Components", () => {
     render(<CitizenMissionPortal />);
 
     await waitFor(() => {
-      expect(screen.getByText("No Active Evidence Missions")).toBeInTheDocument();
+      expect(screen.getByText("No targeted missions are currently available.")).toBeInTheDocument();
     });
   });
 

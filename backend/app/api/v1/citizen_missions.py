@@ -30,6 +30,7 @@ from app.schemas.mission import (
     AgentAuditItem,
     MissionEvidenceSubmission,
     MissionListResponse,
+    MissionRecommendationResponse,
     MissionResponse,
 )
 from app.services.contributor import (
@@ -37,6 +38,7 @@ from app.services.contributor import (
     upgrade_contributor_account,
 )
 from app.services.evidence_gap_intelligence import analyze_evidence_gaps
+from app.services.mission_recommendation import get_recommended_citizen_missions
 
 router = APIRouter(prefix="/citizen", tags=["Citizen Missions & Contributor"])
 
@@ -49,7 +51,11 @@ def get_current_contributor(
     return get_or_create_contributor(db=db, contributor_id_str=x_contributor_id)
 
 
-def serialize_mission(mission) -> MissionResponse:
+def serialize_mission(
+    mission,
+    is_recommended: bool = False,
+    why_this_mission: Optional[list] = None,
+) -> MissionResponse:
     """Helper to convert Mission model to MissionResponse schema."""
     audits = [
         AgentAuditItem(
@@ -66,6 +72,8 @@ def serialize_mission(mission) -> MissionResponse:
         )
         for a in (getattr(mission, "agent_audits", []) or [])
     ]
+    reasons = why_this_mission or getattr(mission, "why_this_mission", []) or []
+    recommended = is_recommended or getattr(mission, "is_recommended", False)
     return MissionResponse(
         id=mission.id,
         mission_type=mission.mission_type,
@@ -76,6 +84,7 @@ def serialize_mission(mission) -> MissionResponse:
         research_need_source=mission.research_need_source,
         research_need_reference=mission.research_need_reference,
         signal_case_id=mission.signal_case_id,
+        mission_need_id=getattr(mission, "mission_need_id", None),
         contributor_id=mission.contributor_id,
         target_latitude=mission.target_latitude,
         target_longitude=mission.target_longitude,
@@ -89,6 +98,8 @@ def serialize_mission(mission) -> MissionResponse:
         submitted_at=mission.submitted_at,
         updated_at=mission.updated_at,
         audits=audits,
+        is_recommended=recommended,
+        why_this_mission=reasons,
     )
 
 
@@ -141,6 +152,7 @@ def get_contributor_impact(
 
     recent_items = []
     total_dims_contributed = 0
+    accepted_dims_count = 0
     verified_count = 0
     has_flow = False
     has_rain = False
@@ -166,11 +178,20 @@ def get_contributor_impact(
                 .first()
             )
             if latest_review:
-                if latest_review.outcome in ["VERIFIED", "ACCEPTED"]:
+                if latest_review.outcome in ["VERIFIED", "ACCEPTED", "SUPPORTS_REPORTED_OBSERVATION"]:
                     rev_status = "ACCEPTED_FOR_RESEARCH"
                     verified_count += 1
-                elif latest_review.outcome in ["INSUFFICIENT_EVIDENCE", "REJECTED"]:
+                    accepted_dims_count += len(dims)
+                elif latest_review.outcome in ["INSUFFICIENT_EVIDENCE", "REJECTED", "REQUEST_MORE_EVIDENCE"]:
                     rev_status = "MORE_EVIDENCE_REQUESTED"
+
+        dims_label = ", ".join(d.upper() for d in dims) if dims else "physical evidence"
+        if rev_status == "ACCEPTED_FOR_RESEARCH":
+            statement = f"Your accepted evidence closed the {dims_label} gap."
+        elif rev_status == "MORE_EVIDENCE_REQUESTED":
+            statement = f"Researcher requested additional verification for {dims_label}."
+        else:
+            statement = f"Your evidence was submitted for {dims_label}. Pending researcher review."
 
         recent_items.append(
             ContributionHistoryItem(
@@ -181,6 +202,7 @@ def get_contributor_impact(
                 submitted_at=m.submitted_at or m.updated_at,
                 review_status=rev_status,
                 coverage_delta_pct=dim_delta,
+                impact_statement=statement,
             )
         )
 
@@ -195,7 +217,8 @@ def get_contributor_impact(
     if len(missions) >= 3:
         milestones.append("Stream Steward")
 
-    total_delta = round(total_dims_contributed * per_dim_delta, 2)
+    potential_delta = round(total_dims_contributed * per_dim_delta, 2)
+    accepted_delta = round(accepted_dims_count * per_dim_delta, 2)
 
     return ContributorImpactResponse(
         contributor_id=contributor.contributor_id,
@@ -204,10 +227,32 @@ def get_contributor_impact(
         total_contributions=len(missions),
         verified_contributions=verified_count,
         overall_evidence_coverage=gaps_info.overall_coverage_percentage,
-        total_coverage_delta_contributed=total_delta,
+        total_coverage_delta_contributed=potential_delta,
+        potential_coverage_delta_submitted=potential_delta,
+        accepted_coverage_delta=accepted_delta,
         recent_contributions=recent_items,
         stewardship_milestones=milestones,
     )
+
+
+@router.get(
+    "/contributors/{contributor_id}/impact",
+    response_model=ContributorImpactResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Specific Contributor Impact (IDOR Protected)",
+)
+def get_specific_contributor_impact(
+    contributor_id: str,
+    current_contributor: Contributor = Depends(get_current_contributor),
+    db: Session = Depends(get_db),
+) -> ContributorImpactResponse:
+    """Returns contributor impact profile strictly verifying identity ownership."""
+    if current_contributor.contributor_id != contributor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You are not authorized to view another contributor's impact data.",
+        )
+    return get_contributor_impact(contributor=current_contributor, db=db)
 
 
 
@@ -237,6 +282,43 @@ def upgrade_account(
 
 
 @router.get(
+    "/missions/recommendations",
+    response_model=MissionRecommendationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Targeted Citizen Mission Recommendations",
+)
+def get_mission_recommendations(
+    x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    lat: Optional[float] = Query(None, description="Citizen latitude"),
+    lon: Optional[float] = Query(None, description="Citizen longitude"),
+    stream_segment: Optional[str] = Query(None, description="Citizen stream segment"),
+    db: Session = Depends(get_db),
+) -> MissionRecommendationResponse:
+    """
+    Returns targeted recommendations derived strictly through the 5-stage pipeline:
+      Approved MissionNeed -> Evidence Gap -> Area Match -> Contributor Eligibility -> Recommendation.
+    Empty database or unmatched eligibility returns empty list. No fake missions.
+    """
+    contributor = (
+        db.query(Contributor).filter(Contributor.contributor_id == x_contributor_id).first()
+        if x_contributor_id
+        else None
+    )
+    recs = get_recommended_citizen_missions(
+        db=db,
+        contributor=contributor,
+        lat=lat,
+        lon=lon,
+        stream_segment=stream_segment,
+    )
+    items = [
+        serialize_mission(m, is_recommended=True, why_this_mission=reasons)
+        for m, reasons in recs
+    ]
+    return MissionRecommendationResponse(recommendations=items, total=len(items))
+
+
+@router.get(
     "/missions",
     response_model=MissionListResponse,
     status_code=status.HTTP_200_OK,
@@ -244,19 +326,45 @@ def upgrade_account(
 )
 def list_citizen_missions(
     x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    lat: Optional[float] = Query(None, description="Citizen latitude"),
+    lon: Optional[float] = Query(None, description="Citizen longitude"),
+    stream_segment: Optional[str] = Query(None, description="Citizen stream segment"),
     db: Session = Depends(get_db),
 ) -> MissionListResponse:
-    """Lists active, allowlisted missions for citizens."""
+    """Lists active, allowlisted missions for citizens, annotating recommended ones."""
     contributor = (
         db.query(Contributor).filter(Contributor.contributor_id == x_contributor_id).first()
         if x_contributor_id
         else None
     )
+    # Check recommendations via 5-stage pipeline
+    recs = get_recommended_citizen_missions(
+        db=db,
+        contributor=contributor,
+        lat=lat,
+        lon=lon,
+        stream_segment=stream_segment,
+    )
+    rec_map = {m.id: reasons for m, reasons in recs}
+
     missions = EvidenceMissionAgent.get_citizen_missions(
         db=db,
         contributor_id=contributor.id if contributor else None,
     )
-    items = [serialize_mission(m) for m in missions]
+    items = []
+    seen_ids = set()
+    for m in missions:
+        seen_ids.add(m.id)
+        is_rec = m.id in rec_map
+        reasons = rec_map.get(m.id, [])
+        items.append(serialize_mission(m, is_recommended=is_rec, why_this_mission=reasons))
+
+    # Also include any newly planned recommended missions not yet in list
+    for rec_m, reasons in recs:
+        if rec_m.id not in seen_ids:
+            items.insert(0, serialize_mission(rec_m, is_recommended=True, why_this_mission=reasons))
+            seen_ids.add(rec_m.id)
+
     return MissionListResponse(missions=items, total=len(items))
 
 
@@ -268,10 +376,16 @@ def list_citizen_missions(
 )
 def get_mission_detail(
     mission_id: UUID,
+    contributor: Contributor = Depends(get_current_contributor),
     db: Session = Depends(get_db),
 ) -> MissionResponse:
     """Retrieves full mission state, required evidence, and agent next action."""
     mission = EvidenceMissionAgent.get_mission_by_id(db=db, mission_id=mission_id)
+    if mission.contributor_id and mission.contributor_id != contributor.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Cannot access another contributor's private mission.",
+        )
     return serialize_mission(mission)
 
 

@@ -56,6 +56,24 @@ export async function fetchCitizenMissions(
   );
 }
 
+export async function fetchMissionRecommendations(
+  contributorId?: string,
+  streamSegment?: string
+): Promise<{ recommendations: MissionItem[]; total: number }> {
+  const headers: Record<string, string> = {};
+  if (contributorId) {
+    headers["X-Contributor-Id"] = contributorId;
+  }
+  const query = streamSegment ? `?stream_segment=${encodeURIComponent(streamSegment)}` : "";
+  return request<{ recommendations: MissionItem[]; total: number }>(
+    `/api/v1/citizen/missions/recommendations${query}`,
+    {
+      method: "GET",
+      headers,
+    }
+  );
+}
+
 export async function fetchMissionDetail(missionId: string): Promise<MissionItem> {
   return request<MissionItem>(`/api/v1/citizen/missions/${missionId}`, {
     method: "GET",

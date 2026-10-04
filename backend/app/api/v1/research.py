@@ -132,6 +132,32 @@ def record_human_review(
     )
 
 
+@router.post(
+    "/human-review",
+    response_model=HumanReviewResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record Human Review Decision (Alias)",
+)
+def record_human_review_alias(
+    review_in: HumanReviewCreate,
+    case_id: Optional[UUID] = Query(None, description="SignalCase ID to review"),
+    x_reviewer_id: str = Depends(require_reviewer_identity),
+    db: Session = Depends(get_db),
+) -> HumanReviewResponse:
+    target_case_id = case_id or review_in.linked_case_id
+    if not target_case_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="case_id query parameter is required for review recording.",
+        )
+    return create_human_review(
+        db=db,
+        case_id=target_case_id,
+        review_in=review_in,
+        reviewer_id=x_reviewer_id,
+    )
+
+
 @router.get(
     "/evidence-cases/{case_id}/reviews",
     response_model=HumanReviewListResponse,

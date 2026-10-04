@@ -12,7 +12,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { fetchEvidenceCoverage } from "../../api/impact";
+import { fetchMissionRecommendations } from "../../api/missions";
 import { EvidenceCoverageInfo } from "../../types/impact";
+import { MissionItem } from "../../types/mission";
 
 interface WaterSignalHomeProps {
   onStartWithPhoto: () => void;
@@ -28,13 +30,21 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
   onGoToImpact,
 }) => {
   const [coverageData, setCoverageData] = useState<EvidenceCoverageInfo | null>(null);
+  const [recommendedMissions, setRecommendedMissions] = useState<MissionItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
-    fetchEvidenceCoverage()
-      .then((data) => {
-        if (isMounted) setCoverageData(data);
+    const contributorId = localStorage.getItem("streamsignal_contributor_id") || undefined;
+    Promise.all([
+      fetchEvidenceCoverage(),
+      fetchMissionRecommendations(contributorId).catch(() => ({ recommendations: [], total: 0 })),
+    ])
+      .then(([covData, recData]) => {
+        if (isMounted) {
+          setCoverageData(covData);
+          setRecommendedMissions(recData.recommendations || []);
+        }
       })
       .catch((err) => {
         console.warn("Could not load real-time evidence coverage:", err);
@@ -201,11 +211,11 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
       </section>
 
       {/* ── 3. Actionable Evidence Opportunity Card ──────────────────────── */}
-      {missingDims.length > 0 ? (
-        <section className="bg-gradient-to-r from-cyan-900 to-slate-900 rounded-2xl border border-cyan-800 p-6 text-white shadow-md space-y-4">
+      {recommendedMissions.length > 0 ? (
+        <section className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-900 rounded-2xl border border-cyan-800/80 p-6 text-white shadow-lg space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
-              Recommended Action · 2–3 Minutes
+              Recommended Evidence Mission
             </span>
             <span className="text-xs text-cyan-300 font-mono font-semibold">
               +{perDimDelta.toFixed(2)}% Potential Coverage
@@ -214,20 +224,40 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
 
           <div className="space-y-1">
             <h3 className="text-base sm:text-lg font-bold text-white">
-              Document {missingDims[0].dimension_label || missingDims[0].dimension}
+              {recommendedMissions[0].title}
             </h3>
             <p className="text-xs text-slate-300">
-              {missingDims[0].cases_missing_evidence} SignalCase
-              {missingDims[0].cases_missing_evidence > 1 ? "s are" : " is"} currently missing{" "}
-              {(missingDims[0].dimension_label || missingDims[0].dimension).toLowerCase()} evidence. A quick observation categorizing this
-              dimension directly strengthens freshwater research.
+              {recommendedMissions[0].purpose}
             </p>
+          </div>
+
+          {/* Why this mission? */}
+          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-2 text-xs">
+            <span className="font-semibold text-cyan-300 block text-[11px] uppercase tracking-wider">
+              Why this mission?
+            </span>
+            <ul className="text-slate-300 space-y-1 text-xs">
+              {(recommendedMissions[0].why_this_mission && recommendedMissions[0].why_this_mission.length > 0
+                ? recommendedMissions[0].why_this_mission
+                : [
+                    `${(recommendedMissions[0].required_evidence[0] || "FLOW_CONDITION").toUpperCase()} is missing`,
+                    "This research need is approved",
+                    "Your selected area matches",
+                    "You have not recently submitted this evidence",
+                  ]
+              ).map((reason, idx) => (
+                <li key={idx} className="flex items-start gap-1.5">
+                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Clock className="w-3.5 h-3.5" />
-              <span>Takes ~2 min · Rapid citizen observation</span>
+              <span>Takes ~2 min · Targeted citizen observation</span>
             </div>
 
             <button
@@ -241,29 +271,29 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
           </div>
         </section>
       ) : (
-        <section className="bg-gradient-to-r from-cyan-900 to-slate-900 rounded-2xl border border-cyan-800 p-6 text-white shadow-md space-y-4">
+        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-6 text-white shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
-              Catchment Surveillance Active
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 px-2.5 py-1 rounded-md border border-slate-700">
+              Catchment Surveillance
             </span>
-            <span className="text-xs text-cyan-300 font-mono font-semibold">
+            <span className="text-xs text-slate-400 font-mono font-semibold">
               {coveragePct.toFixed(1)}% Current Coverage
             </span>
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-bold text-white">
-              Record Stream Observation
+            <h3 className="text-base sm:text-lg font-bold text-slate-200">
+              No targeted missions are currently available.
             </h3>
-            <p className="text-xs text-slate-300">
-              Every documented observation provides real-time ground truth for urban freshwater health.
+            <p className="text-xs text-slate-400">
+              Recommendations originate only from researcher-approved research needs that match active evidence gaps in your watershed. General observations are always welcome.
             </p>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
               <Clock className="w-3.5 h-3.5" />
-              <span>Takes ~2 min · Photo & visual observations</span>
+              <span>Takes ~2 min · Rapid baseline observation</span>
             </div>
 
             <button
@@ -271,7 +301,7 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
               onClick={onStartWithPhoto}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-brand-teal hover:bg-cyan-500 text-white transition-colors shadow-sm"
             >
-              <span>Record Observation</span>
+              <span>Make an Observation</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

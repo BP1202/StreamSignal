@@ -25,6 +25,10 @@ class ContributionHistoryItem(BaseModel):
         ...,
         description="Percentage points of evidence coverage contributed by this submission",
     )
+    impact_statement: str = Field(
+        default="Your evidence was submitted. Pending researcher review.",
+        description="Factual evidence status statement (Submitted vs Accepted)",
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -41,6 +45,8 @@ class ContributorImpactResponse(BaseModel):
     verified_contributions: int = Field(..., description="Submissions reviewed/accepted by researchers")
     overall_evidence_coverage: float = Field(..., description="Current global evidence coverage percentage (0.0–100.0%)")
     total_coverage_delta_contributed: float = Field(..., description="Cumulative percentage points contributed by this citizen")
+    potential_coverage_delta_submitted: float = Field(default=0.0, description="Submitted potential coverage awaiting review")
+    accepted_coverage_delta: float = Field(default=0.0, description="Verified coverage accepted into research record")
     recent_contributions: List[ContributionHistoryItem] = Field(default_factory=list)
     stewardship_milestones: List[str] = Field(
         default_factory=list,

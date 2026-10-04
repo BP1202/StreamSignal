@@ -103,6 +103,7 @@ class MissionResponse(BaseModel):
     research_need_source: str
     research_need_reference: Optional[str] = None
     signal_case_id: Optional[UUID] = None
+    mission_need_id: Optional[UUID] = None
     contributor_id: Optional[UUID] = None
     target_latitude: Optional[float] = None
     target_longitude: Optional[float] = None
@@ -116,12 +117,19 @@ class MissionResponse(BaseModel):
     submitted_at: Optional[datetime] = None
     updated_at: datetime
     audits: Optional[List[AgentAuditItem]] = None
+    is_recommended: bool = False
+    why_this_mission: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class MissionListResponse(BaseModel):
     missions: List[MissionResponse] = Field(default_factory=list)
+    total: int = 0
+
+
+class MissionRecommendationResponse(BaseModel):
+    recommendations: List[MissionResponse] = Field(default_factory=list)
     total: int = 0
 
 

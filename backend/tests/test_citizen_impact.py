@@ -22,6 +22,10 @@ from app.schemas.mission import MissionStatus, MissionType
 
 def test_citizen_impact_empty_database(client: TestClient, sync_test_db: Session):
     """Empty database returns 0 contributions, 0.0% coverage, and epistemic disclaimer."""
+    sync_test_db.query(Report).delete()
+    sync_test_db.query(Mission).delete()
+    sync_test_db.commit()
+
     resp = client.get("/api/v1/citizen/impact")
     assert resp.status_code == 200
     data = resp.json()

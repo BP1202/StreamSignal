@@ -71,9 +71,12 @@ export interface MissionItem {
   next_action?: MissionAgentAction | null;
   contributor_id?: string | null;
   signal_case_id?: string | null;
+  mission_need_id?: string | null;
   created_at: string;
   submitted_at?: string | null;
   agent_audits?: AgentAuditItem[];
+  is_recommended?: boolean;
+  why_this_mission?: string[];
 }
 
 export interface MissionEvidenceSubmission {

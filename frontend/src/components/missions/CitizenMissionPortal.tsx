@@ -155,11 +155,10 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-slate-200">
-              No Active Evidence Missions
+              No targeted missions are currently available.
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              There are currently no researcher-requested evidence missions in this watershed. Missions are
-              planned when researchers approve targeted needs to address specific evidence gaps in existing cases.
+              Recommendations originate only from researcher-approved research needs that match active evidence gaps in your watershed.
             </p>
           </div>
           {onGoToObserve && (
@@ -169,7 +168,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
                 onClick={onGoToObserve}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-teal hover:bg-cyan-600 text-white transition-all shadow-sm"
               >
-                <span>Record a Stream Observation →</span>
+                <span>Make an Observation</span>
               </button>
             </div>
           )}
@@ -202,14 +201,20 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
                 <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-1.5 text-[11px]">
                   <span className="font-semibold text-cyan-300 block">Why this mission?</span>
                   <ul className="text-slate-300 space-y-1">
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400">✓</span>
-                      <span>Targeted research need: {m.research_need}</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400">✓</span>
-                      <span>Required evidence: {m.required_evidence.join(", ")}</span>
-                    </li>
+                    {(m.why_this_mission && m.why_this_mission.length > 0
+                      ? m.why_this_mission
+                      : [
+                          `${(m.required_evidence[0] || "FLOW_CONDITION").toUpperCase()} is missing`,
+                          "This research need is approved",
+                          "Your selected area matches",
+                          "You have not recently submitted this evidence",
+                        ]
+                    ).map((reason, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>{reason}</span>
+                      </li>
+                    ))}
                   </ul>
                   <p className="text-[10px] text-slate-400 border-t border-slate-700/60 pt-1.5 leading-relaxed">
                     🛡 <em>Recommendation indicates evidence collection need only — not pollution or health risk.</em>

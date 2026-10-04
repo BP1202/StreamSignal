@@ -38,7 +38,7 @@ from app.agent.tools import (
 )
 from app.schemas.mission import MissionType
 
-client = TestClient(app)
+client = TestClient(app, headers={"X-Role": "RESEARCHER", "X-Reviewer-Id": "REV-TEST-001"})
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Fixtures & Helpers

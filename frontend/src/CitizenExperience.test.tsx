@@ -96,7 +96,7 @@ describe("Citizen Experience & Product Coherence Components", () => {
     expect(screen.getByText(/Catchment Evidence Coverage/i)).toBeInTheDocument();
     expect(screen.getByText(/not a drinking-water safety or chemical toxicity assessment/i)).toBeInTheDocument();
     expect(screen.getByText(/What would improve this evidence\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Document Stream Flow After Rainfall/i)).toBeInTheDocument();
+    expect(screen.getByText(/Document Flow Condition/i)).toBeInTheDocument();
 
     // Click mission CTA
     const missionBtn = screen.getByRole("button", { name: /Participate in Mission/i });

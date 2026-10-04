@@ -15,7 +15,7 @@ def client() -> Generator[TestClient, None, None]:
     Reusable FastAPI test client fixture.
     Runs with lifespan context management enabled.
     """
-    with TestClient(app) as test_client:
+    with TestClient(app, headers={"X-Role": "RESEARCHER", "X-Reviewer-Id": "REV-TEST-001"}) as test_client:
         yield test_client
 
 

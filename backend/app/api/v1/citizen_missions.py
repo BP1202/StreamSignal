@@ -123,7 +123,7 @@ def get_contributor_impact(
     - Factual stewardship milestones
     """
     gaps_info = analyze_evidence_gaps(db)
-    per_dim_delta = gaps_info.potential_coverage_per_dimension or 0.89
+    per_dim_delta = gaps_info.potential_coverage_per_dimension or 0.0
 
     # Query missions submitted by this contributor
     submitted_statuses = ["SUBMITTED", "RESEARCH_REVIEW", "COMPLETED"]

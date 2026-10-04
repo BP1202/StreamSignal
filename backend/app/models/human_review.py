@@ -22,7 +22,7 @@ class HumanReview(Base):
         index=True,
     )
     signal_case_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    reviewer_id = Column(String(100), nullable=False, default="R-042")
+    reviewer_id = Column(String(100), nullable=False)
     outcome = Column(String(50), nullable=False)
     rationale = Column(Text, nullable=False)
     linked_case_id = Column(

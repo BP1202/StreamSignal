@@ -50,7 +50,7 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
 
   const totalCases = coverageData?.total_cases_analyzed ?? 0;
   const coveragePct = coverageData?.overall_coverage_percentage ?? 0.0;
-  const perDimDelta = coverageData?.potential_coverage_per_dimension ?? 0.89;
+  const perDimDelta = coverageData?.potential_coverage_per_dimension ?? 0.0;
 
   // Tracked dimensions
   const gaps = coverageData?.gaps || [];
@@ -201,42 +201,82 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
       </section>
 
       {/* ── 3. Actionable Evidence Opportunity Card ──────────────────────── */}
-      <section className="bg-gradient-to-r from-cyan-900 to-slate-900 rounded-2xl border border-cyan-800 p-6 text-white shadow-md space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
-            Recommended Action · 2–3 Minutes
-          </span>
-          <span className="text-xs text-cyan-300 font-mono font-semibold">
-            +{perDimDelta.toFixed(2)}% Potential Coverage
-          </span>
-        </div>
-
-        <div className="space-y-1">
-          <h3 className="text-base sm:text-lg font-bold text-white">
-            Document Stream Flow After Rainfall
-          </h3>
-          <p className="text-xs text-slate-300">
-            A nearby SignalCase is currently missing flow rate evidence. A 2-minute observation
-            categorizing flow speed (fast, moderate, slow, stagnant) fills this research need.
-          </p>
-        </div>
-
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Takes ~2 min · Requires photo & flow estimate</span>
+      {missingDims.length > 0 ? (
+        <section className="bg-gradient-to-r from-cyan-900 to-slate-900 rounded-2xl border border-cyan-800 p-6 text-white shadow-md space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
+              Recommended Action · 2–3 Minutes
+            </span>
+            <span className="text-xs text-cyan-300 font-mono font-semibold">
+              +{perDimDelta.toFixed(2)}% Potential Coverage
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onGoToMissions}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-brand-teal hover:bg-cyan-500 text-white transition-colors shadow-sm"
-          >
-            <span>Participate in Mission</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </section>
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-bold text-white">
+              Document {missingDims[0].dimension_label || missingDims[0].dimension}
+            </h3>
+            <p className="text-xs text-slate-300">
+              {missingDims[0].cases_missing_evidence} SignalCase
+              {missingDims[0].cases_missing_evidence > 1 ? "s are" : " is"} currently missing{" "}
+              {(missingDims[0].dimension_label || missingDims[0].dimension).toLowerCase()} evidence. A quick observation categorizing this
+              dimension directly strengthens freshwater research.
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Takes ~2 min · Rapid citizen observation</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onGoToMissions}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-brand-teal hover:bg-cyan-500 text-white transition-colors shadow-sm"
+            >
+              <span>Participate in Mission</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-gradient-to-r from-cyan-900 to-slate-900 rounded-2xl border border-cyan-800 p-6 text-white shadow-md space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
+              Catchment Surveillance Active
+            </span>
+            <span className="text-xs text-cyan-300 font-mono font-semibold">
+              {coveragePct.toFixed(1)}% Current Coverage
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-bold text-white">
+              Record Stream Observation
+            </h3>
+            <p className="text-xs text-slate-300">
+              Every documented observation provides real-time ground truth for urban freshwater health.
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Takes ~2 min · Photo & visual observations</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onStartWithPhoto}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-brand-teal hover:bg-cyan-500 text-white transition-colors shadow-sm"
+            >
+              <span>Record Observation</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ── 4. Flexible Participation Levels ─────────────────────────────── */}
       <section className="space-y-4">

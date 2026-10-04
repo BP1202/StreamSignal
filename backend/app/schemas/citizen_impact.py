@@ -48,6 +48,8 @@ class ContributorImpactResponse(BaseModel):
     )
     epistemic_notice: str = (
         "Evidence coverage reflects the availability of relevant observations and supporting media. "
+        "Submitted coverage deltas represent potential evidence availability prior to researcher review; "
+        "accepted submissions represent verified additions to the case record. "
         "It is not a measure of drinking-water safety or laboratory contamination."
     )
 

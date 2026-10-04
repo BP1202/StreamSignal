@@ -3,6 +3,7 @@ StreamSignal — Evidence Mission Agent API Endpoints
 Provides explicit endpoints for mission planning and agent next-action evaluation.
 """
 
+import os
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -20,6 +21,26 @@ from app.schemas.mission import (
 from app.api.v1.citizen_missions import serialize_mission
 
 router = APIRouter(prefix="/agent", tags=["Evidence Mission Agent"])
+
+
+@router.get(
+    "/status",
+    response_model=Dict[str, Any],
+    status_code=status.HTTP_200_OK,
+    summary="Get Agent Provider and Runtime Status",
+)
+def get_agent_status() -> Dict[str, Any]:
+    """Returns actual runtime model provider and governance status for the Evidence Mission Agent."""
+    from app.agent.providers import get_agent_provider
+    provider = get_agent_provider()
+    configured = os.getenv("AGENT_PROVIDER", "deterministic").lower()
+    return {
+        "configured_provider": configured,
+        "active_provider_class": provider.__class__.__name__,
+        "bounded_fsm_enforced": True,
+        "zero_cost_local": True,
+        "human_in_the_loop_required": True,
+    }
 
 
 @router.get(

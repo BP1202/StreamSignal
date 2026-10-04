@@ -54,12 +54,16 @@ export async function fetchResearchCaseDetail(
 
 export async function submitHumanReview(
   caseId: string,
-  payload: HumanReviewCreateRequest
+  payload: HumanReviewCreateRequest,
+  reviewerId: string = "researcher-primary"
 ): Promise<HumanReviewItem> {
   return request<HumanReviewItem>(
     `/api/v1/research/evidence-cases/${caseId}/reviews`,
     {
       method: "POST",
+      headers: {
+        "X-Reviewer-Id": reviewerId,
+      },
       body: JSON.stringify(payload),
     }
   );

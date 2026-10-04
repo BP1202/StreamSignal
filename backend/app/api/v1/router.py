@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.core.auth import require_researcher_role
 from app.api.v1.health import router as health_router
 from app.api.v1.reports import router as reports_router
 from app.api.v1.research import router as research_router
@@ -21,9 +22,11 @@ api_router.include_router(
     evidence_gaps_router,
     prefix="/research",
     tags=["Evidence Gap Intelligence"],
+    dependencies=[Depends(require_researcher_role)],
 )
 api_router.include_router(
     mission_needs_router,
     prefix="/research",
     tags=["Mission Needs"],
+    dependencies=[Depends(require_researcher_role)],
 )

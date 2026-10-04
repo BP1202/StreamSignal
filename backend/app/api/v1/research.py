@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_researcher_role, require_reviewer_identity
 from app.core.database import get_db
 from app.schemas.evidence_passport import EvidencePassportResponse
 from app.schemas.evidence_quality import EvidenceQualityLevel
@@ -33,7 +34,11 @@ from app.services.review import (
     get_citizen_impact_status,
 )
 
-router = APIRouter(prefix="/research", tags=["Research Workspace"])
+router = APIRouter(
+    prefix="/research",
+    tags=["Research Workspace"],
+    dependencies=[Depends(require_researcher_role)],
+)
 
 
 @router.get(
@@ -112,17 +117,18 @@ def get_research_case(
 def record_human_review(
     case_id: UUID,
     review_in: HumanReviewCreate,
-    x_reviewer_id: Optional[str] = Header(default="R-042", alias="X-Reviewer-Id"),
+    x_reviewer_id: str = Depends(require_reviewer_identity),
     db: Session = Depends(get_db),
 ) -> HumanReviewResponse:
     """
     Atomically records a human review decision, updates case workflow status, and records lineage.
+    Requires an explicit reviewer ID via X-Reviewer-Id — no default or anonymous reviewer identity permitted.
     """
     return create_human_review(
         db=db,
         case_id=case_id,
         review_in=review_in,
-        reviewer_id=x_reviewer_id or "R-042",
+        reviewer_id=x_reviewer_id,
     )
 
 

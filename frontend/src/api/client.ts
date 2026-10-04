@@ -34,6 +34,11 @@ export async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
+  // Enforce role separation: endpoints under /api/v1/research require X-Role: RESEARCHER
+  if (endpoint.startsWith("/api/v1/research") && !headers.has("X-Role")) {
+    headers.set("X-Role", "RESEARCHER");
+  }
+
   let response: Response;
   try {
     response = await fetch(url, {

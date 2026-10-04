@@ -61,7 +61,7 @@ def create_human_review(
     db: Session,
     case_id: UUID,
     review_in: HumanReviewCreate,
-    reviewer_id: str = "R-042",
+    reviewer_id: str,
 ) -> HumanReviewResponse:
     """
     Records a human review decision transactionally with:

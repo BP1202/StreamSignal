@@ -159,8 +159,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
               There are currently no researcher-requested evidence missions in this watershed. Missions are
-              automatically planned after rain events or when researchers identify specific
-              evidence gaps in existing cases.
+              planned when researchers approve targeted needs to address specific evidence gaps in existing cases.
             </p>
           </div>
           {onGoToObserve && (

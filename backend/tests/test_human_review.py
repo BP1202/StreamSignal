@@ -71,7 +71,7 @@ def test_human_review_unlinked_outcomes(client: TestClient, outcome: str, expect
     assert data["outcome"] == outcome
     assert data["rationale"] == rationale
     assert data["workflow_status"] == expected_status
-    assert data["reviewer_id"] == "R-042"
+    assert data["reviewer_id"] == "REV-TEST-001"
     assert data["case_id"] == case_id
     assert data["linked_case_id"] is None
 
@@ -302,7 +302,7 @@ def test_exactly_one_lineage_event_per_successful_review(client: TestClient):
     ev1 = lineage1["events"][0]
     assert ev1["event_type"] == "HUMAN_REVIEW_RECORDED"
     assert ev1["actor_type"] == "RESEARCHER"
-    assert ev1["actor_id"] == "R-042"
+    assert ev1["actor_id"] == "REV-TEST-001"
     assert ev1["source_service"] == "research_workspace"
 
     # Record 2nd review on the same case
@@ -390,7 +390,7 @@ def test_citizen_impact_status_is_non_sensitive(client: TestClient):
     assert "reviewer_id" not in updated_data
     assert "rationale" not in updated_data
     assert "Internal confidential" not in str(updated_data)
-    assert "R-042" not in str(updated_data)
+    assert "REV-TEST-001" not in str(updated_data)
 
 
 # -----------------------------------------------------------------------------

@@ -133,8 +133,9 @@ def analyze_evidence_gaps(
         ))
 
     # --- Boolean columns: foam_observed, dead_wildlife_observed ---
-    # For boolean dimensions, "missing" = NULL (never set), not False.
-    # False = "citizen explicitly said no" = present evidence value.
+    # In the relational schema, boolean flags default to False (non-nullable).
+    # False indicates only that the flag was not affirmed by the citizen.
+    # Only affirmative observations (True) represent documented evidence.
     bool_dims = [
         ("foam_observed", "Foam Observed", Report.foam_observed),
         ("dead_wildlife_observed", "Dead Wildlife Observed", Report.dead_wildlife_observed),
@@ -143,15 +144,15 @@ def analyze_evidence_gaps(
         result = db.execute(
             select(
                 func.count(Report.id).label("total"),
-                func.sum(case((col.is_(None), 1), else_=0)).label("missing"),
+                func.sum(case((col.is_(True), 1), else_=0)).label("present"),
                 func.min(Report.created_at).label("first"),
                 func.max(Report.created_at).label("last"),
             )
         )
         row = result.one()
         total = row.total or 0
-        missing = row.missing or 0
-        present = total - missing
+        present = row.present or 0
+        missing = total - present
         ratio = present / total if total > 0 else 0.0
 
         if total < min_cases:
@@ -169,18 +170,21 @@ def analyze_evidence_gaps(
             last_observed_at=row.last,
         ))
 
-    # --- Photo / media dimension: based on related ReportMedia rows ---
-    photo_result = db.execute(
+    # --- Photo / media dimension: distinct cases with at least one ReportMedia attached ---
+    cases_with_media = db.execute(
+        select(func.count(func.distinct(ReportMedia.report_id)))
+        .where(ReportMedia.report_id.isnot(None))
+    ).scalar() or 0
+
+    photo_dates = db.execute(
         select(
-            func.count(Report.id).label("total_cases"),
-            func.count(ReportMedia.id).label("cases_with_media"),
-            func.min(Report.created_at).label("first"),
-            func.max(Report.created_at).label("last"),
-        ).outerjoin(ReportMedia, ReportMedia.report_id == Report.id)
-    )
-    photo_row = photo_result.one()
-    total_ph = photo_row.total_cases or 0
-    present_ph = photo_row.cases_with_media or 0
+            func.min(ReportMedia.created_at).label("first"),
+            func.max(ReportMedia.created_at).label("last"),
+        )
+    ).one()
+
+    total_ph = total_cases
+    present_ph = min(cases_with_media, total_cases)
     missing_ph = max(total_ph - present_ph, 0)
     ratio_ph = present_ph / total_ph if total_ph > 0 else 0.0
 
@@ -193,15 +197,15 @@ def analyze_evidence_gaps(
             cases_missing_evidence=missing_ph,
             availability_ratio=round(ratio_ph, 4),
             affected_segment_ids=[],
-            first_observed_at=photo_row.first,
-            last_observed_at=photo_row.last,
+            first_observed_at=photo_dates.first,
+            last_observed_at=photo_dates.last,
         ))
 
     total_potential_dims = total_cases * len(DIMENSION_LABEL)
     total_dims_present = sum(g.cases_with_evidence for g in gaps)
     overall_cov_ratio = (total_dims_present / total_potential_dims) if total_potential_dims > 0 else 0.0
     overall_cov_pct = round(overall_cov_ratio * 100, 2)
-    per_dim_delta = round((1.0 / total_potential_dims * 100), 2) if total_potential_dims > 0 else 1.0
+    per_dim_delta = round((1.0 / total_potential_dims * 100), 2) if total_potential_dims > 0 else 0.0
 
     logger.info(
         "Evidence gap analysis complete: %d cases, %d dimensions evaluated. Overall coverage: %.2f%%",
@@ -219,7 +223,6 @@ def analyze_evidence_gaps(
         total_dimensions_present=total_dims_present,
         potential_coverage_per_dimension=per_dim_delta,
     )
-
 
 
 def get_evidence_gap_detail(
@@ -240,14 +243,30 @@ def get_evidence_gap_detail(
             select(
                 Report.id,
                 Report.created_at,
-                ReportMedia.id.label("media_id"),
-            ).outerjoin(ReportMedia, ReportMedia.report_id == Report.id)
+                func.count(ReportMedia.id).label("media_count"),
+            )
+            .outerjoin(ReportMedia, ReportMedia.report_id == Report.id)
+            .group_by(Report.id, Report.created_at)
         )
         rows = result.all()
         total = len(rows)
-        present = sum(1 for r in rows if r.media_id is not None)
+        present = sum(1 for r in rows if r.media_count > 0)
         missing = total - present
-        affected = [str(r.id) for r in rows if r.media_id is None]
+        affected = [str(r.id) for r in rows if r.media_count == 0]
+        times = [r.created_at for r in rows if r.created_at]
+        first = min(times) if times else None
+        last = max(times) if times else None
+
+    elif dimension in ("foam_observed", "dead_wildlife_observed"):
+        col = getattr(Report, dimension)
+        result = db.execute(
+            select(Report.id, col.label("val"), Report.created_at)
+        )
+        rows = result.all()
+        total = len(rows)
+        present = sum(1 for r in rows if r.val is True)
+        missing = total - present
+        affected = [str(r.id) for r in rows if r.val is not True]
         times = [r.created_at for r in rows if r.created_at]
         first = min(times) if times else None
         last = max(times) if times else None
@@ -259,9 +278,9 @@ def get_evidence_gap_detail(
         )
         rows = result.all()
         total = len(rows)
-        missing = sum(1 for r in rows if r.val is None)
+        missing = sum(1 for r in rows if r.val is None or (isinstance(r.val, str) and r.val.strip() == ""))
         present = total - missing
-        affected = [str(r.id) for r in rows if r.val is None]
+        affected = [str(r.id) for r in rows if r.val is None or (isinstance(r.val, str) and r.val.strip() == "")]
         times = [r.created_at for r in rows if r.created_at]
         first = min(times) if times else None
         last = max(times) if times else None

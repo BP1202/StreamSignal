@@ -34,3 +34,5 @@ class Contributor(Base):
 
     # Relationships
     missions = relationship("Mission", back_populates="contributor")
+    reports = relationship("Report", back_populates="contributor")
+    contact_requests = relationship("ContactRequest", back_populates="contributor")

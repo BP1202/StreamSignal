@@ -1,9 +1,11 @@
+from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Path, UploadFile, File, Response, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.report import Report
 from app.models.media import ReportMedia
+from app.services.contributor import get_or_create_contributor
 from app.services.storage import get_storage
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
 from app.schemas.evidence_quality import EvidenceQualityResponse
@@ -45,11 +47,17 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 )
 def create_report(
     report_in: ReportCreate,
+    x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
     db: Session = Depends(get_db),
 ) -> Report:
     """Create a new citizen evidence report with server-managed SUBMITTED status."""
     report_data = report_in.model_dump()
-    db_report = Report(**report_data, status="SUBMITTED")
+    contributor_uuid = None
+    if x_contributor_id:
+        contributor = get_or_create_contributor(db=db, contributor_id_str=x_contributor_id)
+        contributor_uuid = contributor.id
+
+    db_report = Report(**report_data, status="SUBMITTED", contributor_id=contributor_uuid)
     db.add(db_report)
     db.commit()
     db.refresh(db_report)

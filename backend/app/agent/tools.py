@@ -480,6 +480,7 @@ def tool_submit_mission_evidence(
         litter_observed=bool(collected.get("litter_observed", False)),
         dead_wildlife_observed=bool(collected.get("dead_wildlife_observed", False)),
         status="SUBMITTED",
+        contributor_id=contributor_id,
     )
     db.add(report)
     db.flush()

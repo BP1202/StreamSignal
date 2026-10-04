@@ -6,6 +6,7 @@ import { HumanReviewPanel } from "./HumanReviewPanel";
 import { EvidenceLineageTimeline } from "./EvidenceLineageTimeline";
 import { InteroperabilitySection } from "./InteroperabilitySection";
 import { ResearcherMissionTracker } from "./ResearcherMissionTracker";
+import { ContactContributorModal } from "./ContactContributorModal";
 import { ApiError } from "../../api/client";
 import {
   ArrowLeft,
@@ -25,6 +26,7 @@ import {
   UserCheck,
   Send,
   FileCheck2,
+  MessageSquare,
 } from "lucide-react";
 
 interface SignalCaseInvestigationViewProps {
@@ -40,6 +42,7 @@ export const SignalCaseInvestigationView: React.FC<
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isReviewOpen, setIsReviewOpen] = useState<boolean>(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState<boolean>(false);
   const [lineageRefreshTrigger, setLineageRefreshTrigger] = useState<number>(0);
 
   const loadCase = async () => {
@@ -189,8 +192,17 @@ export const SignalCaseInvestigationView: React.FC<
 
             <button
               type="button"
+              onClick={() => setIsContactModalOpen(true)}
+              className="text-xs font-semibold text-brand-teal bg-white border border-brand-teal/40 hover:bg-brand-light px-3.5 py-2.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Contact Contributor</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsReviewOpen((prev) => !prev)}
-              className="text-xs font-semibold text-white bg-brand-dark hover:bg-brand-dark/90 px-4 py-2.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              className="text-xs font-semibold text-white bg-brand-dark hover:bg-brand-dark/90 px-4 py-2.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
               <span>{isReviewOpen ? "Close Review Panel" : "Start Review"}</span>
@@ -600,6 +612,17 @@ export const SignalCaseInvestigationView: React.FC<
           </button>
         </div>
       </div>
+
+      {/* Researcher-Contributor Contact Modal */}
+      <ContactContributorModal
+        caseId={caseId}
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        onContactUpdated={() => {
+          setLineageRefreshTrigger((prev) => prev + 1);
+          loadCase();
+        }}
+      />
     </div>
   );
 };

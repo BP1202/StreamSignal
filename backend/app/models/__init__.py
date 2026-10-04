@@ -5,6 +5,7 @@ from app.models.evidence_lineage import EvidenceLineageEvent
 from app.models.contributor import Contributor
 from app.models.mission_need import MissionNeed
 from app.models.mission import Mission, AgentActionAudit
+from app.models.contact_request import ContactRequest
 
 __all__ = [
     "Report",
@@ -15,4 +16,5 @@ __all__ = [
     "MissionNeed",
     "Mission",
     "AgentActionAudit",
+    "ContactRequest",
 ]

@@ -24,9 +24,14 @@ from app.schemas.research import (
     EvidenceLineageListResponse,
     CitizenImpactStatusResponse,
 )
+from app.schemas.contact_request import ContactRequestCreate, ContactRequestResponse
 from app.services.evidence_passport import generate_evidence_passport
 from app.services.fhir_export import generate_fhir_bundle
 from app.services.research import get_research_inbox, get_research_case_detail
+from app.services.contact_service import (
+    create_researcher_contact_request,
+    get_case_contact_requests,
+)
 from app.services.review import (
     create_human_review,
     get_case_reviews,
@@ -287,3 +292,41 @@ def list_research_missions(
     missions = query.all()
     serialized = [serialize_mission(m).model_dump() for m in missions]
     return {"missions": serialized, "total": len(serialized)}
+
+
+@router.post(
+    "/evidence-cases/{case_id}/contact-requests",
+    response_model=ContactRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Researcher Contact Request",
+    description="Allows an authenticated researcher to initiate a consent-based contact request to the contributor.",
+)
+def create_case_contact_request(
+    case_id: UUID,
+    payload: ContactRequestCreate,
+    reviewer_id: str = Depends(require_reviewer_identity),
+    db: Session = Depends(get_db),
+) -> ContactRequestResponse:
+    """Creates a contact request for a SignalCase."""
+    return create_researcher_contact_request(
+        db=db,
+        case_id=case_id,
+        researcher_id=reviewer_id,
+        payload=payload,
+    )
+
+
+@router.get(
+    "/evidence-cases/{case_id}/contact-requests",
+    response_model=list[ContactRequestResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List Case Contact Requests",
+    description="Retrieves contact requests and any contributor-consented contact information for a case.",
+)
+def list_case_contact_requests(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+) -> list[ContactRequestResponse]:
+    """Retrieves contact requests for a SignalCase."""
+    return get_case_contact_requests(db=db, case_id=case_id)
+

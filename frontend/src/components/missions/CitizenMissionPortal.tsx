@@ -5,8 +5,11 @@ import {
   fetchContributorProfile,
   startMission,
 } from "../../api/missions";
+import { fetchContributorContactRequests } from "../../api/contact";
 import { ContributorIdentityBadge } from "./ContributorIdentityBadge";
 import { AgentGuidedMissionFlow } from "./AgentGuidedMissionFlow";
+import { CitizenContactRequestsModal } from "./CitizenContactRequestsModal";
+import { MessageSquare, ChevronRight } from "lucide-react";
 
 interface Props {
   onCaseCreated?: (caseId: string) => void;
@@ -21,6 +24,8 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submittedCaseId, setSubmittedCaseId] = useState<string | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [pendingContactsCount, setPendingContactsCount] = useState(0);
 
   // Initialize or fetch persistent contributor identity
   useEffect(() => {
@@ -44,6 +49,17 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
       setError(null);
       const res = await fetchCitizenMissions(profile?.contributor_id);
       setMissions(res.missions);
+
+      // Check for pending researcher inquiries
+      if (profile?.contributor_id) {
+        try {
+          const inquiries = await fetchContributorContactRequests(profile.contributor_id);
+          const pending = inquiries.filter((i) => i.status === "PENDING").length;
+          setPendingContactsCount(pending);
+        } catch {
+          // Non-blocking inquiry check
+        }
+      }
     } catch (err: any) {
       setError(err?.message || "Failed to load missions.");
     } finally {
@@ -104,14 +120,50 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
             StreamSignal Evidence Mission Agent.
           </p>
         </div>
-        <ContributorIdentityBadge
-          profile={profile}
-          onProfileUpdated={(updated) => {
-            setProfile(updated);
-            localStorage.setItem("streamsignal_contributor_id", updated.contributor_id);
-          }}
-        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsContactModalOpen(true)}
+            className="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
+            <span>Communications</span>
+            {pendingContactsCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+            )}
+          </button>
+          <ContributorIdentityBadge
+            profile={profile}
+            onProfileUpdated={(updated) => {
+              setProfile(updated);
+              localStorage.setItem("streamsignal_contributor_id", updated.contributor_id);
+            }}
+          />
+        </div>
       </div>
+
+      {/* Pending Researcher Contact Request Alert */}
+      {pendingContactsCount > 0 && (
+        <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-200 flex items-center justify-between flex-wrap gap-3">
+          <div className="text-xs space-y-0.5">
+            <span className="font-bold text-teal-100 flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-teal-400" />
+              Researcher Inquiry Awaiting Your Response ({pendingContactsCount})
+            </span>
+            <p className="text-teal-300/80">
+              A researcher requested clarification or follow-up details on your observation.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsContactModalOpen(true)}
+            className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-lg shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span>Review Inquiries</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Submission Success Banner */}
       {submittedCaseId && (
@@ -257,6 +309,13 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
         </div>
       )}
 
+      {/* Citizen Contact Requests Modal */}
+      <CitizenContactRequestsModal
+        contributorId={profile?.contributor_id}
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        onRequestResponded={() => loadMissions()}
+      />
     </div>
   );
 };

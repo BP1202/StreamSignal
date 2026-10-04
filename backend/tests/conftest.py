@@ -82,6 +82,8 @@ def cleanup_database_after_tests():
 
     db = SessionLocal()
     try:
+        from app.models.contact_request import ContactRequest
+        db.query(ContactRequest).delete()
         db.query(AgentActionAudit).delete()
         db.query(Mission).delete()
         db.query(MissionNeed).delete()

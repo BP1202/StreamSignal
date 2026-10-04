@@ -33,6 +33,16 @@ from app.schemas.mission import (
     MissionRecommendationResponse,
     MissionResponse,
 )
+from app.schemas.contact_request import (
+    CitizenContactInitiate,
+    ContactRequestResponse,
+    ContactResponseSubmit,
+)
+from app.services.contact_service import (
+    create_citizen_initiated_contact,
+    get_contributor_contact_requests,
+    respond_to_contact_request,
+)
 from app.services.contributor import (
     get_or_create_contributor,
     upgrade_contributor_account,
@@ -486,3 +496,63 @@ def submit_mission(
         "case_id": str(report.id),
         "message": "Mission evidence successfully submitted to the Research Evidence Workspace.",
     }
+
+
+@router.get(
+    "/contact-requests",
+    response_model=list[ContactRequestResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List Contributor Contact Requests",
+    description="Retrieves pending and resolved contact requests for the authenticated contributor.",
+)
+def list_contributor_contact_requests(
+    contributor: Contributor = Depends(get_current_contributor),
+    db: Session = Depends(get_db),
+) -> list[ContactRequestResponse]:
+    """Retrieves contact requests relevant to this contributor."""
+    return get_contributor_contact_requests(db=db, contributor=contributor)
+
+
+@router.post(
+    "/contact-requests/{request_id}/respond",
+    response_model=ContactRequestResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Respond to Contact Request",
+    description="Allows citizen to Accept or Decline a researcher contact request with voluntary contact sharing.",
+)
+def respond_contact_request(
+    request_id: UUID,
+    payload: ContactResponseSubmit,
+    contributor: Contributor = Depends(get_current_contributor),
+    db: Session = Depends(get_db),
+) -> ContactRequestResponse:
+    """Accepts or declines a contact request with strict IDOR enforcement."""
+    return respond_to_contact_request(
+        db=db,
+        request_id=request_id,
+        contributor=contributor,
+        payload=payload,
+    )
+
+
+@router.post(
+    "/evidence-cases/{case_id}/contact-researcher",
+    response_model=ContactRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Citizen Initiates Contact With Researchers",
+    description="Allows citizen to voluntarily reach out to research team regarding their observation.",
+)
+def initiate_citizen_contact(
+    case_id: UUID,
+    payload: CitizenContactInitiate,
+    contributor: Contributor = Depends(get_current_contributor),
+    db: Session = Depends(get_db),
+) -> ContactRequestResponse:
+    """Initiates citizen-led contact for a SignalCase."""
+    return create_citizen_initiated_contact(
+        db=db,
+        case_id=case_id,
+        contributor=contributor,
+        payload=payload,
+    )
+

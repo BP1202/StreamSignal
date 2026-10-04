@@ -36,10 +36,12 @@ import { MissionNeedsTracker } from "./MissionNeedsTracker";
 
 interface EvidenceInboxViewProps {
   onSelectCase: (caseId: string) => void;
+  initialWorkspaceTab?: "inbox" | "gaps_and_needs";
 }
 
 export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   onSelectCase,
+  initialWorkspaceTab = "inbox",
 }) => {
   const [inboxData, setInboxData] = useState<ResearchInboxResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -47,7 +49,11 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   const [newCaseAlert, setNewCaseAlert] = useState<RealtimeEvent<SignalCaseCreatedPayload> | null>(null);
 
   // Sub-tabs
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"inbox" | "gaps_and_needs">("inbox");
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"inbox" | "gaps_and_needs">(initialWorkspaceTab);
+
+  useEffect(() => {
+    setActiveWorkspaceTab(initialWorkspaceTab);
+  }, [initialWorkspaceTab]);
   const [needsRefreshTrigger, setNeedsRefreshTrigger] = useState<number>(0);
 
   // Filters

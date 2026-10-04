@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Header, CitizenTab } from "./components/layout/Header";
+import { Header, CitizenTab, ResearchTab } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 import { JourneyProgress } from "./components/journey/JourneyProgress";
 import { HeroLanding } from "./components/journey/HeroLanding";
@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   const initialRoute = getRouteState();
   const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "missions" | "research">(initialRoute.mode);
   const [citizenTab, setCitizenTab] = useState<CitizenTab>(initialRoute.citizenTab || "home");
+  const [researchTab, setResearchTab] = useState<ResearchTab>("inbox");
   const [researchCaseId, setResearchCaseId] = useState<string | null>(initialRoute.caseId);
 
 
@@ -249,6 +250,7 @@ export const App: React.FC = () => {
         showNewButton={workspaceMode === "citizen" && currentStep !== "landing"}
         mode={workspaceMode}
         citizenTab={citizenTab}
+        researchTab={researchTab}
         onSwitchCitizenTab={(tab) => {
           setCitizenTab(tab);
           if (tab === "missions") {
@@ -264,6 +266,14 @@ export const App: React.FC = () => {
             } else {
               navigateTo("citizen", null, "home");
             }
+          }
+        }}
+        onSwitchResearchTab={(tab) => {
+          setResearchTab(tab);
+          setWorkspaceMode("research");
+          if (tab === "inbox" || tab === "gaps") {
+            setResearchCaseId(null);
+            navigateTo("research", null);
           }
         }}
         onSwitchMode={(mode) => {
@@ -310,6 +320,7 @@ export const App: React.FC = () => {
             />
           ) : (
             <EvidenceInboxView
+              initialWorkspaceTab={researchTab === "gaps" ? "gaps_and_needs" : "inbox"}
               onSelectCase={(caseId) => {
                 setResearchCaseId(caseId);
                 navigateTo("research", caseId);

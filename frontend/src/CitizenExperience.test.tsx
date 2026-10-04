@@ -208,8 +208,8 @@ describe("Citizen Experience & Product Coherence Components", () => {
 
     expect(await screen.findByText("BrookDragonfly-2378")).toBeInTheDocument();
 
-    // Click "Citizen Observe" in Header
-    const observeBtn = screen.getByRole("button", { name: /Citizen Observe/i });
+    // Click "Observe" in Header
+    const observeBtn = screen.getByRole("button", { name: /^Observe$/i });
     fireEvent.click(observeBtn);
 
     expect(await screen.findByText(/Capture what you see/i)).toBeInTheDocument();

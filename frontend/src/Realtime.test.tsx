@@ -114,9 +114,9 @@ describe("Issue 14 — Live Evidence Bridge (Frontend)", () => {
     const indicator = await screen.findByTestId("live-indicator");
     expect(indicator).toBeInTheDocument();
 
-    // After mock socket opens, indicator should read "● Live"
+    // After mock socket opens, indicator should read "Live"
     await waitFor(() => {
-      expect(screen.getByText("● Live")).toBeInTheDocument();
+      expect(screen.getByText("Live")).toBeInTheDocument();
     });
   });
 

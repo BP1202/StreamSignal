@@ -153,15 +153,13 @@ export const EvidenceCaseView: React.FC<EvidenceCaseViewProps> = ({
           </div>
         </div>
 
-        {/* SignalGuard Trust Banner */}
-        <div className="p-4 bg-brand-light/40 border border-brand-teal/20 rounded-xl flex items-start space-x-3 text-xs text-brand-dark">
-          <ShieldCheck className="w-5 h-5 text-brand-teal shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-bold text-brand-text">SignalGuard Evidence Trust Active</p>
-            <p className="text-[11px] text-brand-secondary leading-relaxed">
-              StreamSignal strictly separates citizen observations, automated media observations, contextual data, and human decisions. Automated visual cues and historical similarity provide context and do not assert environmental causation, toxicity, or disease diagnosis.
-            </p>
-          </div>
+        {/* SignalGuard trust notice — compact inline */}
+        <div className="px-4 py-2 bg-brand-light/30 border border-brand-teal/15 rounded-lg flex items-center gap-2 text-[11px] text-brand-secondary">
+          <ShieldCheck className="w-3.5 h-3.5 text-brand-teal shrink-0" />
+          <span>
+            <span className="font-semibold text-brand-text">Evidence Integrity:</span>{" "}
+            Citizen observations, automated inference, contextual data, and human decisions are strictly separated. Visual cues do not assert causation or diagnosis.
+          </span>
         </div>
 
         {/* Realtime Citizen Status Card */}

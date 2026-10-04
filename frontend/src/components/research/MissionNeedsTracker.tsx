@@ -443,18 +443,23 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
                     )}
 
                     {need.status === "APPROVED" && (
-                      <span
+                      <button
+                        onClick={() => handleTransition(need.id, "MISSION_PLANNED")}
+                        disabled={isBusy}
                         style={{
-                          fontSize: "11px",
-                          color: "#4ade80",
-                          background: "rgba(34, 197, 94, 0.1)",
-                          padding: "4px 8px",
+                          background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+                          color: "#ffffff",
+                          border: "none",
                           borderRadius: "4px",
-                          border: "1px solid rgba(34, 197, 94, 0.3)",
+                          padding: "4px 12px",
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          cursor: isBusy ? "not-allowed" : "pointer",
+                          opacity: isBusy ? 0.6 : 1,
                         }}
                       >
-                        🤖 Ready for Agent Mission Planning
-                      </span>
+                        {isBusy ? "Planning..." : "🤖 Plan Mission →"}
+                      </button>
                     )}
                   </div>
                 </div>

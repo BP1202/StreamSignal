@@ -212,37 +212,34 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           {/* Realtime Live Connection Indicator */}
           <div
             data-testid="live-indicator"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold bg-white shadow-2xs"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold bg-white shadow-2xs"
           >
             {connectionStatus === "CONNECTED" && (
               <>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-emerald-700">● Live</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-emerald-700">Live</span>
               </>
             )}
             {connectionStatus === "RECONNECTING" && (
               <>
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-                <span className="text-amber-700">○ Reconnecting...</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                <span className="text-amber-700">Reconnecting…</span>
               </>
             )}
             {connectionStatus === "CONNECTING" && (
               <>
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
-                <span className="text-blue-700">○ Connecting...</span>
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span className="text-blue-700">Connecting…</span>
               </>
             )}
             {connectionStatus === "DISCONNECTED" && (
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
-                <span className="text-gray-600">Live connection unavailable.</span>
-                <span className="text-[10px] text-gray-500 font-mono">
-                  Last synchronized: {lastSyncTime.toLocaleTimeString()}
-                </span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-gray-400" />
+                <span className="text-gray-500">Offline</span>
                 <button
                   type="button"
                   onClick={reconnect}
-                  className="px-2 py-0.5 bg-brand-dark hover:bg-slate-800 text-white rounded text-[10px] font-bold transition-colors ml-1"
+                  className="px-2 py-0.5 bg-brand-dark hover:bg-slate-800 text-white rounded text-[10px] font-bold transition-colors"
                 >
                   Reconnect
                 </button>

@@ -227,8 +227,8 @@ describe("Issue 17 — Evidence Gap Intelligence & Mission Needs Components", ()
     expect(screen.getAllByText("IDENTIFIED").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("APPROVED").length).toBeGreaterThanOrEqual(1);
 
-    // Approved item shows agent ready badge
-    expect(screen.getByText(/Ready for Agent Mission Planning/i)).toBeInTheDocument();
+    // Approved item shows Plan Mission action button
+    expect(screen.getByText(/Plan Mission/i)).toBeInTheDocument();
 
     // Advance IDENTIFIED -> REVIEWED
     const reviewBtn = screen.getByText("Mark Reviewed");

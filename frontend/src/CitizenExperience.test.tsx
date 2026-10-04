@@ -181,6 +181,12 @@ describe("Citizen Experience & Product Coherence Components", () => {
     expect(screen.getByText("First Signal")).toBeInTheDocument();
     expect(screen.getByText("Flow Observer")).toBeInTheDocument();
 
+    // Verify 3-stage factual separation
+    expect(screen.getByText("Your accepted evidence closed the FLOW_CONDITION, PHOTO gap.")).toBeInTheDocument();
+    expect(screen.getByText("Your evidence was submitted for FOAM_OBSERVED.")).toBeInTheDocument();
+    expect(screen.getByText("+1.78% accepted coverage")).toBeInTheDocument();
+    expect(screen.getByText("+0.89% potential (pending review)")).toBeInTheDocument();
+
     // Click case link
     const caseBtn = screen.getByText("22222222-3333-4444-5555-666666666666");
     fireEvent.click(caseBtn);

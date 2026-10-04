@@ -10,6 +10,7 @@ export interface ContributionHistoryItem {
   submitted_at: string;
   review_status: "AWAITING_REVIEW" | "ACCEPTED_FOR_RESEARCH" | "MORE_EVIDENCE_REQUESTED" | string;
   coverage_delta_pct: number;
+  impact_statement?: string;
 }
 
 export interface ContributorImpactResponse {
@@ -20,6 +21,8 @@ export interface ContributorImpactResponse {
   verified_contributions: number;
   overall_evidence_coverage: number;
   total_coverage_delta_contributed: number;
+  potential_coverage_delta_submitted?: number;
+  accepted_coverage_delta?: number;
   recent_contributions: ContributionHistoryItem[];
   stewardship_milestones: string[];
   epistemic_notice: string;

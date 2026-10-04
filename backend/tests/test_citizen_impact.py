@@ -94,7 +94,9 @@ def test_citizen_impact_with_submitted_mission(client: TestClient, sync_test_db:
     assert data["display_name"] == "BrookDragonfly-9999"
     assert data["total_contributions"] == 1
     assert data["verified_contributions"] == 0
-    assert data["total_coverage_delta_contributed"] > 0
+    assert data["total_coverage_delta_contributed"] == 0.0
+    assert data["potential_coverage_delta_submitted"] > 0
+    assert data["accepted_coverage_delta"] == 0.0
     assert "First Signal" in data["stewardship_milestones"]
     assert "Flow Observer" in data["stewardship_milestones"]
     assert "Rainwatch Contributor" in data["stewardship_milestones"]
@@ -103,6 +105,7 @@ def test_citizen_impact_with_submitted_mission(client: TestClient, sync_test_db:
     assert len(recent) == 1
     assert recent[0]["review_status"] == "AWAITING_REVIEW"
     assert recent[0]["signal_case_id"] == str(r.id)
+    assert recent[0]["impact_statement"] == "Your evidence was submitted for FLOW_CONDITION, PHOTO."
 
 
 def test_citizen_impact_with_verified_human_review(client: TestClient, sync_test_db: Session):
@@ -164,9 +167,12 @@ def test_citizen_impact_with_verified_human_review(client: TestClient, sync_test
     data = resp.json()
 
     assert data["verified_contributions"] == 1
+    assert data["accepted_coverage_delta"] > 0
+    assert data["total_coverage_delta_contributed"] > 0
     recent = data["recent_contributions"]
     assert len(recent) == 1
     assert recent[0]["review_status"] == "ACCEPTED_FOR_RESEARCH"
+    assert recent[0]["impact_statement"] == "Your accepted evidence closed the FLOW_CONDITION gap."
 
 
 def test_citizen_impact_contributor_isolation(client: TestClient, sync_test_db: Session):
@@ -199,3 +205,89 @@ def test_citizen_impact_contributor_isolation(client: TestClient, sync_test_db: 
     dataB = respB.json()
     assert dataB["total_contributions"] == 0
     assert dataB["recent_contributions"] == []
+
+
+def test_lifecycle_flow_condition_submission_review_acceptance(client: TestClient, sync_test_db: Session):
+    """
+    Explicit test matching acceptance criteria:
+    1. Citizen submits FLOW_CONDITION -> Submitted
+       Statement: "Your evidence was submitted for FLOW_CONDITION."
+       Accepted coverage delta = 0.0 (cannot claim coverage improved)
+    2. Researcher reviews -> Accepted for research
+       Statement: "Your accepted evidence closed the FLOW_CONDITION gap."
+       Accepted coverage changes (> 0.0)
+    """
+    db = sync_test_db
+    c = Contributor(
+        contributor_id="SS-C-FLOW-01",
+        display_name="FlowWatcher-42",
+        account_level="LEVEL_1_CONTRIBUTOR",
+    )
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+
+    r = Report(
+        latitude=42.3601,
+        longitude=-71.0589,
+        description="Stream flow report",
+        status="SUBMITTED",
+    )
+    db.add(r)
+    db.commit()
+    db.refresh(r)
+
+    # 1. Citizen submits FLOW_CONDITION
+    m = Mission(
+        mission_type=MissionType.EVIDENCE_CLARIFICATION.value,
+        status=MissionStatus.SUBMITTED.value,
+        title="Stream Flow Check",
+        purpose="Clarify stream flow rate",
+        research_need="Flow rate verification",
+        research_need_source="RESEARCHER_APPROVED",
+        signal_case_id=r.id,
+        contributor_id=c.id,
+        required_evidence=["flow_condition"],
+        collected_evidence={"flow_condition": "fast"},
+        missing_evidence=[],
+    )
+    db.add(m)
+    db.commit()
+
+    # Step 1 Check: Raw submission
+    resp1 = client.get("/api/v1/citizen/impact", headers={"X-Contributor-Id": "SS-C-FLOW-01"})
+    assert resp1.status_code == 200
+    data1 = resp1.json()
+
+    assert data1["accepted_coverage_delta"] == 0.0
+    assert data1["total_coverage_delta_contributed"] == 0.0
+    assert data1["potential_coverage_delta_submitted"] > 0.0
+    assert len(data1["recent_contributions"]) == 1
+    assert data1["recent_contributions"][0]["review_status"] == "AWAITING_REVIEW"
+    assert data1["recent_contributions"][0]["impact_statement"] == "Your evidence was submitted for FLOW_CONDITION."
+
+    # 2. Researcher reviews & accepts
+    hr = HumanReview(
+        report_id=r.id,
+        signal_case_id=r.id,
+        reviewer_id="R-EVALUATOR",
+        outcome="VERIFIED",
+        rationale="Flow condition corroborated by field observer.",
+        evidence_state_before="E2_REGISTERED",
+        evidence_state_after="E5_VERIFIED",
+    )
+    db.add(hr)
+    db.commit()
+
+    # Step 2 Check: Accepted for research
+    resp2 = client.get("/api/v1/citizen/impact", headers={"X-Contributor-Id": "SS-C-FLOW-01"})
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+
+    # Only now does accepted coverage change
+    assert data2["accepted_coverage_delta"] > 0.0
+    assert data2["total_coverage_delta_contributed"] == data2["accepted_coverage_delta"]
+    assert len(data2["recent_contributions"]) == 1
+    assert data2["recent_contributions"][0]["review_status"] == "ACCEPTED_FOR_RESEARCH"
+    assert data2["recent_contributions"][0]["impact_statement"] == "Your accepted evidence closed the FLOW_CONDITION gap."
+

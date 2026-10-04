@@ -169,7 +169,7 @@ def get_contributor_impact(
 
     for m in missions:
         collected = dict(m.collected_evidence or {})
-        dims = [k for k in collected.keys() if k in tracked_keys and collected[k] is not None]
+        dims = sorted([k for k in collected.keys() if k in tracked_keys and collected[k] is not None])
         if "flow_condition" in dims:
             has_flow = True
         if m.mission_type == "AFTER_RAIN_STREAM_CHECK":
@@ -201,7 +201,7 @@ def get_contributor_impact(
         elif rev_status == "MORE_EVIDENCE_REQUESTED":
             statement = f"Researcher requested additional verification for {dims_label}."
         else:
-            statement = f"Your evidence was submitted for {dims_label}. Pending researcher review."
+            statement = f"Your evidence was submitted for {dims_label}."
 
         recent_items.append(
             ContributionHistoryItem(
@@ -237,7 +237,7 @@ def get_contributor_impact(
         total_contributions=len(missions),
         verified_contributions=verified_count,
         overall_evidence_coverage=gaps_info.overall_coverage_percentage,
-        total_coverage_delta_contributed=potential_delta,
+        total_coverage_delta_contributed=accepted_delta,
         potential_coverage_delta_submitted=potential_delta,
         accepted_coverage_delta=accepted_delta,
         recent_contributions=recent_items,

@@ -99,7 +99,17 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
     epistemic_notice,
   } = impactData;
 
-  const baselineBefore = Math.max(overall_evidence_coverage - total_coverage_delta_contributed, 0);
+  const acceptedDelta =
+    impactData.accepted_coverage_delta !== undefined
+      ? impactData.accepted_coverage_delta
+      : impactData.total_coverage_delta_contributed;
+  const potentialDelta =
+    impactData.potential_coverage_delta_submitted !== undefined
+      ? impactData.potential_coverage_delta_submitted
+      : impactData.total_coverage_delta_contributed;
+  const pendingDelta = Math.max(potentialDelta - acceptedDelta, 0);
+
+  const baselineBefore = Math.max(overall_evidence_coverage - acceptedDelta, 0);
 
   return (
     <div className="space-y-8 text-left max-w-4xl mx-auto py-4">
@@ -162,11 +172,18 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
 
         <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-brand-border shadow-xs space-y-1">
           <span className="text-[11px] font-medium text-brand-secondary block">
-            Your Coverage Contribution
+            Accepted Coverage Impact
           </span>
-          <span className="text-2xl font-extrabold text-brand-teal font-mono">
-            +{total_coverage_delta_contributed.toFixed(2)}%
-          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-extrabold text-emerald-600 font-mono">
+              +{acceptedDelta.toFixed(2)}%
+            </span>
+          </div>
+          {pendingDelta > 0 && (
+            <span className="text-[10px] text-slate-500 font-mono block">
+              (+{pendingDelta.toFixed(2)}% pending review)
+            </span>
+          )}
         </div>
 
         <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-brand-border shadow-xs space-y-1">
@@ -187,7 +204,23 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
             <h3 className="text-base font-bold">Your Evidence Coverage Delta</h3>
           </div>
           <span className="text-xs font-mono font-bold text-cyan-300 bg-cyan-500/20 px-2.5 py-1 rounded border border-cyan-500/30 self-start sm:self-auto">
-            +{total_coverage_delta_contributed.toFixed(2)} percentage points
+            +{acceptedDelta.toFixed(2)} percentage points accepted
+          </span>
+        </div>
+
+        {/* 3-Stage Evidence Lifecycle Separation */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs py-1 border-b border-cyan-800/60 pb-3">
+          <span className="font-semibold text-cyan-200">Evidence Lifecycle:</span>
+          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono">
+            1. Submitted
+          </span>
+          <span className="text-cyan-500">→</span>
+          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono">
+            2. Reviewed
+          </span>
+          <span className="text-cyan-500">→</span>
+          <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 text-[11px] font-mono font-semibold">
+            3. Accepted for Research
           </span>
         </div>
 
@@ -213,6 +246,15 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
             </span>
           </div>
         </div>
+
+        {pendingDelta > 0 && (
+          <div className="text-xs px-3 py-2 rounded-lg bg-cyan-950/70 border border-cyan-800 text-cyan-300 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>
+              <strong>Review Pending:</strong> You have submitted +{pendingDelta.toFixed(2)}% in potential evidence awaiting researcher review. Accepted coverage only increases after research verification.
+            </span>
+          </div>
+        )}
 
         <p className="text-[11px] text-slate-400 leading-relaxed border-t border-slate-800 pt-3">
           {epistemic_notice}
@@ -250,7 +292,7 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
           Contribution Ledger & Provenance
         </h3>
         <p className="text-xs text-brand-secondary">
-          Track the status of your submitted evidence through the research review lifecycle.
+          Track the status of your submitted evidence through the research review lifecycle. A raw submission represents submitted potential; accepted evidence closes verified research gaps.
         </p>
 
         {recent_contributions.length === 0 ? (
@@ -267,61 +309,102 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {recent_contributions.map((item) => (
-              <div key={item.submission_id} className="py-4 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span className="text-xs font-bold text-brand-text">{item.mission_title}</span>
-                  <span className="text-[11px] text-brand-secondary font-mono">
-                    {new Date(item.submitted_at).toLocaleDateString()}
-                  </span>
-                </div>
+            {recent_contributions.map((item) => {
+              const dimsUpper = item.dimensions_provided.map((d) => d.toUpperCase()).join(", ") || "PHYSICAL EVIDENCE";
+              const isAccepted = item.review_status === "ACCEPTED_FOR_RESEARCH";
+              const isMoreEvidence = item.review_status === "MORE_EVIDENCE_REQUESTED";
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  {item.dimensions_provided.map((d) => (
+              // Factual statement compliant with acceptance criteria
+              const factualStatement = item.impact_statement || (
+                isAccepted
+                  ? `Your accepted evidence closed the ${dimsUpper} gap.`
+                  : isMoreEvidence
+                  ? `Researcher requested additional verification for ${dimsUpper}.`
+                  : `Your evidence was submitted for ${dimsUpper}.`
+              );
+
+              return (
+                <div key={item.submission_id} className="py-4 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-xs font-bold text-brand-text">{item.mission_title}</span>
+                    <span className="text-[11px] text-brand-secondary font-mono">
+                      {new Date(item.submitted_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {/* Factual Statement Callout */}
+                  <div
+                    className={`text-xs p-2.5 rounded-lg border flex items-center gap-2 ${
+                      isAccepted
+                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-900 font-medium"
+                        : isMoreEvidence
+                        ? "bg-amber-50/70 border-amber-200 text-amber-900 font-medium"
+                        : "bg-slate-50 border-slate-200 text-slate-800"
+                    }`}
+                  >
+                    {isAccepted ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                    )}
+                    <span>{factualStatement}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {item.dimensions_provided.map((d) => (
+                      <span
+                        key={d}
+                        className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
+                      >
+                        {d.replace(/_/g, " ")}
+                      </span>
+                    ))}
+
                     <span
-                      key={d}
-                      className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                        isAccepted
+                          ? "text-emerald-800 bg-emerald-50 border-emerald-200"
+                          : "text-slate-700 bg-slate-100 border-slate-200"
+                      }`}
                     >
-                      {d.replace(/_/g, " ")}
+                      {isAccepted
+                        ? `+${item.coverage_delta_pct.toFixed(2)}% accepted coverage`
+                        : `+${item.coverage_delta_pct.toFixed(2)}% potential (pending review)`}
                     </span>
-                  ))}
 
-                  <span className="text-[10px] font-mono font-bold text-brand-teal bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
-                    +{item.coverage_delta_pct.toFixed(2)}% coverage
-                  </span>
+                    {isAccepted ? (
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Accepted for Research</span>
+                      </span>
+                    ) : isMoreEvidence ? (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
+                        More Evidence Requested
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Awaiting Research Review</span>
+                      </span>
+                    )}
+                  </div>
 
-                  {item.review_status === "ACCEPTED_FOR_RESEARCH" ? (
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Accepted for Research</span>
-                    </span>
-                  ) : item.review_status === "MORE_EVIDENCE_REQUESTED" ? (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
-                      More Evidence Requested
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>Awaiting Research Review</span>
-                    </span>
+                  {item.signal_case_id && (
+                    <div className="pt-0.5 text-[11px] text-brand-secondary flex items-center gap-1">
+                      <span>Linked to SignalCase:</span>
+                      <button
+                        type="button"
+                        onClick={() => onSelectCase?.(item.signal_case_id!)}
+                        className="font-mono text-brand-teal hover:underline inline-flex items-center gap-0.5"
+                      >
+                        <span>{item.signal_case_id}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
                   )}
                 </div>
-
-                {item.signal_case_id && (
-                  <div className="pt-1 text-[11px] text-brand-secondary flex items-center gap-1">
-                    <span>Linked to SignalCase:</span>
-                    <button
-                      type="button"
-                      onClick={() => onSelectCase?.(item.signal_case_id!)}
-                      className="font-mono text-brand-teal hover:underline inline-flex items-center gap-0.5"
-                    >
-                      <span>{item.signal_case_id}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

@@ -120,7 +120,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
             StreamSignal Evidence Mission Agent.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => setIsContactModalOpen(true)}
@@ -240,7 +240,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
           {missions.map((m) => (
             <div
               key={m.id}
-              className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 shadow-lg flex flex-col justify-between transition-all"
+              className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 shadow-lg flex flex-col justify-between transition-all"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

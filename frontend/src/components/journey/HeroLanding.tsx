@@ -13,17 +13,17 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
   return (
     <div className="space-y-8">
       {/* Hero Container */}
-      <div className="bg-brand-surface rounded-2xl border border-brand-border p-8 sm:p-12 shadow-xs text-center space-y-6">
-        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-brand-light text-brand-dark text-xs font-semibold border border-brand-border">
+      <div className="bg-brand-surface rounded-2xl border border-brand-border p-4 sm:p-12 shadow-xs text-center space-y-6">
+        <div className="inline-flex items-center space-x-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-brand-light text-brand-dark text-[11px] sm:text-xs font-semibold border border-brand-border">
           <Waves className="w-3.5 h-3.5 text-brand-teal" />
           <span>Urban Freshwater Evidence System</span>
         </div>
 
         <div className="max-w-2xl mx-auto space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-brand-text tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-brand-text tracking-tight leading-tight">
             Notice something unusual in a stream?
           </h1>
-          <p className="text-base sm:text-lg text-brand-secondary leading-relaxed">
+          <p className="text-sm sm:text-lg text-brand-secondary leading-relaxed">
             Show us what you saw. We'll help turn your observation into structured, reviewable evidence for researchers and local monitors.
           </p>
         </div>
@@ -33,11 +33,13 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
           <button
             type="button"
             onClick={onStartWithPhoto}
-            className="w-full inline-flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-base font-bold text-white bg-brand-teal hover:bg-brand-dark shadow-sm hover:shadow transition-all group"
+            className="w-full inline-flex flex-col sm:flex-row items-center justify-center sm:space-x-3 px-4 sm:px-6 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-brand-teal hover:bg-brand-dark shadow-sm hover:shadow transition-all group gap-1 sm:gap-0"
           >
-            <Camera className="w-5 h-5 text-brand-light group-hover:scale-110 transition-transform" />
-            <span>Capture what you see</span>
-            <span className="text-xs font-normal opacity-90 pl-1">(~30–60 seconds)</span>
+            <div className="flex items-center space-x-2">
+              <Camera className="w-5 h-5 text-brand-light group-hover:scale-110 transition-transform" />
+              <span>Capture what you see</span>
+            </div>
+            <span className="text-xs font-normal opacity-90 sm:pl-1">(~30–60 seconds)</span>
           </button>
 
           <button

@@ -110,11 +110,11 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
 
   return (
     <div
+      className="p-3.5 sm:p-6"
       style={{
         background: "#0d1527",
         border: "1px solid #1e293b",
         borderRadius: "12px",
-        padding: "24px",
         color: "#e2e8f0",
         marginBottom: "24px",
       }}
@@ -126,6 +126,8 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
           justifyContent: "space-between",
           alignItems: "flex-start",
           marginBottom: "16px",
+          flexWrap: "wrap",
+          gap: "12px",
         }}
       >
         <div>
@@ -296,10 +298,12 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
                     justifyContent: "space-between",
                     alignItems: "flex-start",
                     marginBottom: "8px",
+                    flexWrap: "wrap",
+                    gap: "6px",
                   }}
                 >
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 600, fontSize: "14px", color: "#f8fafc" }}>
                         {need.title}
                       </span>
@@ -352,6 +356,8 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
                     marginTop: "12px",
                     paddingTop: "8px",
                     borderTop: "1px solid #1e293b",
+                    flexWrap: "wrap",
+                    gap: "8px",
                   }}
                 >
                   <div style={{ fontSize: "11px", color: "#64748b" }}>
@@ -364,7 +370,7 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
                   </div>
 
                   {/* Researcher FSM Actions */}
-                  <div style={{ display: "flex", gap: "6px" }}>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     {need.status === "IDENTIFIED" && (
                       <>
                         <button

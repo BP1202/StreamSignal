@@ -122,11 +122,11 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
 
   return (
     <div
+      className="p-3.5 sm:p-6"
       style={{
         background: "#0d1527",
         border: "1px solid #1e293b",
         borderRadius: "12px",
-        padding: "24px",
         color: "#e2e8f0",
         marginBottom: "24px",
       }}
@@ -138,6 +138,8 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
           justifyContent: "space-between",
           alignItems: "flex-start",
           marginBottom: "16px",
+          flexWrap: "wrap",
+          gap: "12px",
         }}
       >
         <div>
@@ -278,7 +280,7 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 250px), 1fr))",
                 gap: "16px",
               }}
             >

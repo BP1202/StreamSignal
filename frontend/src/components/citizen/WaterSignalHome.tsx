@@ -83,7 +83,7 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
         </div>
       )}
       {/* ── 1. Hero: Purpose Before Functionality ──────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-slate-900 to-brand-surface border border-brand-border p-6 sm:p-10 shadow-lg text-white">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-slate-900 to-brand-surface border border-brand-border p-4 sm:p-10 shadow-lg text-white">
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-semibold">
             <Droplets className="w-3.5 h-3.5 text-cyan-400" />
@@ -105,11 +105,11 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
             — closing information gaps before problems escalate.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3">
+          <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={onStartWithPhoto}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-brand-teal hover:bg-cyan-600 text-white shadow-md transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-brand-teal hover:bg-cyan-600 text-white shadow-md transition-all"
             >
               <Camera className="w-4 h-4" />
               <span>Capture what you see</span>
@@ -117,7 +117,7 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
             <button
               type="button"
               onClick={onGoToMissions}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
             >
               <Compass className="w-4 h-4" />
               <span>Explore Missions</span>
@@ -125,7 +125,7 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
             <button
               type="button"
               onClick={onStartWithoutPhoto}
-              className="text-xs text-slate-400 hover:text-white underline underline-offset-4 px-2 py-2"
+              className="w-full sm:w-auto text-xs text-slate-400 hover:text-white underline underline-offset-4 px-2 py-2 text-center"
             >
               Or start without a photo →
             </button>
@@ -226,14 +226,14 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
 
       {/* ── 3. Actionable Evidence Opportunity Card ──────────────────────── */}
       {loading ? (
-        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-6 text-white shadow-sm space-y-2 text-center animate-pulse">
+        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-4 sm:p-6 text-white shadow-sm space-y-2 text-center animate-pulse">
           <div className="text-sm font-semibold text-slate-200">Loading evidence...</div>
           <p className="text-xs text-slate-400">Checking targeted research mission availability...</p>
         </section>
       ) : recommendedMissions.length > 0 ? (
-        <section className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-900 rounded-2xl border border-cyan-800/80 p-6 text-white shadow-lg space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">
+        <section className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-900 rounded-2xl border border-cyan-800/80 p-4 sm:p-6 text-white shadow-lg space-y-4">
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30 self-start xs:self-auto">
               Recommended Evidence Mission
             </span>
             <span className="text-xs text-cyan-300 font-mono font-semibold">
@@ -290,9 +290,9 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
           </div>
         </section>
       ) : (
-        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-6 text-white shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 px-2.5 py-1 rounded-md border border-slate-700">
+        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-4 sm:p-6 text-white shadow-sm space-y-4">
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 px-2.5 py-1 rounded-md border border-slate-700 self-start xs:self-auto">
               Catchment Surveillance
             </span>
             <span className="text-xs text-slate-400 font-mono font-semibold">

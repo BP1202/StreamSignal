@@ -256,10 +256,10 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
       </div>
 
       {/* Workspace Sub-Tab Navigation */}
-      <div className="flex items-center gap-3 border-b border-brand-border pb-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-brand-border pb-3">
         <button
           onClick={() => setActiveWorkspaceTab("inbox")}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
             activeWorkspaceTab === "inbox"
               ? "bg-brand-dark text-white shadow-xs"
               : "bg-white text-brand-secondary hover:text-brand-text border border-brand-border"
@@ -287,7 +287,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
 
         <button
           onClick={() => setActiveWorkspaceTab("gaps_and_needs")}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all ${
             activeWorkspaceTab === "gaps_and_needs"
               ? "bg-brand-dark text-white shadow-xs"
               : "bg-white text-brand-secondary hover:text-brand-text border border-brand-border"
@@ -540,11 +540,11 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
             return (
               <div
                 key={item.case_id}
-                className="bg-white rounded-xl border border-brand-border hover:border-brand-teal/50 hover:shadow-md transition-all p-5 space-y-4"
+                className="bg-white rounded-xl border border-brand-border hover:border-brand-teal/50 hover:shadow-md transition-all p-3.5 sm:p-5 space-y-4"
               >
                 {/* Card Top: Identity & Action Badge */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="font-mono text-xs font-bold bg-gray-100 text-brand-text px-2 py-1 rounded-md">
                       {shortId}
                     </span>
@@ -562,13 +562,13 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
                 </div>
 
                 {/* Evidence Metrics Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50/70 p-3 rounded-lg text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 bg-gray-50/70 p-3 rounded-lg text-xs">
                   <div>
                     <span className="text-gray-500 text-[10px] uppercase font-semibold block mb-0.5">
                       Completeness
                     </span>
                     <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-16 bg-gray-200 h-1.5 rounded-full overflow-hidden shrink-0">
                         <div
                           className="bg-brand-teal h-full rounded-full"
                           style={{ width: `${pct}%` }}
@@ -650,7 +650,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectCase(item.case_id)}
-                    className="inline-flex items-center gap-2 text-xs font-semibold bg-brand-teal hover:bg-brand-dark text-white px-4 py-2 rounded-lg transition-colors shadow-xs"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold bg-brand-teal hover:bg-brand-dark text-white px-4 py-2 rounded-lg transition-colors shadow-xs"
                   >
                     <span>Investigate Evidence Case</span>
                     <ArrowRight className="w-3.5 h-3.5" />

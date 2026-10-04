@@ -284,7 +284,7 @@ export const App: React.FC = () => {
 
       <main className="flex-1 w-full mx-auto">
         {workspaceMode === "missions" || (workspaceMode === "citizen" && citizenTab === "missions") ? (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
             <CitizenMissionPortal
               onCaseCreated={(caseId) => {
                 setWorkspaceMode("research");
@@ -317,7 +317,7 @@ export const App: React.FC = () => {
             />
           )
         ) : (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
             {currentStep === "case" && evidenceCase ? (
               <EvidenceCaseView
                 evidenceCase={evidenceCase}

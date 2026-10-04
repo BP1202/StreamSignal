@@ -19,6 +19,16 @@
   color-scheme: light;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -27,6 +37,12 @@ body {
   color: #172525;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure pre and code blocks never overflow mobile containers */
+pre, code, kbd, samp {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Accessible focus ring */

@@ -43,22 +43,22 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-brand-surface border-b border-brand-border sticky top-0 z-30 shadow-xs">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-1.5 sm:gap-2">
         {/* Brand & Catchment Identity */}
         <div
-          className="flex items-center space-x-3 cursor-pointer shrink-0"
+          className="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0"
           onClick={() => {
             if (onSwitchMode) onSwitchMode("citizen");
             if (onSwitchCitizenTab) onSwitchCitizenTab("home");
           }}
         >
-          <div className="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center text-brand-teal">
-            <Droplets className="w-6 h-6" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-brand-light flex items-center justify-center text-brand-teal shrink-0">
+            <Droplets className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg text-brand-text tracking-tight">StreamSignal</span>
-              <span className="text-[11px] font-semibold bg-brand-light text-brand-dark px-2 py-0.5 rounded-full">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <span className="font-bold text-base sm:text-lg text-brand-text tracking-tight">StreamSignal</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold bg-brand-light text-brand-dark px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:inline-block">
                 One Health
               </span>
             </div>
@@ -165,9 +165,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onNewObservation}
               type="button"
-              className="text-xs sm:text-sm font-medium bg-brand-teal text-white hover:bg-brand-dark px-3.5 py-1.5 rounded-md transition-colors shadow-xs"
+              className="text-xs sm:text-sm font-medium bg-brand-teal text-white hover:bg-brand-dark px-2.5 sm:px-3.5 py-1.5 rounded-md transition-colors shadow-xs whitespace-nowrap"
             >
-              + New Observation
+              <span className="hidden sm:inline">+ New Observation</span>
+              <span className="sm:hidden">+ New</span>
             </button>
           )}
 
@@ -175,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-brand-secondary hover:text-brand-text hover:bg-gray-100 transition-colors border border-brand-border"
+            className="md:hidden p-1.5 sm:p-2 rounded-lg text-brand-secondary hover:text-brand-text hover:bg-gray-100 transition-colors border border-brand-border shrink-0"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

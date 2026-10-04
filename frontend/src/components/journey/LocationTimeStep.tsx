@@ -116,18 +116,18 @@ export const LocationTimeStep: React.FC<LocationTimeStepProps> = ({
   return (
     <form onSubmit={handleValidateAndSubmit} className="space-y-6" noValidate>
       {/* Header */}
-      <div className="bg-brand-surface rounded-xl border border-brand-border p-6 shadow-xs">
-        <div className="flex items-start justify-between">
+      <div className="bg-brand-surface rounded-xl border border-brand-border p-3.5 sm:p-6 shadow-xs">
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-xl font-bold text-brand-text">Where & when did you see it?</h2>
-            <p className="text-sm text-brand-secondary mt-1">
+            <h2 className="text-lg sm:text-xl font-bold text-brand-text">Where & when did you see it?</h2>
+            <p className="text-xs sm:text-sm text-brand-secondary mt-1">
               Coordinates tie your observation to the specific stream segment.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowWhy(!showWhy)}
-            className="inline-flex items-center space-x-1 text-xs text-brand-teal hover:text-brand-dark transition-colors"
+            className="inline-flex items-center space-x-1 text-xs text-brand-teal hover:text-brand-dark transition-colors shrink-0"
           >
             <HelpCircle className="w-4 h-4" />
             <span>Why location?</span>
@@ -152,7 +152,7 @@ export const LocationTimeStep: React.FC<LocationTimeStepProps> = ({
       </div>
 
       {/* Location Card */}
-      <div className="bg-brand-surface rounded-xl border border-brand-border p-6 shadow-xs space-y-4">
+      <div className="bg-brand-surface rounded-xl border border-brand-border p-3.5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-brand-border pb-3">
           <div className="flex items-center space-x-2">
             <MapPin className="w-5 h-5 text-brand-teal" />
@@ -278,12 +278,12 @@ export const LocationTimeStep: React.FC<LocationTimeStepProps> = ({
       </div>
 
       {/* Navigation & Submit CTA */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          className="text-xs font-semibold text-brand-secondary hover:text-brand-text px-4 py-2 transition-colors disabled:opacity-50"
+          className="text-xs font-semibold text-brand-secondary hover:text-brand-text px-4 py-2 transition-colors disabled:opacity-50 text-center sm:text-left"
         >
           &larr; Back
         </button>
@@ -291,7 +291,7 @@ export const LocationTimeStep: React.FC<LocationTimeStepProps> = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center justify-center space-x-2 px-8 py-3 rounded-xl text-sm font-bold text-white bg-brand-teal hover:bg-brand-dark disabled:opacity-50 shadow-sm hover:shadow transition-all min-w-[220px]"
+          className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 sm:px-8 py-3 rounded-xl text-sm font-bold text-white bg-brand-teal hover:bg-brand-dark disabled:opacity-50 shadow-sm hover:shadow transition-all min-w-0 sm:min-w-[220px]"
         >
           {isSubmitting ? (
             <div className="flex items-center space-x-2">

@@ -82,7 +82,7 @@ export const InterviewModal: React.FC<InterviewModalProps> = ({
   };
 
   return (
-    <div className="bg-brand-surface rounded-2xl border border-brand-border p-6 sm:p-8 shadow-xs space-y-6">
+    <div className="bg-brand-surface rounded-2xl border border-brand-border p-3.5 sm:p-8 shadow-xs space-y-6">
       <div className="flex items-start space-x-3 border-b border-brand-border pb-4">
         <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand-teal shrink-0">
           <Sparkles className="w-5 h-5" />

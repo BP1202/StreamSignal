@@ -131,9 +131,9 @@ export const SignalCaseInvestigationView: React.FC<
   const currentEvidenceState = caseDetail.evidence_state || "E1_REPORTED";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
       {/* Top Nav & Context Breadcrumb */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-2.5 sm:gap-4">
         <button
           onClick={onBackToInbox}
           className="text-xs font-semibold text-brand-secondary hover:text-brand-dark flex items-center gap-1.5 transition-colors"
@@ -142,7 +142,7 @@ export const SignalCaseInvestigationView: React.FC<
           Back to Evidence Inbox
         </button>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <span className="text-xs font-mono bg-gray-100 text-brand-text px-2.5 py-1 rounded-md font-semibold">
             {shortId}
           </span>
@@ -159,14 +159,14 @@ export const SignalCaseInvestigationView: React.FC<
       </div>
 
       {/* Case Overview Card */}
-      <div className="bg-brand-surface rounded-xl border border-brand-border p-6 shadow-xs space-y-4">
+      <div className="bg-brand-surface rounded-xl border border-brand-border p-3.5 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-brand-border pb-4">
           <div>
-            <h1 className="text-2xl font-bold text-brand-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-brand-text tracking-tight">
               SignalCase Investigation
             </h1>
-            <div className="flex items-center gap-4 text-xs text-brand-secondary mt-1.5 flex-wrap">
-              <span className="flex items-center gap-1 font-mono">
+            <div className="flex items-center gap-2.5 sm:gap-4 text-xs text-brand-secondary mt-1.5 flex-wrap">
+              <span className="flex items-center gap-1 font-mono break-all text-[11px] sm:text-xs">
                 UUID: {caseDetail.case_id}
               </span>
               <span className="flex items-center gap-1">
@@ -180,12 +180,12 @@ export const SignalCaseInvestigationView: React.FC<
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
+            <div className="text-left sm:text-right">
               <span className="text-[10px] uppercase font-semibold text-gray-400 block">
                 Evidence Completeness
               </span>
-              <span className="text-lg font-bold text-brand-text">
+              <span className="text-base sm:text-lg font-bold text-brand-text">
                 {pct}% ({caseDetail.evidence_quality.quality})
               </span>
             </div>
@@ -193,7 +193,7 @@ export const SignalCaseInvestigationView: React.FC<
             <button
               type="button"
               onClick={() => setIsContactModalOpen(true)}
-              className="text-xs font-semibold text-brand-teal bg-white border border-brand-teal/40 hover:bg-brand-light px-3.5 py-2.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-semibold text-brand-teal bg-white border border-brand-teal/40 hover:bg-brand-light px-3.5 py-2 sm:py-2.5 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Contact Contributor</span>
@@ -202,7 +202,7 @@ export const SignalCaseInvestigationView: React.FC<
             <button
               type="button"
               onClick={() => setIsReviewOpen((prev) => !prev)}
-              className="text-xs font-semibold text-white bg-brand-dark hover:bg-brand-dark/90 px-4 py-2.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-semibold text-white bg-brand-dark hover:bg-brand-dark/90 px-4 py-2 sm:py-2.5 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
             >
               <UserCheck className="w-4 h-4" />
               <span>{isReviewOpen ? "Close Review Panel" : "Start Review"}</span>

@@ -151,7 +151,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
   }
 
   return (
-    <div className="bg-white rounded-xl border border-brand-border p-6 shadow-xs">
+    <div className="bg-white rounded-xl border border-brand-border p-3.5 sm:p-6 shadow-xs">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
@@ -451,17 +451,17 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       {/* 1. Evidence Passport Modal */}
       {/* ------------------------------------------------------------- */}
       {isPassportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2">
                 <FileCheck className="w-5 h-5 text-indigo-600" />
                 <div>
-                  <h4 className="text-base font-bold text-slate-900">
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900">
                     SignalCase Evidence Passport
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] sm:text-xs text-slate-500">
                     Comprehensive provenance-rich evidence specification (Version {passport.metadata.schema_version})
                   </p>
                 </div>
@@ -476,7 +476,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Modal Content Scroll Area */}
-            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+            <div className="p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 text-xs text-slate-700">
               {/* Section 1: Governance & Identity */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -645,14 +645,14 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50/50">
               <span className="text-[11px] text-slate-500">
                 Generated: {new Date(passport.metadata.generated_at).toUTCString()}
               </span>
               <button
                 type="button"
                 onClick={() => handleCopy(JSON.stringify(passport, null, 2), "passport")}
-                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
               >
                 {copiedKey === "passport" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedKey === "passport" ? "Copied JSON" : "Copy Passport JSON"}</span>
@@ -666,17 +666,17 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       {/* 2. FHIR R4 Bundle Modal */}
       {/* ------------------------------------------------------------- */}
       {isFhirModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2">
                 <Code2 className="w-5 h-5 text-indigo-600" />
                 <div>
-                  <h4 className="text-base font-bold text-slate-900">
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900">
                     FHIR R4-Compatible Collection Bundle
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] sm:text-xs text-slate-500">
                     Deterministic bundle with {fhirBundle.total} resources (Location, QR, Observations, Media, Task, Provenance)
                   </p>
                 </div>
@@ -691,13 +691,13 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Code Box */}
-            <div className="p-4 bg-slate-950 overflow-y-auto flex-1 font-mono text-xs text-emerald-400 leading-relaxed">
-              <pre className="whitespace-pre-wrap">{JSON.stringify(fhirBundle, null, 2)}</pre>
+            <div className="p-3 sm:p-4 bg-slate-950 overflow-y-auto flex-1 font-mono text-xs text-emerald-400 leading-relaxed">
+              <pre className="whitespace-pre-wrap break-all overflow-x-auto text-[11px] sm:text-xs">{JSON.stringify(fhirBundle, null, 2)}</pre>
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-2">
+            <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50/50">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-sm">
                   Reference Integrity: Verified
                 </span>
@@ -708,7 +708,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
               <button
                 type="button"
                 onClick={() => handleCopy(JSON.stringify(fhirBundle, null, 2), "fhir")}
-                className="text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
               >
                 {copiedKey === "fhir" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedKey === "fhir" ? "Copied FHIR JSON" : "Copy FHIR JSON"}</span>
@@ -722,17 +722,17 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       {/* 3. Provenance Trail Modal */}
       {/* ------------------------------------------------------------- */}
       {isProvenanceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2">
                 <GitBranch className="w-5 h-5 text-indigo-600" />
                 <div>
-                  <h4 className="text-base font-bold text-slate-900">
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900">
                     FHIR Provenance Chain
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] sm:text-xs text-slate-500">
                     Authoritative actor attribution and activity linkage from immutable audit lineage
                   </p>
                 </div>
@@ -747,7 +747,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div className="p-3.5 sm:p-6 overflow-y-auto space-y-4">
               {passport.lineage.events.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">No provenance events recorded yet.</p>
               ) : (
@@ -755,7 +755,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
                   <div key={ev.event_id} className="relative pl-6 pb-4 border-l-2 border-indigo-200 last:border-l-transparent">
                     <span className="absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-indigo-600 ring-4 ring-white" />
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <span className="text-xs font-bold text-slate-800">{ev.event_type}</span>
                         <span className="text-[10px] text-slate-400">{new Date(ev.created_at).toLocaleString()}</span>
                       </div>
@@ -770,14 +770,14 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50/50">
               <span className="text-[11px] text-slate-500">
                 Total Provenance Resources: {passport.lineage.total_events}
               </span>
               <button
                 type="button"
                 onClick={() => handleCopy(JSON.stringify(passport.lineage, null, 2), "provenance")}
-                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
               >
                 {copiedKey === "provenance" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedKey === "provenance" ? "Copied Provenance" : "Copy Provenance JSON"}</span>

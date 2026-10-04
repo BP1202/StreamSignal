@@ -98,18 +98,18 @@ export const ObservationSignalsStep: React.FC<ObservationSignalsStepProps> = ({
   return (
     <div className="space-y-6">
       {/* Step Header */}
-      <div className="bg-brand-surface rounded-xl border border-brand-border p-6 shadow-xs">
-        <div className="flex items-start justify-between">
+      <div className="bg-brand-surface rounded-xl border border-brand-border p-3.5 sm:p-6 shadow-xs">
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-xl font-bold text-brand-text">What caught your attention?</h2>
-            <p className="text-sm text-brand-secondary mt-1">
+            <h2 className="text-lg sm:text-xl font-bold text-brand-text">What caught your attention?</h2>
+            <p className="text-xs sm:text-sm text-brand-secondary mt-1">
               Select any visual signals that you noticed today. You don't need to know the cause.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowWhy(!showWhy)}
-            className="inline-flex items-center space-x-1 text-xs text-brand-teal hover:text-brand-dark transition-colors"
+            className="inline-flex items-center space-x-1 text-xs text-brand-teal hover:text-brand-dark transition-colors shrink-0"
           >
             <HelpCircle className="w-4 h-4" />
             <span>Why structured?</span>
@@ -124,7 +124,7 @@ export const ObservationSignalsStep: React.FC<ObservationSignalsStepProps> = ({
       </div>
 
       {/* Visual Signal Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         {VISUAL_SIGNALS.map((sig) => {
           const isSelected = selectedCards.has(sig.id);
           return (
@@ -132,7 +132,7 @@ export const ObservationSignalsStep: React.FC<ObservationSignalsStepProps> = ({
               key={sig.id}
               type="button"
               onClick={() => handleToggleCard(sig.id, sig.fieldTrigger)}
-              className={`p-4 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+              className={`p-3 sm:p-4 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
                 isSelected
                   ? "border-brand-teal bg-brand-light/40 ring-1 ring-brand-teal shadow-xs"
                   : "border-brand-border bg-brand-surface hover:bg-gray-50"
@@ -270,11 +270,11 @@ export const ObservationSignalsStep: React.FC<ObservationSignalsStepProps> = ({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-2 gap-2">
         <button
           type="button"
           onClick={onBack}
-          className="text-xs font-semibold text-brand-secondary hover:text-brand-text px-4 py-2 transition-colors"
+          className="text-xs font-semibold text-brand-secondary hover:text-brand-text px-3 py-2 transition-colors"
         >
           &larr; Back
         </button>
@@ -282,7 +282,7 @@ export const ObservationSignalsStep: React.FC<ObservationSignalsStepProps> = ({
         <button
           type="button"
           onClick={handleContinue}
-          className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-lg text-xs font-bold text-white bg-brand-teal hover:bg-brand-dark transition-colors shadow-xs"
+          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white bg-brand-teal hover:bg-brand-dark transition-colors shadow-xs"
         >
           <span>Continue to location</span>
           <ArrowRight className="w-4 h-4" />

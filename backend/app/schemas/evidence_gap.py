@@ -60,6 +60,11 @@ class EvidenceGapListResponse(BaseModel):
     total_cases_analyzed: int
     gaps: List[EvidenceGapSummary]
     analysis_timestamp: datetime
+    overall_coverage_ratio: float = 0.0
+    overall_coverage_percentage: float = 0.0
+    total_potential_dimensions: int = 0
+    total_dimensions_present: int = 0
+    potential_coverage_per_dimension: float = 0.0
     epistemic_notice: str = (
         "Evidence availability statistics describe the completeness of collected data only. "
         "Missing evidence dimensions do not establish environmental conditions, toxicity, or health risk."

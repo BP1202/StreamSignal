@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Header } from "./components/layout/Header";
+import { Header, CitizenTab } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 import { JourneyProgress } from "./components/journey/JourneyProgress";
 import { HeroLanding } from "./components/journey/HeroLanding";
@@ -8,6 +8,8 @@ import { ObservationSignalsStep } from "./components/journey/ObservationSignalsS
 import { LocationTimeStep } from "./components/journey/LocationTimeStep";
 import { InterviewModal } from "./components/interview/InterviewModal";
 import { EvidenceCaseView } from "./components/evidence/EvidenceCaseView";
+import { WaterSignalHome } from "./components/citizen/WaterSignalHome";
+import { CitizenImpactView } from "./components/citizen/CitizenImpactView";
 import {
   createReport,
   uploadReportMedia,
@@ -35,7 +37,9 @@ export const App: React.FC = () => {
   // Top-level workspace mode: "citizen" (reporting journey) vs "missions" (Mission Agent) vs "research" (Research Workspace)
   const initialRoute = getRouteState();
   const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "missions" | "research">(initialRoute.mode);
+  const [citizenTab, setCitizenTab] = useState<CitizenTab>(initialRoute.citizenTab || "home");
   const [researchCaseId, setResearchCaseId] = useState<string | null>(initialRoute.caseId);
+
 
   const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -95,17 +99,19 @@ export const App: React.FC = () => {
     const handlePopState = () => {
       const route = getRouteState();
       setWorkspaceMode(route.mode);
+      setCitizenTab(route.citizenTab || "home");
       if (route.mode === "research") {
         setResearchCaseId(route.caseId);
       } else {
         setResearchCaseId(null);
         if (route.caseId) {
           loadCaseAndTriage(route.caseId, false);
-        } else {
+        } else if (route.citizenTab !== "observe") {
           setCurrentStep("landing");
         }
       }
     };
+
 
     window.addEventListener("popstate", handlePopState);
 
@@ -121,8 +127,10 @@ export const App: React.FC = () => {
   }, [loadCaseAndTriage]);
 
   const resetJourney = () => {
-    navigateTo("citizen", null);
+    navigateTo("citizen", null, "home");
+    setCitizenTab("home");
     setCurrentStep("landing");
+
     setIsSubmitting(false);
     setSubmittingMessage("");
     setErrorMessage(null);
@@ -232,31 +240,62 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg">
       <Header
-        onNewObservation={resetJourney}
+        onNewObservation={() => {
+          setWorkspaceMode("citizen");
+          setCitizenTab("observe");
+          setCurrentStep("landing");
+          navigateTo("citizen", null, "observe");
+        }}
         showNewButton={workspaceMode === "citizen" && currentStep !== "landing"}
         mode={workspaceMode}
+        citizenTab={citizenTab}
+        onSwitchCitizenTab={(tab) => {
+          setCitizenTab(tab);
+          if (tab === "missions") {
+            setWorkspaceMode("missions");
+            navigateTo("missions", null);
+          } else {
+            setWorkspaceMode("citizen");
+            if (tab === "observe") {
+              setCurrentStep("landing");
+              navigateTo("citizen", null, "observe");
+            } else if (tab === "impact") {
+              navigateTo("citizen", null, "impact");
+            } else {
+              navigateTo("citizen", null, "home");
+            }
+          }
+        }}
         onSwitchMode={(mode) => {
           setWorkspaceMode(mode);
           if (mode === "research") {
             setResearchCaseId(null);
             navigateTo("research", null);
           } else if (mode === "missions") {
+            setCitizenTab("missions");
             setResearchCaseId(null);
             navigateTo("missions", null);
           } else {
-            navigateTo("citizen", null);
+            setCitizenTab("home");
+            navigateTo("citizen", null, "home");
           }
         }}
       />
 
       <main className="flex-1 w-full mx-auto">
-        {workspaceMode === "missions" ? (
+        {workspaceMode === "missions" || (workspaceMode === "citizen" && citizenTab === "missions") ? (
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <CitizenMissionPortal
               onCaseCreated={(caseId) => {
                 setWorkspaceMode("research");
                 setResearchCaseId(caseId);
                 navigateTo("research", caseId);
+              }}
+              onGoToObserve={() => {
+                setWorkspaceMode("citizen");
+                setCitizenTab("observe");
+                setCurrentStep("landing");
+                navigateTo("citizen", null, "observe");
               }}
             />
           </div>
@@ -279,105 +318,150 @@ export const App: React.FC = () => {
           )
         ) : (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <JourneyProgress currentStep={currentStep} />
-
-            {currentStep === "landing" && (
-              <HeroLanding
-                onStartWithPhoto={() => setCurrentStep("capture")}
-                onStartWithoutPhoto={() => setCurrentStep("signals")}
+            {currentStep === "case" && evidenceCase ? (
+              <EvidenceCaseView
+                evidenceCase={evidenceCase}
+                triage={triage}
+                onNewObservation={resetJourney}
               />
+            ) : currentStep === "error" ? (
+              <div className="bg-brand-surface rounded-2xl border border-brand-border p-8 text-center space-y-4 shadow-xs">
+                <div className="w-12 h-12 rounded-full bg-red-100 text-brand-error flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-bold text-brand-text">Workflow Interrupted</h2>
+                <p className="text-sm text-brand-secondary max-w-md mx-auto">
+                  {errorMessage || "An unexpected error occurred while processing your observation."}
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={resetJourney}
+                    className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-brand-teal hover:bg-brand-dark transition-colors"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Start Anew</span>
+                  </button>
+                </div>
+              </div>
+            ) : citizenTab === "impact" ? (
+              <CitizenImpactView
+                onGoToMissions={() => {
+                  setCitizenTab("missions");
+                  setWorkspaceMode("missions");
+                  navigateTo("missions", null);
+                }}
+                onGoToObserve={() => {
+                  setCitizenTab("observe");
+                  setCurrentStep("landing");
+                  navigateTo("citizen", null, "observe");
+                }}
+                onSelectCase={(caseId) => {
+                  setWorkspaceMode("research");
+                  setResearchCaseId(caseId);
+                  navigateTo("research", caseId);
+                }}
+              />
+            ) : citizenTab === "home" && currentStep === "landing" ? (
+              <WaterSignalHome
+                onStartWithPhoto={() => {
+                  setCitizenTab("observe");
+                  setCurrentStep("capture");
+                  navigateTo("citizen", null, "observe");
+                }}
+                onStartWithoutPhoto={() => {
+                  setCitizenTab("observe");
+                  setCurrentStep("signals");
+                  navigateTo("citizen", null, "observe");
+                }}
+                onGoToMissions={() => {
+                  setCitizenTab("missions");
+                  setWorkspaceMode("missions");
+                  navigateTo("missions", null);
+                }}
+                onGoToImpact={() => {
+                  setCitizenTab("impact");
+                  navigateTo("citizen", null, "impact");
+                }}
+              />
+            ) : (
+              <>
+                <JourneyProgress currentStep={currentStep} />
+
+                {currentStep === "landing" && (
+                  <HeroLanding
+                    onStartWithPhoto={() => setCurrentStep("capture")}
+                    onStartWithoutPhoto={() => setCurrentStep("signals")}
+                  />
+                )}
+
+                {currentStep === "capture" && (
+                  <PhotoCaptureStep
+                    mediaFile={mediaFile}
+                    onSelectMedia={(file) => setMediaFile(file)}
+                    onNext={() => setCurrentStep("signals")}
+                    onBack={() => {
+                      setCitizenTab("home");
+                      setCurrentStep("landing");
+                      navigateTo("citizen", null, "home");
+                    }}
+                  />
+                )}
+
+                {currentStep === "signals" && (
+                  <ObservationSignalsStep
+                    description={description}
+                    onChangeDescription={setDescription}
+                    waterAppearance={waterAppearance}
+                    onChangeWaterAppearance={setWaterAppearance}
+                    flowCondition={flowCondition}
+                    onChangeFlowCondition={setFlowCondition}
+                    odor={odor}
+                    onChangeOdor={setOdor}
+                    foamObserved={foamObserved}
+                    onToggleFoam={setFoamObserved}
+                    litterObserved={litterObserved}
+                    onToggleLitter={setLitterObserved}
+                    deadWildlifeObserved={deadWildlifeObserved}
+                    onToggleWildlife={setDeadWildlifeObserved}
+                    onNext={() => setCurrentStep("location")}
+                    onBack={() => (mediaFile ? setCurrentStep("capture") : setCurrentStep("landing"))}
+                  />
+                )}
+
+                {currentStep === "location" && (
+                  <LocationTimeStep
+                    latitude={latitude}
+                    onChangeLatitude={setLatitude}
+                    longitude={longitude}
+                    onChangeLongitude={setLongitude}
+                    observedAt={observedAt}
+                    onChangeObservedAt={setObservedAt}
+                    hasMedia={Boolean(mediaFile)}
+                    hasDescription={Boolean(description.trim())}
+                    hasCharacteristics={Boolean(waterAppearance || flowCondition || odor || foamObserved || litterObserved || deadWildlifeObserved)}
+                    isSubmitting={isSubmitting}
+                    submittingMessage={submittingMessage}
+                    errorMessage={errorMessage}
+                    onSubmit={handleFinalSubmit}
+                    onBack={() => setCurrentStep("signals")}
+                  />
+                )}
+
+                {currentStep === "interview" && (
+                  <InterviewModal
+                    questions={interviewQuestions}
+                    onSubmitAnswers={handleInterviewSubmit}
+                    onSkip={handleInterviewSkip}
+                    isSubmitting={isSubmittingAnswers}
+                  />
+                )}
+              </>
             )}
-
-        {currentStep === "capture" && (
-          <PhotoCaptureStep
-            mediaFile={mediaFile}
-            onSelectMedia={(file) => setMediaFile(file)}
-            onNext={() => setCurrentStep("signals")}
-            onBack={() => setCurrentStep("landing")}
-          />
-        )}
-
-        {currentStep === "signals" && (
-          <ObservationSignalsStep
-            description={description}
-            onChangeDescription={setDescription}
-            waterAppearance={waterAppearance}
-            onChangeWaterAppearance={setWaterAppearance}
-            flowCondition={flowCondition}
-            onChangeFlowCondition={setFlowCondition}
-            odor={odor}
-            onChangeOdor={setOdor}
-            foamObserved={foamObserved}
-            onToggleFoam={setFoamObserved}
-            litterObserved={litterObserved}
-            onToggleLitter={setLitterObserved}
-            deadWildlifeObserved={deadWildlifeObserved}
-            onToggleWildlife={setDeadWildlifeObserved}
-            onNext={() => setCurrentStep("location")}
-            onBack={() => (mediaFile ? setCurrentStep("capture") : setCurrentStep("landing"))}
-          />
-        )}
-
-        {currentStep === "location" && (
-          <LocationTimeStep
-            latitude={latitude}
-            onChangeLatitude={setLatitude}
-            longitude={longitude}
-            onChangeLongitude={setLongitude}
-            observedAt={observedAt}
-            onChangeObservedAt={setObservedAt}
-            hasMedia={Boolean(mediaFile)}
-            hasDescription={Boolean(description.trim())}
-            hasCharacteristics={Boolean(waterAppearance || flowCondition || odor || foamObserved || litterObserved || deadWildlifeObserved)}
-            isSubmitting={isSubmitting}
-            submittingMessage={submittingMessage}
-            errorMessage={errorMessage}
-            onSubmit={handleFinalSubmit}
-            onBack={() => setCurrentStep("signals")}
-          />
-        )}
-
-        {currentStep === "interview" && (
-          <InterviewModal
-            questions={interviewQuestions}
-            onSubmitAnswers={handleInterviewSubmit}
-            onSkip={handleInterviewSkip}
-            isSubmitting={isSubmittingAnswers}
-          />
-        )}
-
-        {currentStep === "case" && evidenceCase && (
-          <EvidenceCaseView
-            evidenceCase={evidenceCase}
-            triage={triage}
-            onNewObservation={resetJourney}
-          />
-        )}
-
-        {currentStep === "error" && (
-          <div className="bg-brand-surface rounded-2xl border border-brand-border p-8 text-center space-y-4 shadow-xs">
-            <div className="w-12 h-12 rounded-full bg-red-100 text-brand-error flex items-center justify-center mx-auto">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-brand-text">Workflow Interrupted</h2>
-            <p className="text-sm text-brand-secondary max-w-md mx-auto">
-              {errorMessage || "An unexpected error occurred while processing your observation."}
-            </p>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={resetJourney}
-                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-brand-teal hover:bg-brand-dark transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Start Anew</span>
-              </button>
-            </div>
-          </div>
-        )}
           </div>
         )}
       </main>
+
 
       <Footer />
     </div>

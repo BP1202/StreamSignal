@@ -10,9 +10,11 @@ import { AgentGuidedMissionFlow } from "./AgentGuidedMissionFlow";
 
 interface Props {
   onCaseCreated?: (caseId: string) => void;
+  onGoToObserve?: () => void;
 }
 
-export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
+export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObserve }) => {
+
   const [profile, setProfile] = useState<ContributorProfile | null>(null);
   const [missions, setMissions] = useState<MissionItem[]>([]);
   const [activeMission, setActiveMission] = useState<MissionItem | null>(null);
@@ -147,7 +149,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
           Loading available evidence collection missions...
         </div>
       ) : missions.length === 0 ? (
-        <div className="p-12 rounded-2xl bg-slate-900/60 border border-dashed border-slate-800 text-center space-y-3">
+        <div className="p-12 rounded-2xl bg-slate-900/60 border border-dashed border-slate-800 text-center space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto text-2xl text-slate-400">
             🌊
           </div>
@@ -156,11 +158,22 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
               No Active Evidence Missions
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              There are currently no open evidence missions in this watershed. Missions are
+              There are currently no researcher-requested evidence missions in this watershed. Missions are
               automatically planned after rain events or when researchers identify specific
               evidence gaps in existing cases.
             </p>
           </div>
+          {onGoToObserve && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onGoToObserve}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand-teal hover:bg-cyan-600 text-white transition-all shadow-sm"
+              >
+                <span>Record a Stream Observation →</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,8 +199,22 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
                   </p>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-300">
-                  <strong className="text-slate-200">Research Need:</strong> {m.research_need}
+                {/* Why this mission? */}
+                <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-1.5 text-[11px]">
+                  <span className="font-semibold text-cyan-300 block">Why this mission?</span>
+                  <ul className="text-slate-300 space-y-1">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Targeted research need: {m.research_need}</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Required evidence: {m.required_evidence.join(", ")}</span>
+                    </li>
+                  </ul>
+                  <p className="text-[10px] text-slate-400 border-t border-slate-700/60 pt-1.5 leading-relaxed">
+                    🛡 <em>Recommendation indicates evidence collection need only — not pollution or health risk.</em>
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -203,7 +230,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
               </div>
 
               <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                <span className="text-[11px] text-slate-500">⏱ ~3 minutes</span>
+                <span className="text-[11px] text-slate-500">⏱ ~2–3 minutes</span>
                 <button
                   onClick={() => handleStartMission(m)}
                   className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white shadow-md transition-all"
@@ -215,6 +242,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated }) => {
           ))}
         </div>
       )}
+
     </div>
   );
 };

@@ -197,16 +197,29 @@ def analyze_evidence_gaps(
             last_observed_at=photo_row.last,
         ))
 
+    total_potential_dims = total_cases * len(DIMENSION_LABEL)
+    total_dims_present = sum(g.cases_with_evidence for g in gaps)
+    overall_cov_ratio = (total_dims_present / total_potential_dims) if total_potential_dims > 0 else 0.0
+    overall_cov_pct = round(overall_cov_ratio * 100, 2)
+    per_dim_delta = round((1.0 / total_potential_dims * 100), 2) if total_potential_dims > 0 else 1.0
+
     logger.info(
-        "Evidence gap analysis complete: %d cases, %d dimensions evaluated.",
+        "Evidence gap analysis complete: %d cases, %d dimensions evaluated. Overall coverage: %.2f%%",
         total_cases,
         len(gaps),
+        overall_cov_pct,
     )
     return EvidenceGapListResponse(
         total_cases_analyzed=total_cases,
         gaps=gaps,
         analysis_timestamp=analysis_timestamp,
+        overall_coverage_ratio=round(overall_cov_ratio, 4),
+        overall_coverage_percentage=overall_cov_pct,
+        total_potential_dimensions=total_potential_dims,
+        total_dimensions_present=total_dims_present,
+        potential_coverage_per_dimension=per_dim_delta,
     )
+
 
 
 def get_evidence_gap_detail(

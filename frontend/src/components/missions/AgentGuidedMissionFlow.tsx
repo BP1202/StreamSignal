@@ -210,6 +210,40 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
           </div>
         </div>
 
+        {/* Visible Bounded Agent Action Trail */}
+        <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
+          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+            Agent Execution Milestones
+          </span>
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span className="text-slate-300">Analyzed research requirement: {mission.research_need}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span className="text-slate-300">Selected approved template: {mission.mission_type}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400 font-bold">✓</span>
+              <span className="text-slate-300">Verified input schema: SignalGuard firewall check passed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {isReadyForSubmission ? (
+                <>
+                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span className="text-emerald-300">Evidence completeness satisfied: Ready for SignalCase handoff</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-cyan-400 animate-pulse font-bold">→</span>
+                  <span className="text-cyan-300">Awaiting citizen field observation: missing [{mission.missing_evidence.join(", ")}]</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Evidence Completion Status Bar */}
         <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">

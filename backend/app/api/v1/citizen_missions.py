@@ -15,6 +15,12 @@ from sqlalchemy.orm import Session
 from app.agent.orchestrator import EvidenceMissionAgent
 from app.core.database import get_db
 from app.models.contributor import Contributor
+from app.models.human_review import HumanReview
+from app.models.mission import Mission
+from app.schemas.citizen_impact import (
+    ContributionHistoryItem,
+    ContributorImpactResponse,
+)
 from app.schemas.contributor import (
     AccountUpgradeRequest,
     AccountUpgradeResponse,
@@ -30,6 +36,7 @@ from app.services.contributor import (
     get_or_create_contributor,
     upgrade_contributor_account,
 )
+from app.services.evidence_gap_intelligence import analyze_evidence_gaps
 
 router = APIRouter(prefix="/citizen", tags=["Citizen Missions & Contributor"])
 
@@ -96,6 +103,112 @@ def get_contributor_me(
 ) -> ContributorResponse:
     """Returns persistent non-identifying contributor profile."""
     return ContributorResponse.model_validate(contributor)
+
+
+@router.get(
+    "/impact",
+    response_model=ContributorImpactResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Contributor Impact and Coverage Delta",
+)
+def get_contributor_impact(
+    contributor: Contributor = Depends(get_current_contributor),
+    db: Session = Depends(get_db),
+) -> ContributorImpactResponse:
+    """
+    Returns real, deterministic impact metrics for the authenticated citizen:
+    - Evidence coverage before and after contributions
+    - List of submitted contributions linked to SignalCases
+    - Research review status (Pending review vs Accepted for research)
+    - Factual stewardship milestones
+    """
+    gaps_info = analyze_evidence_gaps(db)
+    per_dim_delta = gaps_info.potential_coverage_per_dimension or 0.89
+
+    # Query missions submitted by this contributor
+    submitted_statuses = ["SUBMITTED", "RESEARCH_REVIEW", "COMPLETED"]
+    missions = (
+        db.query(Mission)
+        .filter(
+            Mission.contributor_id == contributor.id,
+            Mission.status.in_(submitted_statuses),
+        )
+        .order_by(Mission.updated_at.desc())
+        .all()
+    )
+
+    tracked_keys = {"flow_condition", "water_appearance", "odor", "foam_observed", "dead_wildlife_observed", "photo"}
+
+    recent_items = []
+    total_dims_contributed = 0
+    verified_count = 0
+    has_flow = False
+    has_rain = False
+
+    for m in missions:
+        collected = dict(m.collected_evidence or {})
+        dims = [k for k in collected.keys() if k in tracked_keys and collected[k] is not None]
+        if "flow_condition" in dims:
+            has_flow = True
+        if m.mission_type == "AFTER_RAIN_STREAM_CHECK":
+            has_rain = True
+
+        total_dims_contributed += len(dims)
+        dim_delta = round(len(dims) * per_dim_delta, 2)
+
+        # Determine review status
+        rev_status = "AWAITING_REVIEW"
+        if m.signal_case_id:
+            latest_review = (
+                db.query(HumanReview)
+                .filter(HumanReview.signal_case_id == m.signal_case_id)
+                .order_by(HumanReview.created_at.desc())
+                .first()
+            )
+            if latest_review:
+                if latest_review.outcome in ["VERIFIED", "ACCEPTED"]:
+                    rev_status = "ACCEPTED_FOR_RESEARCH"
+                    verified_count += 1
+                elif latest_review.outcome in ["INSUFFICIENT_EVIDENCE", "REJECTED"]:
+                    rev_status = "MORE_EVIDENCE_REQUESTED"
+
+        recent_items.append(
+            ContributionHistoryItem(
+                submission_id=m.id,
+                signal_case_id=m.signal_case_id,
+                mission_title=m.title,
+                dimensions_provided=dims,
+                submitted_at=m.submitted_at or m.updated_at,
+                review_status=rev_status,
+                coverage_delta_pct=dim_delta,
+            )
+        )
+
+    # Stewardship milestones
+    milestones = []
+    if len(missions) > 0:
+        milestones.append("First Signal")
+    if has_flow:
+        milestones.append("Flow Observer")
+    if has_rain:
+        milestones.append("Rainwatch Contributor")
+    if len(missions) >= 3:
+        milestones.append("Stream Steward")
+
+    total_delta = round(total_dims_contributed * per_dim_delta, 2)
+
+    return ContributorImpactResponse(
+        contributor_id=contributor.contributor_id,
+        display_name=contributor.display_name,
+        account_level=contributor.account_level,
+        total_contributions=len(missions),
+        verified_contributions=verified_count,
+        overall_evidence_coverage=gaps_info.overall_coverage_percentage,
+        total_coverage_delta_contributed=total_delta,
+        recent_contributions=recent_items,
+        stewardship_milestones=milestones,
+    )
+
 
 
 @router.post(

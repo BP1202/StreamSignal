@@ -58,15 +58,30 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
   if (loading) {
     return (
       <div className="p-12 text-center text-xs text-brand-secondary animate-pulse">
-        Loading evidence contribution ledger and impact metrics...
+        Loading evidence...
       </div>
     );
   }
 
   if (error || !impactData) {
     return (
-      <div className="p-8 text-center text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-2xl">
-        {error || "Could not retrieve contributor impact profile."}
+      <div className="p-8 text-center text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-2xl space-y-3">
+        <div className="font-semibold text-sm">Evidence could not be loaded.</div>
+        <p className="text-rose-500">{error || "Could not retrieve contributor impact profile."}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            setError(null);
+            fetchContributorImpact(contributorId)
+              .then((d) => setImpactData(d))
+              .catch((err) => setError(err.message || "Failed to load impact metrics."))
+              .finally(() => setLoading(false));
+          }}
+          className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -239,6 +254,7 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
 
         {recent_contributions.length === 0 ? (
           <div className="p-8 text-center text-xs text-brand-secondary bg-gray-50 border border-dashed border-gray-200 rounded-xl space-y-2">
+            <p className="font-semibold text-brand-text">No evidence has been recorded yet.</p>
             <p>You have not submitted any evidence missions yet.</p>
             <button
               type="button"

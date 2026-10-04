@@ -82,7 +82,7 @@ export const SignalCaseInvestigationView: React.FC<
         <div className="bg-white rounded-xl border border-brand-border p-12 text-center shadow-xs space-y-3">
           <RefreshCw className="w-8 h-8 text-brand-teal animate-spin mx-auto" />
           <h3 className="text-base font-semibold text-brand-text">
-            Loading SignalCase Investigation...
+            Loading evidence...
           </h3>
           <p className="text-xs text-brand-secondary max-w-md mx-auto">
             Aggregating multi-layered evidence, visual observations, spatial Pattern Echo context, SignalGuard trust bounds, and human review decisions.
@@ -98,7 +98,7 @@ export const SignalCaseInvestigationView: React.FC<
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center space-y-4">
           <AlertCircle className="w-10 h-10 text-red-600 mx-auto" />
           <h3 className="text-lg font-bold text-red-900">
-            SignalCase Not Found or Error Loading
+            Evidence could not be loaded.
           </h3>
           <p className="text-xs text-red-700 max-w-md mx-auto">
             {error || `Case with id '${caseId}' could not be retrieved.`}

@@ -32,30 +32,31 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
   const [coverageData, setCoverageData] = useState<EvidenceCoverageInfo | null>(null);
   const [recommendedMissions, setRecommendedMissions] = useState<MissionItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
     const contributorId = localStorage.getItem("streamsignal_contributor_id") || undefined;
     Promise.all([
       fetchEvidenceCoverage(),
       fetchMissionRecommendations(contributorId).catch(() => ({ recommendations: [], total: 0 })),
     ])
       .then(([covData, recData]) => {
-        if (isMounted) {
-          setCoverageData(covData);
-          setRecommendedMissions(recData.recommendations || []);
-        }
+        setCoverageData(covData);
+        setRecommendedMissions(recData.recommendations || []);
       })
       .catch((err) => {
         console.warn("Could not load real-time evidence coverage:", err);
+        setError(err?.message || "Failed to load evidence coverage.");
       })
       .finally(() => {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       });
+  };
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    loadData();
   }, []);
 
   const totalCases = coverageData?.total_cases_analyzed ?? 0;
@@ -68,6 +69,19 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
 
   return (
     <div className="space-y-10 text-left max-w-4xl mx-auto py-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center space-y-3">
+          <div className="text-base font-semibold text-red-900">Evidence could not be loaded.</div>
+          <p className="text-xs text-red-700 max-w-md mx-auto">{error}</p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="text-xs font-semibold text-white bg-red-700 hover:bg-red-800 px-4 py-2 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* ── 1. Hero: Purpose Before Functionality ──────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-slate-900 to-brand-surface border border-brand-border p-6 sm:p-10 shadow-lg text-white">
         <div className="relative z-10 max-w-2xl space-y-4">
@@ -211,7 +225,12 @@ export const WaterSignalHome: React.FC<WaterSignalHomeProps> = ({
       </section>
 
       {/* ── 3. Actionable Evidence Opportunity Card ──────────────────────── */}
-      {recommendedMissions.length > 0 ? (
+      {loading ? (
+        <section className="bg-slate-900/80 rounded-2xl border border-dashed border-slate-800 p-6 text-white shadow-sm space-y-2 text-center animate-pulse">
+          <div className="text-sm font-semibold text-slate-200">Loading evidence...</div>
+          <p className="text-xs text-slate-400">Checking targeted research mission availability...</p>
+        </section>
+      ) : recommendedMissions.length > 0 ? (
         <section className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-900 rounded-2xl border border-cyan-800/80 p-6 text-white shadow-lg space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-md border border-cyan-500/30">

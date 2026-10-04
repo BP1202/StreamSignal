@@ -77,19 +77,24 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         return true;
       });
       setInboxData({ ...data, items: uniqueItems, total: uniqueItems.length });
+      setLastSyncTime(new Date());
+      setError(null);
     } catch (err: unknown) {
       const msg =
         err instanceof ApiError
           ? err.message
           : "Failed to load research evidence inbox.";
       setError(msg);
+      setInboxData(null);
     } finally {
       if (showSpinner) setIsLoading(false);
     }
   }, [actionFilter, qualityFilter, hasMedia, hasPatternEcho]);
 
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+
   // Realtime Live Evidence Bridge hook
-  const { connectionStatus } = useResearchRealtime({
+  const { connectionStatus, reconnect } = useResearchRealtime({
     onSignalCaseCreated: (event) => {
       setNewCaseAlert(event);
       loadInbox(false);
@@ -222,10 +227,20 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
               </>
             )}
             {connectionStatus === "DISCONNECTED" && (
-              <>
+              <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
-                <span className="text-gray-600">○ Offline</span>
-              </>
+                <span className="text-gray-600">Live connection unavailable.</span>
+                <span className="text-[10px] text-gray-500 font-mono">
+                  Last synchronized: {lastSyncTime.toLocaleTimeString()}
+                </span>
+                <button
+                  type="button"
+                  onClick={reconnect}
+                  className="px-2 py-0.5 bg-brand-dark hover:bg-slate-800 text-white rounded text-[10px] font-bold transition-colors ml-1"
+                >
+                  Reconnect
+                </button>
+              </div>
             )}
           </div>
 
@@ -252,7 +267,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         >
           <Inbox className="w-4 h-4" />
           <span>SignalCase Inbox</span>
-          {inboxData && (
+          {inboxData && !error && (
             <span
               className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                 activeWorkspaceTab === "inbox"
@@ -261,6 +276,11 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
               }`}
             >
               {inboxData.total}
+            </span>
+          )}
+          {error && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+              Error
             </span>
           )}
         </button>
@@ -465,7 +485,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         <div className="bg-white rounded-xl border border-brand-border p-12 text-center shadow-xs space-y-3">
           <RefreshCw className="w-8 h-8 text-brand-teal animate-spin mx-auto" />
           <h3 className="text-base font-semibold text-brand-text">
-            Loading Evidence Inbox...
+            Loading evidence...
           </h3>
           <p className="text-xs text-brand-secondary max-w-md mx-auto">
             Composing multi-layered evidence from citizen reports, Pillow visual observation extraction, Pattern Echo spatial clusters, and SignalGuard contracts.
@@ -477,14 +497,14 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center space-y-3">
           <AlertCircle className="w-8 h-8 text-red-600 mx-auto" />
           <h3 className="text-base font-semibold text-red-900">
-            Error Loading Workspace Cases
+            Evidence could not be loaded.
           </h3>
           <p className="text-xs text-red-700 max-w-md mx-auto">{error}</p>
           <button
             onClick={() => loadInbox(true)}
             className="text-xs font-semibold text-white bg-red-700 hover:bg-red-800 px-4 py-2 rounded-lg transition-colors"
           >
-            Try Again
+            Retry
           </button>
         </div>
       )}
@@ -493,7 +513,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center space-y-3">
           <Inbox className="w-10 h-10 text-gray-400 mx-auto" />
           <h3 className="text-base font-semibold text-brand-text">
-            No SignalCases Found
+            No evidence has been recorded yet.
           </h3>
           <p className="text-xs text-brand-secondary max-w-md mx-auto">
             No evidence cases match the selected filters or search query. Try resetting filters or submitting a new observation from the Citizen flow.

@@ -126,7 +126,7 @@ describe("Issue 14 — Live Evidence Bridge (Frontend)", () => {
     render(<EvidenceInboxView onSelectCase={() => {}} />);
 
     await waitFor(() => {
-      expect(screen.getByText("No SignalCases Found")).toBeInTheDocument();
+      expect(screen.getByText(/No evidence has been recorded yet|No SignalCases Found/i)).toBeInTheDocument();
     });
 
     expect(screen.queryByText("SS-1048")).not.toBeInTheDocument();
@@ -143,7 +143,7 @@ describe("Issue 14 — Live Evidence Bridge (Frontend)", () => {
     render(<EvidenceInboxView onSelectCase={onSelectCase} />);
 
     // Wait for initial load
-    await screen.findByText("No SignalCases Found");
+    await screen.findByText(/No evidence has been recorded yet|No SignalCases Found/i);
     expect(MockWebSocket.instances.length).toBeGreaterThan(0);
 
     const socket = MockWebSocket.instances[0];

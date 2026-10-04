@@ -204,7 +204,7 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
       {/* Loading & Error States */}
       {loading && (
         <div style={{ textAlign: "center", padding: "24px", color: "#94a3b8", fontSize: "13px" }}>
-          Querying PostgreSQL for evidence availability metrics...
+          Loading evidence...
         </div>
       )}
 
@@ -213,14 +213,34 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
           style={{
             background: "rgba(239, 68, 68, 0.1)",
             border: "1px solid #ef4444",
-            padding: "12px",
-            borderRadius: "6px",
+            padding: "16px",
+            borderRadius: "8px",
             color: "#fca5a5",
             fontSize: "13px",
             marginBottom: "16px",
+            textAlign: "center",
           }}
         >
-          {error}
+          <div style={{ fontWeight: 600, color: "#f87171", marginBottom: "4px" }}>
+            Evidence could not be loaded.
+          </div>
+          <div style={{ fontSize: "12px", color: "#fca5a5", marginBottom: "12px" }}>{error}</div>
+          <button
+            type="button"
+            onClick={loadGaps}
+            style={{
+              background: "#b91c1c",
+              color: "#ffffff",
+              border: "none",
+              padding: "6px 14px",
+              borderRadius: "6px",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -252,7 +272,7 @@ export const EvidenceGapIntelligencePanel: React.FC<EvidenceGapIntelligencePanel
                 fontSize: "13px",
               }}
             >
-              No SignalCases currently available for gap analysis. Empty state is factual.
+              No evidence has been recorded yet.
             </div>
           ) : (
             <div

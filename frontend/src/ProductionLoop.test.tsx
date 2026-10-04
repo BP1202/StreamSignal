@@ -182,7 +182,7 @@ describe("Production Vertical Slice — Two Surfaces & Refresh Survival", () => 
     render(<App />);
 
     expect(screen.getByText(/Research Evidence Workspace/i)).toBeInTheDocument();
-    expect(await screen.findByText(/No SignalCases Found/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No evidence has been recorded yet|No SignalCases Found/i)).toBeInTheDocument();
     expect(screen.getByText(/No evidence cases match the selected filters/i)).toBeInTheDocument();
   });
 

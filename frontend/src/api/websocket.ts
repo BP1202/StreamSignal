@@ -165,7 +165,7 @@ export function useResearchRealtime(callbacks: ResearchRealtimeCallbacks = {}) {
     };
   }, [connect]);
 
-  return { connectionStatus };
+  return { connectionStatus, reconnect: connect };
 }
 
 export interface CitizenRealtimeCallbacks {
@@ -266,5 +266,5 @@ export function useCitizenRealtime(
     };
   }, [reportId, connect]);
 
-  return { connectionStatus };
+  return { connectionStatus, reconnect: connect };
 }

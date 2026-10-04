@@ -221,14 +221,16 @@ def test_top_level_research_endpoints_return_403_for_citizen(unauth_client: Test
 
 def test_contributor_idor_access_protection(sync_test_db: Session, unauth_client: TestClient):
     """Citizen attempting to access another contributor's impact data returns 403 Forbidden."""
+    u1_id = f"SS-C-{uuid.uuid4().hex[:8]}"
+    u2_id = f"SS-C-{uuid.uuid4().hex[:8]}"
     c1 = Contributor(
-        contributor_id="SS-C-USER-1",
-        display_name="User1",
+        contributor_id=u1_id,
+        display_name=f"User-{uuid.uuid4().hex[:6]}",
         account_level="LEVEL_1_CONTRIBUTOR",
     )
     c2 = Contributor(
-        contributor_id="SS-C-USER-2",
-        display_name="User2",
+        contributor_id=u2_id,
+        display_name=f"User-{uuid.uuid4().hex[:6]}",
         account_level="LEVEL_1_CONTRIBUTOR",
     )
     sync_test_db.add_all([c1, c2])

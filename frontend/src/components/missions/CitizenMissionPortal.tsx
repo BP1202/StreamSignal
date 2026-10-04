@@ -138,15 +138,25 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
       )}
 
       {error && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-          {error}
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="font-bold text-rose-200 block">Evidence could not be loaded.</span>
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={loadMissions}
+            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold transition-colors shrink-0"
+          >
+            Retry
+          </button>
         </div>
       )}
 
       {/* Missions Grid */}
       {loading ? (
         <div className="p-12 text-center text-xs text-slate-400 animate-pulse">
-          Loading available evidence collection missions...
+          Loading evidence...
         </div>
       ) : missions.length === 0 ? (
         <div className="p-12 rounded-2xl bg-slate-900/60 border border-dashed border-slate-800 text-center space-y-4">

@@ -242,7 +242,7 @@ describe("EvidenceInboxView Component", () => {
 
     render(<EvidenceInboxView onSelectCase={handleSelect} />);
 
-    expect(screen.getByText("Loading Evidence Inbox...")).toBeInTheDocument();
+    expect(screen.getByText(/Loading evidence/i)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("Research Evidence Workspace")).toBeInTheDocument();
@@ -281,7 +281,7 @@ describe("EvidenceInboxView Component", () => {
     });
 
     vi.spyOn(researchApi, "fetchResearchInbox").mockResolvedValue(mockInboxResponse);
-    fireEvent.click(screen.getByText("Try Again"));
+    fireEvent.click(screen.getByRole("button", { name: /Retry|Try Again/i }));
 
     await waitFor(() => {
       expect(screen.getByText("SS-11111111")).toBeInTheDocument();
@@ -331,7 +331,7 @@ describe("SignalCaseInvestigationView Component (Issue 13)", () => {
       />
     );
 
-    expect(screen.getByText("Loading SignalCase Investigation...")).toBeInTheDocument();
+    expect(screen.getByText(/Loading evidence/i)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("SignalCase Investigation")).toBeInTheDocument();

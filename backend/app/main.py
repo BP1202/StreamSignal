@@ -80,6 +80,25 @@ def create_application() -> FastAPI:
     # Top-level WebSocket routes (/ws/research, /ws/citizen/{report_id})
     app_instance.include_router(realtime_router)
 
+    from fastapi.responses import JSONResponse
+    from fastapi import Request
+
+    @app_instance.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        # Do not intercept standard HTTPExceptions
+        from fastapi import HTTPException
+        if isinstance(exc, HTTPException):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers or {},
+            )
+        logger.error("Internal server error on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An internal server error occurred. Sensitive diagnostic details are withheld."},
+        )
+
     @app_instance.get("/", tags=["Root"], summary="Service Root")
     def root() -> Dict[str, Any]:
         """Root endpoint returning service identity, version, and API directory."""

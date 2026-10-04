@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Any
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, status
@@ -5,6 +6,7 @@ from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import check_db_health, engine
 
+logger = logging.getLogger("streamsignal.health")
 router = APIRouter()
 settings = get_settings()
 
@@ -66,9 +68,10 @@ def database_health_check():
             "details": health_info,
         }
     except Exception as exc:
+        logger.error("Database health check failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Database health check failed: {str(exc)}",
+            detail="Database health check failed: service unavailable or connectivity error",
         )
 
 
@@ -94,7 +97,8 @@ def verify_extensions_execution() -> ExtensionVerifyResponse:
                 pgvector_distance=float(vector_res),
             )
     except Exception as exc:
+        logger.error("Extension execution error: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Extension query execution failed: {str(exc)}",
+            detail="Extension query execution failed: spatial or vector feature error",
         )

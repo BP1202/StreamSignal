@@ -1,8 +1,10 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, Response, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.report import Report
+from app.models.media import ReportMedia
+from app.services.storage import get_storage
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
 from app.schemas.evidence_quality import EvidenceQualityResponse
 from app.schemas.media import ReportMediaResponse
@@ -182,6 +184,56 @@ async def upload_report_media(
     )
 
     return media_record
+
+
+@router.get(
+    "/{report_id}/media/{media_id}",
+    summary="Retrieve Citizen Media Evidence Binary",
+    description=(
+        "Retrieves stored visual evidence binary with verified content-type. "
+        "Enforces IDOR boundary (media must belong to the specified report UUID) "
+        "and path confinement without exposing internal filesystem paths."
+    ),
+    responses={
+        200: {"content": {"image/*": {}}, "description": "Binary image stream"},
+        404: {"description": "Media file or report not found"},
+    },
+)
+def get_report_media_binary(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    media_id: UUID = Path(..., description="Unique UUID identifier of the media record"),
+    db: Session = Depends(get_db),
+):
+    """Safely streams media evidence binary without leaking internal storage keys."""
+    media_record = (
+        db.query(ReportMedia)
+        .filter(ReportMedia.id == media_id, ReportMedia.report_id == report_id)
+        .first()
+    )
+    if not media_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media evidence not found or IDOR boundary violation",
+        )
+
+    storage = get_storage()
+    try:
+        content_bytes = storage.read(media_record.storage_key)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media evidence binary not found in storage",
+        )
+
+    return Response(
+        content=content_bytes,
+        media_type=media_record.content_type,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Content-Type-Options": "nosniff",
+            "ETag": f'"{media_record.sha256}"',
+        },
+    )
 
 
 @router.get(

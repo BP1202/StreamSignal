@@ -246,3 +246,32 @@ def test_storage_rollback_on_database_failure(client: TestClient, created_report
 
     # Check that any generated file during the failed attempt was cleaned up
     # (storage.exists for any orphaned file should be False)
+
+
+def test_get_media_binary_success(client: TestClient, created_report_id: str):
+    """Retrieve uploaded media binary content with proper headers and content verification."""
+    img_bytes = create_test_image_bytes(fmt="JPEG")
+    files = {"file": ("stream_view.jpg", img_bytes, "image/jpeg")}
+    upload_res = client.post(f"/api/v1/reports/{created_report_id}/media", files=files)
+    assert upload_res.status_code == 201
+    media_id = upload_res.json()["id"]
+
+    # Stream the binary
+    get_res = client.get(f"/api/v1/reports/{created_report_id}/media/{media_id}")
+    assert get_res.status_code == 200
+    assert get_res.content == img_bytes
+    assert get_res.headers["content-type"] == "image/jpeg"
+    assert get_res.headers["x-content-type-options"] == "nosniff"
+
+
+def test_get_media_binary_idor_protection(client: TestClient, created_report_id: str):
+    """Attempting to access media with an invalid/mismatched report ID fails (IDOR prevention)."""
+    img_bytes = create_test_image_bytes(fmt="JPEG")
+    files = {"file": ("idor_sample.jpg", img_bytes, "image/jpeg")}
+    upload_res = client.post(f"/api/v1/reports/{created_report_id}/media", files=files)
+    media_id = upload_res.json()["id"]
+
+    other_report_id = str(uuid.uuid4())
+    get_res = client.get(f"/api/v1/reports/{other_report_id}/media/{media_id}")
+    assert get_res.status_code == 404
+    assert "Media evidence not found" in get_res.json()["detail"]

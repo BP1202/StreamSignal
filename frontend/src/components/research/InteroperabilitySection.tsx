@@ -24,6 +24,8 @@ import {
   Clock,
   Layers,
   Sparkles,
+  Droplets,
+  Globe,
 } from "lucide-react";
 
 interface InteroperabilitySectionProps {
@@ -196,6 +198,175 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             <GitBranch className="w-3.5 h-3.5 text-slate-500" />
             <span>Provenance Trail</span>
           </button>
+        </div>
+      </div>
+
+      {/* Evidence Interoperability Journey Callout */}
+      <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-900 via-slate-900 to-teal-950 text-white border border-indigo-700/40 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-300 bg-indigo-950/70 border border-indigo-500/40 px-2 py-0.5 rounded">
+                One Health Interoperability Journey
+              </span>
+              <span className="text-[10px] font-semibold text-teal-300 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                Provenanced Evidence Packaging
+              </span>
+            </div>
+            <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              “This case is packaged with its evidence history and provenance for interoperability.”
+            </h4>
+            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+              FHIR export is not an isolated download button. Every resource is sequentially sealed from observed facts, through the Evidence Passport and immutable audit lineage, into a deterministic R4 Bundle ready for epidemiological and environmental surveillance.
+            </p>
+          </div>
+        </div>
+
+        {/* 5-Step Visual Stepper */}
+        <div className="mt-5 pt-4 border-t border-slate-700/60 grid grid-cols-1 md:grid-cols-5 gap-3">
+          {/* Step 1: SignalCase */}
+          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-cyan-400 font-semibold">01 · SOURCE</span>
+                <span className="text-[10px] bg-cyan-950 border border-cyan-800 text-cyan-300 px-1.5 py-0.5 rounded font-mono">
+                  Reported
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-6 h-6 rounded bg-cyan-900/60 text-cyan-300 flex items-center justify-center shrink-0">
+                  <Droplets className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">SignalCase</h5>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Citizen observations, media attachments, and spatial context.
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Citizen Telemetry</span>
+              <span className="hidden md:inline text-cyan-400 font-bold">→</span>
+            </div>
+          </div>
+
+          {/* Step 2: Evidence Passport */}
+          <div className="bg-slate-800/80 border border-indigo-700/50 rounded-lg p-3 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-indigo-300 font-semibold">02 · ENVELOPE</span>
+                <span className="text-[10px] bg-indigo-950 border border-indigo-800 text-indigo-300 px-1.5 py-0.5 rounded font-mono">
+                  v{passport.metadata.schema_version}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-6 h-6 rounded bg-indigo-900/60 text-indigo-300 flex items-center justify-center shrink-0">
+                  <FileCheck className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">Evidence Passport Envelope</h5>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Immutable envelope sealing multi-layered facts and SignalGuard bounds.
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
+              <button
+                type="button"
+                onClick={() => setIsPassportModalOpen(true)}
+                className="text-indigo-300 hover:text-indigo-200 underline font-medium cursor-pointer"
+              >
+                Inspect Envelope
+              </button>
+              <span className="hidden md:inline text-indigo-400 font-bold">→</span>
+            </div>
+          </div>
+
+          {/* Step 3: Evidence Lineage */}
+          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-amber-300 font-semibold">03 · AUDIT</span>
+                <span className="text-[10px] bg-amber-950 border border-amber-800 text-amber-300 px-1.5 py-0.5 rounded font-mono">
+                  {resourceCounts.Provenance} Events
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-6 h-6 rounded bg-amber-900/60 text-amber-300 flex items-center justify-center shrink-0">
+                  <GitBranch className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">Evidence Lineage Audit</h5>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Chronological chain of human decisions, transitions, and reviews.
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
+              <button
+                type="button"
+                onClick={() => setIsProvenanceModalOpen(true)}
+                className="text-amber-300 hover:text-amber-200 underline font-medium cursor-pointer"
+              >
+                Audit Chain
+              </button>
+              <span className="hidden md:inline text-amber-400 font-bold">→</span>
+            </div>
+          </div>
+
+          {/* Step 4: FHIR R4 Bundle */}
+          <div className="bg-slate-800/80 border border-teal-700/60 rounded-lg p-3 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-teal-300 font-semibold">04 · STANDARDS</span>
+                <span className="text-[10px] bg-teal-950 border border-teal-800 text-teal-300 px-1.5 py-0.5 rounded font-mono">
+                  {resourceCounts.Total} Resources
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-6 h-6 rounded bg-teal-900/60 text-teal-300 flex items-center justify-center shrink-0">
+                  <Code2 className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">FHIR R4 Serialization</h5>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Deterministic HL7 FHIR mapping with Observation & Provenance targets.
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
+              <button
+                type="button"
+                onClick={() => setIsFhirModalOpen(true)}
+                className="text-teal-300 hover:text-teal-200 underline font-medium cursor-pointer"
+              >
+                View R4 JSON
+              </button>
+              <span className="hidden md:inline text-teal-400 font-bold">→</span>
+            </div>
+          </div>
+
+          {/* Step 5: External One Health System */}
+          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-emerald-300 font-semibold">05 · TARGET</span>
+                <span className="text-[10px] bg-emerald-950 border border-emerald-800 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+                  Surveillance
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-6 h-6 rounded bg-emerald-900/60 text-emerald-300 flex items-center justify-center shrink-0">
+                  <Globe className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">One Health Systems</h5>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                CDC, EPA, municipal health, and syndromic surveillance ingest nodes.
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-emerald-300 font-mono">
+              <span>Ready for Export</span>
+              <Check className="w-3 h-3 text-emerald-400" />
+            </div>
+          </div>
         </div>
       </div>
 

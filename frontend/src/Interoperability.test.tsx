@@ -286,4 +286,23 @@ describe("One Health InteroperabilitySection", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("renders 5-stage Interoperability Journey: SignalCase -> Evidence Passport -> Evidence Lineage -> FHIR R4 -> External One Health", async () => {
+    render(
+      <InteroperabilitySection caseId="11111111-1111-1111-1111-111111111111" />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/This case is packaged with its evidence history and provenance for interoperability/i)
+      ).toBeInTheDocument();
+    });
+
+    // 5 Stages
+    expect(screen.getByText("SignalCase")).toBeInTheDocument();
+    expect(screen.getByText("Evidence Passport Envelope")).toBeInTheDocument();
+    expect(screen.getByText("Evidence Lineage Audit")).toBeInTheDocument();
+    expect(screen.getByText("FHIR R4 Serialization")).toBeInTheDocument();
+    expect(screen.getByText("One Health Systems")).toBeInTheDocument();
+  });
 });

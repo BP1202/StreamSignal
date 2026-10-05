@@ -27,17 +27,6 @@ Urban freshwater ecosystems face severe stress from runoff, sewage, and industri
 3. **Researcher Review & Audit Trail**: Limnologists review cases with mandatory rationales and verified reviewer IDs (`X-Reviewer-Id`).
 4. **HL7 FHIR R4 Interoperability**: Deterministically exports cases into standard FHIR R4 Bundles (`Observation`, `Media`, `Location`, `Provenance`) ready for health and environmental authorities.
 
----
-
-## 🎯 Hackathon Tracks Addressed
-
-| Track | Challenge Addressed in StreamSignal |
-|---|---|
-| **Track 1: Citizen Science UX** | Intuitive mobile-ready flow, zero-password instant handles (`aqua-001`), interactive follow-up questions, and personal impact tracking. |
-| **Track 3: AI-Supported Assessment** | Human-in-the-loop AI assistance: visual cue analysis with explicit uncertainty bounds; AI is strictly barred from confirming medical or toxic claims ($E_4 \ne E_5$). |
-| **Track 7: Digital Health Standards** | Full HL7 FHIR R4 export gateway and cryptographic Evidence Passports for seamless interoperability across digital health and ecological systems. |
-
----
 
 ## ⚡ Quickstart (Run Demo in 3 Steps)
 

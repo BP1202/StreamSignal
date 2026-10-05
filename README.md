@@ -1,174 +1,146 @@
-# 🌊 StreamSignal — One Health Evidence System
-> *Urban Freshwater Observation, Evidence Interoperability & One Health Surveillance*
+# 🌊 StreamSignal
 
-StreamSignal turns uncertain citizen freshwater observations into transparent, reviewable, provenance-rich, standards-ready **One Health evidence cases**.
+> **Urban Freshwater Surveillance & One Health Evidence Platform**  
+> *Transforming citizen freshwater observations into transparent, reviewable, standards-compliant One Health evidence cases.*
 
-The platform is designed around a fundamental principle: **StreamSignal is an evidence system, not a black-box detector.** It never diagnoses disease, declares water "toxic", or asserts environmental causation from unverified inputs. Instead, it maintains strict ontological separation between citizen observations, automated machine cues, contextual corroboration, and authorized human expert decisions.
-
----
-
-## 🧭 Core Architectural Principles
-
-### 1. The StreamSignal One Health Evidence Model ($E_1$ to $E_5$)
-
-Evidence states are strictly partitioned and tamper-resistant:
-
-| Tier | Name | Meaning | Authority |
-|---|---|---|---|
-| **$E_1$** | **REPORTED** | Citizen-submitted observation text and structured attributes. | Citizen contributor |
-| **$E_2$** | **DOCUMENTED** | Verified photographic media with cryptographic SHA-256 integrity hashes and EXIF metadata. | Upload pipeline |
-| **$E_3$** | **INFERRED** | Automated machine vision visual cues (discoloration, foam patterns) with explicit uncertainty bounds. | Machine analysis |
-| **$E_4$** | **CORROBORATED**| Spatio-temporal clustering (PostGIS) and visual embedding similarity (pgvector). | Pattern Echo engine |
-| **$E_5$** | **VERIFIED** | Authorized human decision (e.g. professional field verification, environmental agency review). | **Human reviewer ONLY** |
-
-> **$E_4 \ne E_5$ Boundary:** High contextual similarity ($E_4$) is never conflated with verified truth ($E_5$). AI models, automated agents, computer vision, and citizen contributors are mathematically barred from emitting or upgrading to $E_5$. Only an authenticated human reviewer using the research workflow can establish $E_5$.
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/Frontend-React%2019%20+%20Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20+%20PostGIS-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org)
+[![FHIR R4](https://img.shields.io/badge/Standard-HL7%20FHIR%20R4-E05A47?style=flat-square)](https://hl7.org/fhir/R4/)
+[![Tests](https://img.shields.io/badge/Tests-264%20Backend%20|%2093%20Frontend%20Passing-brightgreen?style=flat-square)]()
 
 ---
 
-## 🏛️ System Architecture
+## 📌 What is StreamSignal?
 
-```
-                                  CITIZEN LOOP
-                                       │
-                      [ Citizen Observation & Media Upload ]
-                                       │ (E1 / E2)
-                                       ▼
-                       [ SignalCase Domain Model & Quality ]
-                                       │
-                      ┌────────────────┴────────────────┐
-                      ▼                                 ▼
-             [ Machine Vision (E3) ]           [ Pattern Echo (E4) ]
-             (Visual Cue Extraction)           (PostGIS + pgvector)
-                      │                                 │
-                      └────────────────┬────────────────┘
-                                       │
-                                       ▼
-                          [ SignalGuard Trust Contract ]
-                         (Enforces Evidence Boundaries)
-                                       │
-                                       ▼
-                         [ Human Review & Oversight ]  <─── RESEARCHER
-                                       │ (E5)
-                      ┌────────────────┴────────────────┐
-                      ▼                                 ▼
-         [ One Health Evidence Passport ]      [ FHIR R4 Provenance Gateway ]
-         (Cryptographic Audit Lineage)         (Interoperable Resources)
-```
+StreamSignal bridges the gap between everyday community freshwater sightings and professional watershed surveillance. 
 
-### Research-Driven Evidence Gap Loop
-
-In addition to citizen-initiated reports, StreamSignal supports a researcher-driven evidence loop:
-
-```
-Real PostgreSQL SignalCases
-         │
-         ▼
-[ Evidence Gap Intelligence ]  (Factual availability ratios, zero synthetic data)
-         │
-         ▼
-[ Researcher Authors Need ]    (Mandatory substantive rationale; placeholders blocked)
-         │
-         ▼
-[ Researcher FSM Approval ]    (IDENTIFIED → REVIEWED → APPROVED)
-         │
-         ▼  (AGENT GATE: Only APPROVED needs are visible)
-[ Evidence Mission Agent ]     (Autonomous bounded orchestrator, S0 → S7)
-         │
-         ▼
-[ Targeted Citizen Mission ]   (After-Rain checks, Clarifications, Snapshots)
-```
+Instead of acting as a black-box image classifier or making unverified environmental claims, StreamSignal functions as an **auditable evidence platform**. It maintains strict epistemic separation between:
+1. **Citizen Evidence**: Raw observational text, timestamps, GPS coordinates, and media uploads.
+2. **Machine Assistance**: Automated photo quality assessments, visual cues, and spatial-temporal clustering.
+3. **Contextual Corroboration**: Weather history, rain events, and watershed coverage gaps.
+4. **Human Expert Decision**: Verified determinations by authorized researchers with immutable provenance.
 
 ---
 
-## 🤖 Bounded Evidence Mission Agent
-
-Located in [`backend/app/agent/`](backend/app/agent/README.md), the **Evidence Mission Agent** turns researcher-approved evidence needs into guided citizen missions:
-
-- 🔒 **Finite State Machine ($S_0 \to S_7$)**: Transition firewall prevents illegal state jumps or premature submission of incomplete evidence.
-- 🛡️ **Tool Execution Firewall (`ALLOWED_AGENT_TOOLS`)**: Restricts capabilities to 7 allowlisted tools; treats citizen input as untrusted data.
-- 🔬 **Researcher Authority Gate**: The agent can only read `APPROVED` MissionNeeds. It has zero authority to create, approve, or close research needs.
-- 💻 **Local-First & Zero-Cost**: Powered by local **Ollama** (`llama3.2`) with JSON Schema-constrained structured outputs and an authoritative **Deterministic Rule Provider** fallback. Operates 100% offline with zero commercial API dependencies.
-- 📜 **Provenance Preservation**: Links planned missions to the originating `mission_need_id` and records every step in PostgreSQL `agent_action_audits`.
-
-👉 **[Read the complete Evidence Mission Agent Architecture Guide](backend/app/agent/README.md)**
-
----
-
-## 🌐 Standards-Based Interoperability (FHIR R4)
-
-StreamSignal serializes verified evidence into FHIR R4 resources ready for cross-sector One Health data exchange:
-
-- **`Location`**: Geographic coordinates and spatial context.
-- **`QuestionnaireResponse`**: Structured citizen observation questions and responses.
-- **`Observation`**: Tier-separated observations isolating citizen reports ($E_1$), machine cues ($E_3$), and contextual echoes ($E_4$).
-- **`Media`**: Cryptographic SHA-256 hashes, MIME types, and dimensions (server disk paths are strictly redacted).
-- **`Task`**: Workflow tasks tracking human review status (`requested`, `in-progress`, `completed`).
-- **`Provenance`**: Authoritative audit trail recording agents, activities, and cryptographic signatures.
-
----
-
-## 🚀 Quickstart & Local Development
+## 🚀 Quickstart (Run Demo Locally)
 
 ### Prerequisites
-- Docker & Docker Compose
-- Python 3.11+ (for local backend development)
-- Node.js 18+ (for frontend development)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running)
+- [Node.js 18+](https://nodejs.org/) (for frontend)
 
-### 1. Environment Configuration
-Copy `.env.example` to `.env`:
+---
+
+### Step 1: Clone & Configure
 ```bash
+git clone https://github.com/BP1202/StreamSignal.git
+cd StreamSignal
+
+# Create environment configuration from template
 cp .env.example .env
 ```
 
-### 2. Start Infrastructure
-Launch the PostgreSQL (with PostGIS and pgvector) and backend containers:
+---
+
+### Step 2: Start Backend & Database
+Launch the PostgreSQL database (with PostGIS) and FastAPI backend containers:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
+*Verification:*
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **API Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+- **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### 3. Verify Health & Extensions
-- **FastAPI Documentation (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Backend Healthcheck**: [http://localhost:8000/health](http://localhost:8000/health)
-- **Database Extension Verification**: [http://localhost:8000/health/extensions/verify](http://localhost:8000/health/extensions/verify)
+---
 
-### 4. Run Frontend
+### Step 3: Start Frontend
+In a new terminal window:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Access the application at [http://localhost:5173](http://localhost:5173).
+Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
 ---
 
-## 🧪 Automated Testing
+## 🎮 How to Test the Demo
 
-### Backend Test Suite (pytest)
-```bash
-pytest backend/tests/ -v
+### 1. Citizen Contributor Journey
+1. Open [http://localhost:5173](http://localhost:5173).
+2. On the sign-in modal, click **"Continue without password (guest aqua-xxx)"** to receive an instant anonymous citizen handle (e.g. `aqua-001`).
+3. Click **"Report Observation"** or **"Start with photo"**.
+4. Upload an urban stream photograph (JPG/PNG).
+5. Select observed signals (e.g., surface discoloration, foam, odor) and enter a description.
+6. Provide GPS coordinates (or use the one-click *"Use current location"* button) and click **Submit**.
+7. Complete the brief 2-question clarification interview to generate your structured **SignalCase**.
+
+---
+
+### 2. Researcher & Limnologist Review
+1. Switch to the **Researcher Workspace** using the top navigation bar or sign in as Researcher.
+2. Open the **Evidence Inbox** to see incoming unreviewed citizen observations sorted by triage urgency.
+3. Select your submitted case to open the **SignalCase Investigation View**:
+   - Inspect raw citizen evidence and high-resolution media.
+   - Review automated quality metrics and contextual weather corroboration.
+4. In the **Researcher Review Panel**, select an action (e.g., *Request field verification*, *Mark related case*), enter your empirical rationale, verify your **Reviewer ID** (`X-Reviewer-Id`), and click **Record Decision**.
+5. Scroll down to **One Health Interoperability** to view or download the generated **HL7 FHIR R4 Bundle** and cryptographic **Evidence Passport**.
+
+---
+
+## 🏛️ System Architecture & Data Flow
+
+```text
+[ Citizen Smartphone / Web App ]
+               │
+               ▼  (POST /api/v1/reports + Media Upload)
+     [ FastAPI Backend ] 
+               ├── File signature & EXIF verification
+               ├── PostGIS geospatial indexing
+               └── Deterministic triage scoring
+               │
+               ▼
+      [ PostgreSQL + PostGIS ]
+               │
+               ▼
+[ Researcher Review Portal ]
+               ├── Inspect citizen evidence & cues
+               ├── Record auditable decision (X-Reviewer-Id)
+               └── Append immutable EvidenceLineageEvent
+               │
+               ▼
+   [ HL7 FHIR R4 / Evidence Passport ]
+  (Ready for Public Health & Environmental Agencies)
 ```
-Runs 208 comprehensive automated tests covering:
-- Citizen report submission & coordinate validation
-- EXIF inspection & media security
-- Deterministic triage engine & SignalGuard interpretation firewall
-- PostGIS spatial clustering & pgvector visual similarity
-- Human review workflow & immutable evidence lineage
-- FHIR R4 export & external consumer bundle validation
-- Evidence Mission Agent FSM, tool firewall, and 10-point adversarial security audit
-- Evidence Gap Intelligence & Mission Need lifecycle FSM
 
-### Frontend Test Suite (Vitest)
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technologies |
+|---|---|
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons |
+| **Backend** | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0 |
+| **Database** | PostgreSQL 16 with PostGIS & pgvector |
+| **Interoperability** | HL7 FHIR R4 (`Observation`, `Media`, `Location`, `Provenance`) |
+| **Auth & Audit** | RBAC, OIDC / Auth0 support, explicit `X-Reviewer-Id` audit provenance |
+| **Containerization** | Docker, Docker Compose |
+
+---
+
+## 🧪 Running Tests
+
+### Backend Test Suite (264 Tests)
+```bash
+docker compose exec backend pytest
+```
+
+### Frontend Test Suite (93 Tests)
 ```bash
 cd frontend
 npm test -- --run
 ```
-Runs 42 component and integration tests covering:
-- Citizen guided observation journey
-- SignalCase investigation view & Why-This-Case rationales
-- Live Evidence Bridge WebSocket updates
-- Contributor identity & mission execution flow
-- Evidence Gap Intelligence panel & Mission Needs tracker
-- Evidence Passport & FHIR R4 provenance modal viewers
 
 ### Frontend Production Build
 ```bash
@@ -178,18 +150,14 @@ npm run build
 
 ---
 
-## 🛡️ Security & Privacy Boundaries
+## 🔒 Security & Privacy Commitments
 
-1. **Untrusted Citizen Input**: All text, coordinates, timestamps, and media undergo strict length, type, signature (magic byte), and range validation.
-2. **Path Traversal & Storage Isolation**: Uploaded files receive random UUID storage names; user-provided filenames and internal server paths are never exposed over APIs or in FHIR bundles.
-3. **No Phantom / Synthetic Data**: An empty database returns empty results with zero phantom cases, simulated metrics, or placeholder summaries.
-4. **Researcher Accountability**: All human review decisions require substantive rationales and authenticated reviewer identification.
-5. **No Secret Leakage**: Stack traces, SQL queries, credentials, and environment secrets are excluded from API responses and log outputs.
+- **Decoupled Citizen Identity**: Community members are identified through non-identifying pseudonyms (`aqua-001`, `SS-C-1001`), protecting privacy while preserving evidence attribution.
+- **Strict Media Validation**: All uploads are verified by magic byte file signatures and MIME validation. Server disk paths are strictly redacted.
+- **Mandatory Audit Headers**: Review operations strictly enforce `X-Reviewer-Id` to prevent unattributed scientific determinations.
+- **Zero Hallucinated Claims**: AI agents and automated heuristics cannot alter human review outcomes or declare water toxicity without verified human confirmation.
 
 ---
 
-## 📚 Key Architectural Documentation
-
-- 🤖 **[Evidence Mission Agent Architecture Guide](backend/app/agent/README.md)** — Deep-dive into state machines, execution firewalls, and local LLM execution.
-- 📋 **[Agent Operating Contract (AGENTS.md)](AGENTS.md)** — Core non-hallucination rules, One Health principles, and engineering protocols.
-- 🛡️ **[SignalGuard Rules (RULES.md)](RULES.md)** — Scientific trust boundaries preventing unwarranted environmental and medical claims.
+## 📄 License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

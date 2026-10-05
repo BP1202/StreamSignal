@@ -1,8 +1,7 @@
 # 🌊 StreamSignal
 ### *From streams to systems: turning citizen science into actionable One Health intelligence.*
 
-> Built for the **IEEE OneAquaHealth Global Hackathon 2026**  
-> Aligned with the EU-funded **[OneAquaHealth Project](https://www.oneaquahealth.eu/)** connecting freshwater ecosystem health and human well-being.
+
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20+%20Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)

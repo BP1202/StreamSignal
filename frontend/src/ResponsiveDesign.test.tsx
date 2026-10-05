@@ -200,7 +200,7 @@ describe("Comprehensive Responsive Design Across Viewports (320px to 1920px)", (
     it("renders PhotoCaptureStep with accessible action buttons", () => {
       render(
         <PhotoCaptureStep
-          mediaFile={null}
+          mediaFiles={[]}
           onSelectMedia={vi.fn()}
           onNext={vi.fn()}
           onBack={vi.fn()}
@@ -208,7 +208,7 @@ describe("Comprehensive Responsive Design Across Viewports (320px to 1920px)", (
       );
       expect(screen.getByText("Show us what you saw")).toBeInTheDocument();
       expect(screen.getByText("Continue to observation")).toBeInTheDocument();
-      expect(screen.getByText("Skip photo for now →")).toBeInTheDocument();
+      expect(screen.getByText("Skip media for now →")).toBeInTheDocument();
     });
 
     it("renders HeroLanding with stacked responsive CTAs", () => {

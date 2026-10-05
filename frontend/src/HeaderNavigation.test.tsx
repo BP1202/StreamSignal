@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import React from "react";
 import { Header } from "./components/layout/Header";
 
@@ -19,7 +19,8 @@ describe("Header Navigation & Mobile Drawer Acceptance Criteria", () => {
       expect(screen.getByRole("button", { name: /^Observe$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Missions$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /My Impact/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Account/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Account/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Research Workspace/i })).not.toBeInTheDocument();
 
       // Verify no duplicated "Citizen" labels in the primary nav buttons
       expect(screen.queryByRole("button", { name: /Citizen Missions/i })).not.toBeInTheDocument();
@@ -57,7 +58,7 @@ describe("Header Navigation & Mobile Drawer Acceptance Criteria", () => {
   });
 
   describe("2. Researcher Desktop Navigation", () => {
-    it("renders Researcher nav items: Inbox, SignalCases, Evidence Gaps, Interoperability, Account", () => {
+    it("renders only working Researcher nav items: Inbox and Evidence Gaps", () => {
       render(
         <Header
           mode="research"
@@ -67,10 +68,10 @@ describe("Header Navigation & Mobile Drawer Acceptance Criteria", () => {
       );
 
       expect(screen.getByRole("button", { name: /^Inbox$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^SignalCases$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Evidence Gaps$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Interoperability$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Account/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^SignalCases$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Interoperability$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Account/i })).not.toBeInTheDocument();
     });
 
     it("does NOT show citizen navigation to researchers", () => {
@@ -140,6 +141,20 @@ describe("Header Navigation & Mobile Drawer Acceptance Criteria", () => {
       fireEvent.keyDown(window, { key: "Escape", code: "Escape" });
 
       expect(screen.queryByRole("dialog", { name: /Navigation menu/i })).not.toBeInTheDocument();
+    });
+
+    it("keeps keyboard focus inside the open navigation drawer", () => {
+      render(<Header mode="citizen" citizenTab="home" />);
+      fireEvent.click(screen.getByLabelText("Toggle navigation menu"));
+
+      const closeButton = screen.getByLabelText("Close navigation menu");
+      closeButton.focus();
+      fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+
+      const dialog = screen.getByRole("dialog");
+      const buttons = within(dialog).getAllByRole("button");
+      const lastButton = buttons[buttons.length - 1];
+      expect(lastButton).toHaveFocus();
     });
 
     it("navigates and closes mobile drawer on link selection", () => {

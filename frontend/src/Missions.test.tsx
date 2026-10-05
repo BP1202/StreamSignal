@@ -6,6 +6,7 @@ import { CitizenMissionPortal } from "./components/missions/CitizenMissionPortal
 import { AgentGuidedMissionFlow } from "./components/missions/AgentGuidedMissionFlow";
 import { ContributorProfile, MissionItem } from "./types/mission";
 import * as missionApi from "./api/missions";
+import * as contactApi from "./api/contact";
 
 describe("Citizen Missions & Contributor Loop Components", () => {
   const mockProfileLevel1: ContributorProfile = {
@@ -52,6 +53,7 @@ describe("Citizen Missions & Contributor Loop Components", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(contactApi, "fetchContributorContactRequests").mockResolvedValue([]);
   });
 
   it("renders ContributorIdentityBadge with handle and level 1 indicator", () => {

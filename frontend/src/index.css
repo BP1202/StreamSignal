@@ -50,3 +50,26 @@ pre, code, kbd, samp {
   outline: 2px solid #0D7C7C;
   outline-offset: 2px;
 }
+
+/* Transitional theme normalization for researcher panels that still use inline styles. */
+.research-inline-theme {
+  color: var(--color-brand-text) !important;
+  background-color: var(--color-brand-surface) !important;
+  background-image: none !important;
+  border-color: var(--color-brand-border) !important;
+}
+
+.research-inline-theme [style]:not([style*="position: fixed"]) {
+  color: var(--color-brand-text) !important;
+  background-color: var(--color-brand-surface) !important;
+  background-image: none !important;
+  border-color: var(--color-brand-border) !important;
+}
+
+.research-inline-theme [style*="width:"][style*="%"] {
+  background-color: var(--color-brand-teal) !important;
+}
+
+.research-inline-theme [style*="position: fixed"] {
+  background-color: rgb(23 37 37 / 45%) !important;
+}

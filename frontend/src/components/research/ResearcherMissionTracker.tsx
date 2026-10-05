@@ -55,13 +55,13 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
   );
 
   return (
-    <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 text-left">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+    <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border shadow-xs space-y-4 text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-brand-border">
         <div>
-          <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+          <h3 className="text-sm font-bold text-brand-text flex items-center gap-1.5">
             <span>🎯</span> Evidence Missions & Citizen Collaboration
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-brand-secondary mt-0.5">
             Targeted evidence-gathering tasks assigned to citizen observers.
           </p>
         </div>
@@ -72,8 +72,8 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
             disabled={planning || hasActiveMission}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
               hasActiveMission
-                ? "bg-slate-800 text-slate-400 border-slate-700 cursor-not-allowed"
-                : "bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40"
+                ? "bg-gray-100 text-brand-secondary border-brand-border cursor-not-allowed"
+                : "bg-brand-light hover:bg-brand-light/80 text-brand-dark border border-brand-border"
             }`}
           >
             {planning
@@ -86,17 +86,17 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
       </div>
 
       {error && (
-        <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+        <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-brand-error text-xs">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="p-6 text-center text-xs text-slate-400 animate-pulse">
+        <div className="p-6 text-center text-xs text-brand-secondary animate-pulse">
           Loading missions...
         </div>
       ) : missions.length === 0 ? (
-        <div className="p-6 text-center text-xs text-slate-400 bg-slate-800/40 rounded-xl border border-dashed border-slate-800">
+        <div className="p-6 text-center text-xs text-brand-secondary bg-brand-bg rounded-xl border border-dashed border-brand-border">
           No missions currently linked {caseId ? "to this case" : "in the system"}.
         </div>
       ) : (
@@ -104,20 +104,20 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
           {missions.map((m) => (
             <div
               key={m.id}
-              className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 hover:border-slate-600 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="p-3.5 rounded-xl bg-brand-bg border border-brand-border hover:border-brand-teal transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-dark bg-brand-light px-2 py-0.5 rounded border border-brand-border">
                     {m.mission_type.replace(/_/g, " ")}
                   </span>
-                  <span className="text-xs font-semibold text-slate-200">
+                  <span className="text-xs font-semibold text-brand-text">
                     {m.title}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400">
-                  <strong className="text-slate-300">Status:</strong> {m.status} •{" "}
-                  <strong className="text-slate-300">Missing:</strong>{" "}
+                <div className="text-[11px] text-brand-secondary">
+                  <strong className="text-brand-text">Status:</strong> {m.status} •{" "}
+                  <strong className="text-brand-text">Missing:</strong>{" "}
                   {m.missing_evidence?.length ? m.missing_evidence.join(", ") : "None"}
                 </div>
               </div>
@@ -126,7 +126,7 @@ export const ResearcherMissionTracker: React.FC<Props> = ({
                 {m.signal_case_id && onCaseSelected && (
                   <button
                     onClick={() => onCaseSelected(m.signal_case_id!)}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 font-mono"
+                    className="text-xs text-brand-teal hover:text-brand-dark font-mono"
                   >
                     View Case →
                   </button>

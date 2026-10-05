@@ -22,6 +22,44 @@ FORMAT_MAP = {
     "WEBP": ("image/webp", ".webp"),
 }
 
+VIDEO_BRANDS = {
+    b"isom", b"iso2", b"iso3", b"iso4", b"iso5", b"iso6",
+    b"mp41", b"mp42", b"M4V ", b"avc1", b"dash", b"qt  ",
+}
+
+
+def validate_and_classify_media(data: bytes) -> Tuple[str, str]:
+    """Validate supported image or video bytes and return MIME type and extension."""
+    settings = get_settings()
+    if not data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded file is empty")
+    if len(data) > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds maximum allowed limit of {settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)}MB",
+        )
+
+    # MP4 and QuickTime containers identify themselves with an ftyp box.
+    if len(data) >= 24 and data[4:8] == b"ftyp":
+        box_size = int.from_bytes(data[:4], "big")
+        brand = data[8:12]
+        if box_size < 16 or box_size > len(data) or brand not in VIDEO_BRANDS:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported or invalid video payload")
+        if b"moov" not in data and b"moof" not in data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid video container")
+        if b"mdat" not in data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid video container")
+        return ("video/quicktime", ".mov") if brand == b"qt  " else ("video/mp4", ".mp4")
+
+    # WebM/Matroska files start with the EBML magic and declare the WebM DocType.
+    if data.startswith(b"\x1a\x45\xdf\xa3"):
+        if len(data) < 16 or b"webm" not in data[:256]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported or invalid video payload")
+        return "video/webm", ".webm"
+
+    _, content_type, extension = validate_and_decode_image(data)
+    return content_type, extension
+
 
 def sanitize_filename(filename: Optional[str]) -> str:
     """
@@ -136,7 +174,14 @@ def ingest_report_media(
         )
 
     # 2. Content validation & decode verification
-    _, content_type, ext = validate_and_decode_image(file_bytes)
+    settings = get_settings()
+    media_count = db.query(ReportMedia).filter(ReportMedia.report_id == report_id).count()
+    if media_count >= settings.MAX_MEDIA_FILES_PER_REPORT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A report may contain at most {settings.MAX_MEDIA_FILES_PER_REPORT} media files",
+        )
+    content_type, ext = validate_and_classify_media(file_bytes)
 
     # 3. Cryptographic checksum
     sha256_checksum = hashlib.sha256(file_bytes).hexdigest()

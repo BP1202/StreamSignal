@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Header, CitizenTab, ResearchTab } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 import { JourneyProgress } from "./components/journey/JourneyProgress";
@@ -19,7 +19,6 @@ import {
   getEvidenceTriage,
 } from "./api/reports";
 import { ReportCreate, ReportResponse } from "./types/report";
-import { ReportMediaResponse } from "./types/media";
 import {
   EvidenceInterviewQuestion,
   InterviewAnswerSubmission,
@@ -29,17 +28,85 @@ import { JourneyStep } from "./types/journey";
 import { EvidenceInboxView } from "./components/research/EvidenceInboxView";
 import { SignalCaseInvestigationView } from "./components/research/SignalCaseInvestigationView";
 import { CitizenMissionPortal } from "./components/missions/CitizenMissionPortal";
+import { ResearchAllMediaGallery } from "./components/research/ResearchAllMediaGallery";
+import { LandingAuthModal } from "./components/auth/LandingAuthModal";
 import { ApiError } from "./api/client";
-import { AlertCircle, RotateCcw } from "lucide-react";
+import { AlertCircle, RotateCcw, Droplets } from "lucide-react";
 import { getRouteState, navigateTo } from "./utils/routing";
+import { useAppAuth } from "./auth/AuthProvider";
 
 export const App: React.FC = () => {
+  const auth = useAppAuth();
   // Top-level workspace mode: "citizen" (reporting journey) vs "missions" (Mission Agent) vs "research" (Research Workspace)
   const initialRoute = getRouteState();
   const [workspaceMode, setWorkspaceMode] = useState<"citizen" | "missions" | "research">(initialRoute.mode);
   const [citizenTab, setCitizenTab] = useState<CitizenTab>(initialRoute.citizenTab || "home");
   const [researchTab, setResearchTab] = useState<ResearchTab>("inbox");
   const [researchCaseId, setResearchCaseId] = useState<string | null>(initialRoute.caseId);
+
+  // Authentication & session state
+  const [userRole, setUserRole] = useState<"citizen" | "researcher" | null>(() => {
+    if (auth.isAuthenticated) return "researcher";
+    const saved = localStorage.getItem("streamsignal_auth_role");
+    if (saved === "citizen" || saved === "researcher") return saved;
+    if (localStorage.getItem("streamsignal_citizen_username")) return "citizen";
+    if (localStorage.getItem("streamsignal_researcher_authenticated") === "true") return "researcher";
+    return null;
+  });
+
+  const [citizenUsername, setCitizenUsername] = useState<string | null>(() => {
+    return localStorage.getItem("streamsignal_citizen_username") || null;
+  });
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => {
+    const role = localStorage.getItem("streamsignal_auth_role");
+    const hasCitizen = localStorage.getItem("streamsignal_citizen_username");
+    return !role && !hasCitizen && !auth.isAuthenticated;
+  });
+
+  const handleCitizenEnter = (username: string, contributorId?: string) => {
+    setUserRole("citizen");
+    setCitizenUsername(username);
+    localStorage.setItem("streamsignal_auth_role", "citizen");
+    localStorage.setItem("streamsignal_citizen_username", username);
+    if (contributorId) {
+      localStorage.setItem("streamsignal_contributor_id", contributorId);
+    }
+    setIsLoginModalOpen(false);
+  };
+
+  const handleResearcherEnter = (reviewerId?: string) => {
+    const activeReviewer =
+      reviewerId ||
+      localStorage.getItem("streamsignal_reviewer_id") ||
+      "REV-RESEARCHER-001";
+    setUserRole("researcher");
+    localStorage.setItem("streamsignal_auth_role", "researcher");
+    localStorage.setItem("streamsignal_researcher_authenticated", "true");
+    localStorage.setItem("streamsignal_reviewer_id", activeReviewer);
+    setWorkspaceMode("research");
+    setResearchTab("inbox");
+    setResearchCaseId(null);
+    navigateTo("research", null);
+    setIsLoginModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("streamsignal_auth_role");
+    localStorage.removeItem("streamsignal_citizen_username");
+    localStorage.removeItem("streamsignal_researcher_authenticated");
+    localStorage.removeItem("streamsignal_contributor_id");
+    localStorage.removeItem("streamsignal_reviewer_id");
+    setUserRole(null);
+    setCitizenUsername(null);
+    setIsLoginModalOpen(true);
+    setWorkspaceMode("citizen");
+    setCitizenTab("home");
+    navigateTo("citizen", null, "home");
+    if (auth.isAuthenticated) {
+      auth.signOut();
+    }
+  };
 
 
   const [currentStep, setCurrentStep] = useState<JourneyStep>("landing");
@@ -48,7 +115,8 @@ export const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Citizen observation journey state
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const uploadedFilesRef = useRef<Set<File>>(new Set());
   const [description, setDescription] = useState<string>("");
   const [waterAppearance, setWaterAppearance] = useState<string>("");
   const [flowCondition, setFlowCondition] = useState<string>("");
@@ -65,7 +133,6 @@ export const App: React.FC = () => {
 
   // Backend state
   const [activeReport, setActiveReport] = useState<ReportResponse | null>(null);
-  const [activeMedia, setActiveMedia] = useState<ReportMediaResponse | null>(null);
   const [interviewQuestions, setInterviewQuestions] = useState<EvidenceInterviewQuestion[]>([]);
   const [isSubmittingAnswers, setIsSubmittingAnswers] = useState<boolean>(false);
   const [evidenceCase, setEvidenceCase] = useState<EvidenceCaseResponse | null>(null);
@@ -135,7 +202,8 @@ export const App: React.FC = () => {
     setIsSubmitting(false);
     setSubmittingMessage("");
     setErrorMessage(null);
-    setMediaFile(null);
+    setMediaFiles([]);
+    uploadedFilesRef.current.clear();
     setDescription("");
     setWaterAppearance("");
     setFlowCondition("");
@@ -147,7 +215,6 @@ export const App: React.FC = () => {
     setLongitude("");
     setObservedAt(new Date().toISOString().slice(0, 16));
     setActiveReport(null);
-    setActiveMedia(null);
     setInterviewQuestions([]);
     setIsSubmittingAnswers(false);
     setEvidenceCase(null);
@@ -175,28 +242,48 @@ export const App: React.FC = () => {
       dead_wildlife_observed: deadWildlifeObserved,
     };
 
-    let createdReport: ReportResponse;
-    try {
-      setSubmittingMessage("Recording citizen observation report...");
-      createdReport = await createReport(reportData);
-      setActiveReport(createdReport);
-    } catch (err: unknown) {
-      setIsSubmitting(false);
-      const msg = err instanceof ApiError ? err.message : "Failed to submit observation.";
-      setErrorMessage(msg);
-      return;
+    let createdReport = activeReport;
+    if (!createdReport) {
+      try {
+        setSubmittingMessage("Recording citizen observation report...");
+        createdReport = await createReport(reportData);
+        setActiveReport(createdReport);
+      } catch (err: unknown) {
+        setIsSubmitting(false);
+        const msg = err instanceof ApiError ? err.message : "Failed to submit observation.";
+        setErrorMessage(msg);
+        return;
+      }
     }
 
-    // Media upload if attached
-    if (mediaFile) {
+    // Upload any attached files not already persisted by an earlier partial attempt.
+    if (mediaFiles.length > 0) {
       try {
-        setSubmittingMessage("Uploading original photo evidence...");
-        const mediaRecord = await uploadReportMedia(createdReport.id, mediaFile);
-        setActiveMedia(mediaRecord);
+        for (const [index, mediaFile] of mediaFiles.entries()) {
+          if (uploadedFilesRef.current.has(mediaFile)) continue;
+          setSubmittingMessage(`Uploading media ${index + 1} of ${mediaFiles.length}...`);
+          try {
+            await uploadReportMedia(createdReport.id, mediaFile);
+            uploadedFilesRef.current.add(mediaFile);
+          } catch (uploadErr: unknown) {
+            // If the report was deleted, reset, or not found on the backend (404),
+            // self-heal: re-create the report and upload with the newly created report ID
+            if (uploadErr instanceof ApiError && uploadErr.status === 404) {
+              setSubmittingMessage("Recording fresh citizen observation report...");
+              uploadedFilesRef.current.clear();
+              createdReport = await createReport(reportData);
+              setActiveReport(createdReport);
+              await uploadReportMedia(createdReport.id, mediaFile);
+              uploadedFilesRef.current.add(mediaFile);
+            } else {
+              throw uploadErr;
+            }
+          }
+        }
       } catch (err: unknown) {
         setIsSubmitting(false);
         const msg = err instanceof ApiError ? err.message : "Media upload failed.";
-        setErrorMessage(`Observation was saved, but photo upload failed: ${msg}`);
+        setErrorMessage(`Observation was saved, but a media upload failed: ${msg}`);
         return;
       }
     }
@@ -204,7 +291,18 @@ export const App: React.FC = () => {
     // Evidence interview
     try {
       setSubmittingMessage("Evaluating evidence completeness...");
-      const interviewData = await getEvidenceInterview(createdReport.id);
+      let interviewData;
+      try {
+        interviewData = await getEvidenceInterview(createdReport.id);
+      } catch (interviewErr: unknown) {
+        if (interviewErr instanceof ApiError && interviewErr.status === 404) {
+          createdReport = await createReport(reportData);
+          setActiveReport(createdReport);
+          interviewData = await getEvidenceInterview(createdReport.id);
+        } else {
+          throw interviewErr;
+        }
+      }
 
       if (interviewData.questions && interviewData.questions.length > 0) {
         setInterviewQuestions(interviewData.questions);
@@ -238,19 +336,63 @@ export const App: React.FC = () => {
     await loadCaseAndTriage(activeReport.id);
   };
 
+  if (workspaceMode === "research" && auth.isConfigured && auth.isLoading) {
+    return (
+      <div className="min-h-screen bg-brand-bg p-6 flex items-center justify-center">
+        <div className="w-full max-w-md rounded-2xl border border-brand-border bg-brand-surface p-8 text-center shadow-xs">
+          <p className="text-sm font-semibold text-brand-text">Checking researcher access…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (workspaceMode === "research" && auth.isConfigured && !auth.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-brand-bg p-6 flex items-center justify-center">
+        <div className="w-full max-w-md space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-8 text-center shadow-xs">
+          <h1 className="text-xl font-bold text-brand-text">Researcher sign-in</h1>
+          <p className="text-sm text-brand-secondary">Sign in with your authorized researcher account to review cases and original citizen media.</p>
+          <button type="button" onClick={() => void auth.signIn()} className="rounded-lg bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark">
+            Sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (workspaceMode === "research" && auth.isConfigured && auth.isAuthenticated && !auth.hasResearcherRole) {
+    return (
+      <div className="min-h-screen bg-brand-bg p-6 flex items-center justify-center">
+        <div className="w-full max-w-md space-y-4 rounded-2xl border border-brand-border bg-brand-surface p-8 text-center shadow-xs">
+          <h1 className="text-xl font-bold text-brand-text">Researcher access required</h1>
+          <p className="text-sm text-brand-secondary">This account does not have the configured researcher role.</p>
+          <button type="button" onClick={auth.signOut} className="rounded-lg border border-brand-border bg-white px-5 py-2.5 text-sm font-semibold text-brand-text hover:bg-brand-bg">
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg">
+      <LandingAuthModal
+        isOpen={isLoginModalOpen || !userRole}
+        onCitizenEnter={handleCitizenEnter}
+        onResearcherEnter={handleResearcherEnter}
+        isAuth0Configured={auth.isConfigured}
+        onAuth0SignIn={auth.signIn}
+        onClose={userRole ? () => setIsLoginModalOpen(false) : undefined}
+      />
+
       <Header
-        onNewObservation={() => {
-          setWorkspaceMode("citizen");
-          setCitizenTab("observe");
-          setCurrentStep("landing");
-          navigateTo("citizen", null, "observe");
-        }}
-        showNewButton={workspaceMode === "citizen" && currentStep !== "landing"}
         mode={workspaceMode}
         citizenTab={citizenTab}
         researchTab={researchTab}
+        userRole={userRole}
+        citizenUsername={citizenUsername}
+        onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
         onSwitchCitizenTab={(tab) => {
           setCitizenTab(tab);
           if (tab === "missions") {
@@ -259,6 +401,8 @@ export const App: React.FC = () => {
           } else {
             setWorkspaceMode("citizen");
             if (tab === "observe") {
+              setActiveReport(null);
+              uploadedFilesRef.current.clear();
               setCurrentStep("landing");
               navigateTo("citizen", null, "observe");
             } else if (tab === "impact") {
@@ -271,7 +415,7 @@ export const App: React.FC = () => {
         onSwitchResearchTab={(tab) => {
           setResearchTab(tab);
           setWorkspaceMode("research");
-          if (tab === "inbox" || tab === "gaps") {
+          if (tab === "inbox" || tab === "gaps" || tab === "media") {
             setResearchCaseId(null);
             navigateTo("research", null);
           }
@@ -279,6 +423,9 @@ export const App: React.FC = () => {
         onSwitchMode={(mode) => {
           setWorkspaceMode(mode);
           if (mode === "research") {
+            if (!userRole) {
+              setIsLoginModalOpen(true);
+            }
             setResearchCaseId(null);
             navigateTo("research", null);
           } else if (mode === "missions") {
@@ -286,15 +433,37 @@ export const App: React.FC = () => {
             setResearchCaseId(null);
             navigateTo("missions", null);
           } else {
-            setCitizenTab("home");
-            navigateTo("citizen", null, "home");
+            setActiveReport(null);
+            uploadedFilesRef.current.clear();
+            setCitizenTab("observe");
+            setCurrentStep("landing");
+            navigateTo("citizen", null, "observe");
           }
         }}
       />
 
       <main className="flex-1 w-full mx-auto">
-        {workspaceMode === "missions" || (workspaceMode === "citizen" && citizenTab === "missions") ? (
-          <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {!userRole ? (
+          <div className="max-w-screen-2xl mx-auto px-4 py-16 text-center space-y-4">
+            <div className="max-w-lg mx-auto p-8 rounded-3xl bg-brand-surface border border-brand-border shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-brand-teal mx-auto">
+                <Droplets className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold text-brand-text">Please sign in to access StreamSignal</h2>
+              <p className="text-xs text-brand-secondary">
+                Citizen observations, watershed missions, and research evidence cases require entering as a citizen contributor or authorized researcher.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsLoginModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-brand-teal text-white text-xs font-bold hover:bg-cyan-600 transition-colors shadow-sm"
+              >
+                Sign In / Get Started
+              </button>
+            </div>
+          </div>
+        ) : workspaceMode === "missions" || (workspaceMode === "citizen" && citizenTab === "missions") ? (
+          <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
             <CitizenMissionPortal
               onCaseCreated={(caseId) => {
                 setWorkspaceMode("research");
@@ -302,6 +471,8 @@ export const App: React.FC = () => {
                 navigateTo("research", caseId);
               }}
               onGoToObserve={() => {
+                setActiveReport(null);
+                uploadedFilesRef.current.clear();
                 setWorkspaceMode("citizen");
                 setCitizenTab("observe");
                 setCurrentStep("landing");
@@ -318,6 +489,13 @@ export const App: React.FC = () => {
                 navigateTo("research", null);
               }}
             />
+          ) : researchTab === "media" ? (
+            <ResearchAllMediaGallery
+              onSelectCase={(caseId) => {
+                setResearchCaseId(caseId);
+                navigateTo("research", caseId);
+              }}
+            />
           ) : (
             <EvidenceInboxView
               initialWorkspaceTab={researchTab === "gaps" ? "gaps_and_needs" : "inbox"}
@@ -328,7 +506,7 @@ export const App: React.FC = () => {
             />
           )
         ) : (
-          <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+          <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
             {currentStep === "case" && evidenceCase ? (
               <EvidenceCaseView
                 evidenceCase={evidenceCase}
@@ -363,6 +541,8 @@ export const App: React.FC = () => {
                   navigateTo("missions", null);
                 }}
                 onGoToObserve={() => {
+                  setActiveReport(null);
+                  uploadedFilesRef.current.clear();
                   setCitizenTab("observe");
                   setCurrentStep("landing");
                   navigateTo("citizen", null, "observe");
@@ -376,11 +556,15 @@ export const App: React.FC = () => {
             ) : citizenTab === "home" && currentStep === "landing" ? (
               <WaterSignalHome
                 onStartWithPhoto={() => {
+                  setActiveReport(null);
+                  uploadedFilesRef.current.clear();
                   setCitizenTab("observe");
                   setCurrentStep("capture");
                   navigateTo("citizen", null, "observe");
                 }}
                 onStartWithoutPhoto={() => {
+                  setActiveReport(null);
+                  uploadedFilesRef.current.clear();
                   setCitizenTab("observe");
                   setCurrentStep("signals");
                   navigateTo("citizen", null, "observe");
@@ -401,15 +585,23 @@ export const App: React.FC = () => {
 
                 {currentStep === "landing" && (
                   <HeroLanding
-                    onStartWithPhoto={() => setCurrentStep("capture")}
-                    onStartWithoutPhoto={() => setCurrentStep("signals")}
+                    onStartWithPhoto={() => {
+                      setActiveReport(null);
+                      uploadedFilesRef.current.clear();
+                      setCurrentStep("capture");
+                    }}
+                    onStartWithoutPhoto={() => {
+                      setActiveReport(null);
+                      uploadedFilesRef.current.clear();
+                      setCurrentStep("signals");
+                    }}
                   />
                 )}
 
                 {currentStep === "capture" && (
                   <PhotoCaptureStep
-                    mediaFile={mediaFile}
-                    onSelectMedia={(file) => setMediaFile(file)}
+                    mediaFiles={mediaFiles}
+                    onSelectMedia={setMediaFiles}
                     onNext={() => setCurrentStep("signals")}
                     onBack={() => {
                       setCitizenTab("home");
@@ -436,7 +628,7 @@ export const App: React.FC = () => {
                     deadWildlifeObserved={deadWildlifeObserved}
                     onToggleWildlife={setDeadWildlifeObserved}
                     onNext={() => setCurrentStep("location")}
-                    onBack={() => (mediaFile ? setCurrentStep("capture") : setCurrentStep("landing"))}
+                    onBack={() => (mediaFiles.length > 0 ? setCurrentStep("capture") : setCurrentStep("landing"))}
                   />
                 )}
 
@@ -448,7 +640,7 @@ export const App: React.FC = () => {
                     onChangeLongitude={setLongitude}
                     observedAt={observedAt}
                     onChangeObservedAt={setObservedAt}
-                    hasMedia={Boolean(mediaFile)}
+                    hasMedia={mediaFiles.length > 0}
                     hasDescription={Boolean(description.trim())}
                     hasCharacteristics={Boolean(waterAppearance || flowCondition || odor || foamObserved || litterObserved || deadWildlifeObserved)}
                     isSubmitting={isSubmitting}

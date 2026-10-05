@@ -26,7 +26,7 @@ export async function fetchContributorImpact(
  * Returns deterministic coverage percentage and per-dimension availability.
  */
 export async function fetchEvidenceCoverage(): Promise<EvidenceCoverageInfo> {
-  return request<EvidenceCoverageInfo>("/api/v1/evidence-gaps", {
+  return request<EvidenceCoverageInfo>("/api/v1/citizen/evidence-coverage", {
     method: "GET",
   });
 }

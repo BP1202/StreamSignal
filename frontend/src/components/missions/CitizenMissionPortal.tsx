@@ -108,14 +108,14 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 text-left">
+    <div className="w-full max-w-screen-2xl mx-auto space-y-6 text-left">
       {/* Top Header & Contributor Badge */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-brand-border">
         <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-brand-text flex items-center gap-2">
             <span>🎯</span> Citizen Evidence Missions
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-brand-secondary mt-1">
             Targeted evidence-gathering missions requested by researchers and guided by the
             StreamSignal Evidence Mission Agent.
           </p>
@@ -124,7 +124,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
           <button
             type="button"
             onClick={() => setIsContactModalOpen(true)}
-            className="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="text-xs font-semibold text-brand-text hover:text-brand-dark bg-brand-surface hover:bg-brand-light border border-brand-border px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
             <span>Communications</span>
@@ -144,20 +144,20 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
 
       {/* Pending Researcher Contact Request Alert */}
       {pendingContactsCount > 0 && (
-        <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-200 flex items-center justify-between flex-wrap gap-3">
+        <div className="p-4 rounded-xl bg-brand-light/60 border border-brand-border text-brand-dark flex items-center justify-between flex-wrap gap-3">
           <div className="text-xs space-y-0.5">
-            <span className="font-bold text-teal-100 flex items-center gap-1.5">
-              <MessageSquare className="w-4 h-4 text-teal-400" />
+            <span className="font-bold text-brand-dark flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-brand-teal" />
               Researcher Inquiry Awaiting Your Response ({pendingContactsCount})
             </span>
-            <p className="text-teal-300/80">
+            <p className="text-brand-secondary">
               A researcher requested clarification or follow-up details on your observation.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setIsContactModalOpen(true)}
-            className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-lg shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold bg-brand-teal hover:bg-brand-dark text-white px-3.5 py-1.5 rounded-lg shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
           >
             <span>Review Inquiries</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -167,14 +167,14 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
 
       {/* Submission Success Banner */}
       {submittedCaseId && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-brand-light/60 border border-brand-border text-brand-dark flex items-center justify-between">
           <div className="text-xs space-y-0.5">
-            <span className="font-bold text-emerald-100 block">
+            <span className="font-bold text-brand-dark block">
               🎉 Mission Completed & Evidence Submitted!
             </span>
             <span>
               Your evidence was handed off into SignalCase{" "}
-              <code className="text-emerald-300 font-mono font-bold">
+              <code className="text-brand-teal font-mono font-bold">
                 {submittedCaseId}
               </code>{" "}
               and is now active in the Research Workspace.
@@ -182,7 +182,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
           </div>
           <button
             onClick={() => setSubmittedCaseId(null)}
-            className="text-xs text-emerald-300 hover:text-white px-2 py-1"
+            className="text-xs text-brand-secondary hover:text-brand-text px-2 py-1"
           >
             Dismiss
           </button>
@@ -190,15 +190,15 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-brand-error text-xs flex items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="font-bold text-rose-200 block">Evidence could not be loaded.</span>
+            <span className="font-bold text-brand-error block">Evidence could not be loaded.</span>
             <span>{error}</span>
           </div>
           <button
             type="button"
             onClick={loadMissions}
-            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold transition-colors shrink-0"
+            className="px-3 py-1.5 rounded-lg bg-brand-teal hover:bg-brand-dark text-white font-semibold transition-colors shrink-0"
           >
             Retry
           </button>
@@ -207,19 +207,19 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
 
       {/* Missions Grid */}
       {loading ? (
-        <div className="p-12 text-center text-xs text-slate-400 animate-pulse">
+        <div className="p-12 text-center text-xs text-brand-secondary animate-pulse">
           Loading evidence...
         </div>
       ) : missions.length === 0 ? (
-        <div className="p-12 rounded-2xl bg-slate-900/60 border border-dashed border-slate-800 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto text-2xl text-slate-400">
+        <div className="p-12 rounded-2xl bg-brand-surface border border-dashed border-brand-border text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-brand-light flex items-center justify-center mx-auto text-2xl text-brand-teal">
             🌊
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-slate-200">
+            <h3 className="text-sm font-semibold text-brand-text">
               No targeted missions are currently available.
             </h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto">
+            <p className="text-xs text-brand-secondary max-w-md mx-auto">
               Recommendations originate only from researcher-approved research needs that match active evidence gaps in your watershed.
             </p>
           </div>
@@ -240,29 +240,29 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
           {missions.map((m) => (
             <div
               key={m.id}
-              className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 shadow-lg flex flex-col justify-between transition-all"
+              className="p-3.5 sm:p-5 rounded-2xl bg-brand-surface border border-brand-border hover:border-brand-teal shadow-xs flex flex-col justify-between transition-all"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-dark bg-brand-light px-2 py-0.5 rounded border border-brand-border">
                     {m.mission_type.replace(/_/g, " ")}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] font-mono text-brand-secondary">
                     {m.status}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">{m.title}</h3>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  <h3 className="text-sm font-bold text-brand-text">{m.title}</h3>
+                  <p className="text-xs text-brand-secondary mt-1 line-clamp-2">
                     {m.purpose}
                   </p>
                 </div>
 
                 {/* Why this mission? */}
-                <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-1.5 text-[11px]">
-                  <span className="font-semibold text-cyan-300 block">Why this mission?</span>
-                  <ul className="text-slate-300 space-y-1">
+                <div className="p-3 rounded-xl bg-brand-bg border border-brand-border space-y-1.5 text-[11px]">
+                  <span className="font-semibold text-brand-teal block">Why this mission?</span>
+                  <ul className="text-brand-secondary space-y-1">
                     {(m.why_this_mission && m.why_this_mission.length > 0
                       ? m.why_this_mission
                       : [
@@ -273,12 +273,12 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
                         ]
                     ).map((reason, idx) => (
                       <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span className="text-brand-success font-bold">✓</span>
                         <span>{reason}</span>
                       </li>
                     ))}
                   </ul>
-                  <p className="text-[10px] text-slate-400 border-t border-slate-700/60 pt-1.5 leading-relaxed">
+                  <p className="text-[10px] text-brand-secondary border-t border-brand-border pt-1.5 leading-relaxed">
                     🛡 <em>Recommendation indicates evidence collection need only — not pollution or health risk.</em>
                   </p>
                 </div>
@@ -287,7 +287,7 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
                   {m.required_evidence.map((req) => (
                     <span
                       key={req}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+                      className="text-[10px] px-2 py-0.5 rounded bg-brand-light text-brand-dark border border-brand-border"
                     >
                       {req}
                     </span>
@@ -295,11 +295,11 @@ export const CitizenMissionPortal: React.FC<Props> = ({ onCaseCreated, onGoToObs
                 </div>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                <span className="text-[11px] text-slate-500">⏱ ~2–3 minutes</span>
+              <div className="pt-4 mt-4 border-t border-brand-border flex items-center justify-between">
+                <span className="text-[11px] text-brand-secondary">⏱ ~2–3 minutes</span>
                 <button
                   onClick={() => handleStartMission(m)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white shadow-md transition-all"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-teal hover:bg-brand-dark text-white shadow-xs transition-all"
                 >
                   Accept Mission →
                 </button>

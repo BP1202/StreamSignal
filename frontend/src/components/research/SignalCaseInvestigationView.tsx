@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ResearchCaseDetailResponse, HumanReviewItem } from "../../types/research";
 import { fetchResearchCaseDetail } from "../../api/research";
-import { SignalGuardClaimInspector } from "./SignalGuardClaimInspector";
 import { HumanReviewPanel } from "./HumanReviewPanel";
-import { EvidenceLineageTimeline } from "./EvidenceLineageTimeline";
+import { ResearchMediaGallery } from "./ResearchMediaGallery";
 import { InteroperabilitySection } from "./InteroperabilitySection";
 import { ResearcherMissionTracker } from "./ResearcherMissionTracker";
 import { ContactContributorModal } from "./ContactContributorModal";
@@ -16,7 +15,6 @@ import {
   MapPin,
   CheckCircle2,
   FileText,
-  Eye,
   History,
   ShieldCheck,
   AlertTriangle,
@@ -72,23 +70,16 @@ export const SignalCaseInvestigationView: React.FC<
     loadCase();
   };
 
-  const handleScrollToLineage = () => {
-    const el = document.getElementById("evidence-lineage-section");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="research-workspace w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="bg-white rounded-xl border border-brand-border p-12 text-center shadow-xs space-y-3">
           <RefreshCw className="w-8 h-8 text-brand-teal animate-spin mx-auto" />
           <h3 className="text-base font-semibold text-brand-text">
             Loading evidence...
           </h3>
           <p className="text-xs text-brand-secondary max-w-md mx-auto">
-            Aggregating multi-layered evidence, visual observations, spatial Pattern Echo context, SignalGuard trust bounds, and human review decisions.
+            Loading reported observations, evidence completeness, historical context, and human review status.
           </p>
         </div>
       </div>
@@ -97,7 +88,7 @@ export const SignalCaseInvestigationView: React.FC<
 
   if (error || !caseDetail) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="research-workspace w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center space-y-4">
           <AlertCircle className="w-10 h-10 text-red-600 mx-auto" />
           <h3 className="text-lg font-bold text-red-900">
@@ -131,7 +122,7 @@ export const SignalCaseInvestigationView: React.FC<
   const currentEvidenceState = caseDetail.evidence_state || "E1_REPORTED";
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
+    <div className="research-workspace w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
       {/* Top Nav & Context Breadcrumb */}
       <div className="flex items-center justify-between flex-wrap gap-2.5 sm:gap-4">
         <button
@@ -243,13 +234,14 @@ export const SignalCaseInvestigationView: React.FC<
         </div>
       </div>
 
+      <ResearchMediaGallery caseId={caseDetail.case_id} media={caseDetail.media || []} />
+
       {/* Interactive Human Review Panel (Opens when researcher initiates review) */}
       {isReviewOpen && (
         <HumanReviewPanel
           caseDetail={caseDetail}
           onReviewRecorded={handleReviewRecorded}
           onCancel={() => setIsReviewOpen(false)}
-          onViewLineage={handleScrollToLineage}
         />
       )}
 
@@ -300,13 +292,13 @@ export const SignalCaseInvestigationView: React.FC<
       )}
 
       {/* 4 Multi-Layered Evidence Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
         {/* Layer 1: What Was Reported (Citizen Evidence) */}
         <div className="bg-white rounded-xl border border-brand-border p-5 shadow-xs space-y-4">
           <div className="border-b border-brand-border pb-3 flex items-center justify-between">
             <h3 className="text-sm font-bold text-brand-text flex items-center gap-2">
               <FileText className="w-4 h-4 text-brand-teal" />
-              1. What Was Reported (Citizen Evidence)
+              1. Reported observation
             </h3>
             <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-sm border border-blue-200">
               E1 — REPORTED
@@ -377,7 +369,7 @@ export const SignalCaseInvestigationView: React.FC<
           <div className="border-b border-brand-border pb-3 flex items-center justify-between">
             <h3 className="text-sm font-bold text-brand-text flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-brand-teal" />
-              2. Deterministic Evidence Quality
+              2. Evidence completeness
             </h3>
             <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-sm border border-emerald-200">
               {caseDetail.evidence_quality.quality}
@@ -434,67 +426,12 @@ export const SignalCaseInvestigationView: React.FC<
           </div>
         </div>
 
-        {/* Layer 3: Observable Media Visual Observations */}
-        <div className="bg-white rounded-xl border border-brand-border p-5 shadow-xs space-y-4">
-          <div className="border-b border-brand-border pb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-brand-text flex items-center gap-2">
-              <Eye className="w-4 h-4 text-brand-teal" />
-              3. Visual Evidence & Machine Observations
-            </h3>
-            <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-sm border border-emerald-200">
-              E2 — OBSERVED
-            </span>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {caseDetail.media_observations.length > 0 ? (
-              caseDetail.media_observations.map((group) => (
-                <div
-                  key={group.media_id}
-                  className="bg-gray-50 border border-gray-200 p-3 rounded-lg space-y-2"
-                >
-                  <div className="flex items-center justify-between font-mono text-[10px] text-gray-500 border-b border-gray-200 pb-1.5">
-                    <span>Media Attachment: {group.media_id.slice(0, 8)}</span>
-                    <span>{group.observations.length} cue(s)</span>
-                  </div>
-
-                  {group.observations.map((obs) => (
-                    <div
-                      key={obs.observation_id}
-                      className="bg-white border border-brand-border/70 p-2.5 rounded-md space-y-1"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-brand-text font-mono text-[11px]">
-                          {obs.observation_type}
-                        </span>
-                        <span className="text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded-sm border border-emerald-200">
-                          {obs.evidence_class}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-brand-secondary">
-                        {obs.description}
-                      </p>
-                      <div className="text-[10px] text-amber-700 italic pt-0.5">
-                        Uncertainty: {obs.uncertainty}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 italic bg-gray-50 p-3 rounded-md">
-                No visual observations extracted. Either no media was attached or no discernible visual cues were extracted.
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* Layer 4: Contextual Evidence: Pattern Echo */}
         <div className="bg-white rounded-xl border border-brand-border p-5 shadow-xs space-y-4">
           <div className="border-b border-brand-border pb-3 flex items-center justify-between">
             <h3 className="text-sm font-bold text-brand-text flex items-center gap-2">
               <History className="w-4 h-4 text-brand-teal" />
-              4. Contextual Evidence: Pattern Echo
+              3. Historical context: Pattern Echo
             </h3>
             <span className="text-[10px] font-semibold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-sm border border-purple-200">
               E4 — CORROBORATED
@@ -563,17 +500,6 @@ export const SignalCaseInvestigationView: React.FC<
           </div>
         </div>
       </div>
-
-      {/* SignalGuard Claim Inspector */}
-      <SignalGuardClaimInspector
-        claims={caseDetail.evidence_contract.claims}
-      />
-
-      {/* Persistent Audit Evidence Lineage Section */}
-      <EvidenceLineageTimeline
-        caseId={caseDetail.case_id}
-        refreshTrigger={lineageRefreshTrigger}
-      />
 
       {/* One Health Evidence Passport & FHIR R4 Provenance Gateway */}
       <InteroperabilitySection

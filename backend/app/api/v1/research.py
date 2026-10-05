@@ -15,6 +15,8 @@ from app.schemas.evidence_passport import EvidencePassportResponse
 from app.schemas.evidence_quality import EvidenceQualityLevel
 from app.schemas.fhir import FHIRBundle
 from app.schemas.triage import TriageAction
+from app.models.media import ReportMedia
+from app.models.report import Report
 from app.schemas.research import (
     ResearchInboxResponse,
     ResearchCaseDetailResponse,
@@ -23,6 +25,8 @@ from app.schemas.research import (
     HumanReviewListResponse,
     EvidenceLineageListResponse,
     CitizenImpactStatusResponse,
+    CitizenMediaListResponse,
+    CitizenMediaSummaryItem,
 )
 from app.schemas.contact_request import ContactRequestCreate, ContactRequestResponse
 from app.services.evidence_passport import generate_evidence_passport
@@ -329,4 +333,46 @@ def list_case_contact_requests(
 ) -> list[ContactRequestResponse]:
     """Retrieves contact requests for a SignalCase."""
     return get_case_contact_requests(db=db, case_id=case_id)
+
+
+@router.get(
+    "/media",
+    response_model=CitizenMediaListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="All Citizen Media Evidence Gallery",
+    description="Retrieves all citizen-submitted media evidence across all cases for authorized researcher review.",
+)
+def list_all_citizen_media(
+    limit: int = Query(50, ge=1, le=100, description="Page limit"),
+    offset: int = Query(0, ge=0, description="Offset for pagination"),
+    media_type: Optional[str] = Query(None, description="Filter by media type: 'image' or 'video'"),
+    db: Session = Depends(get_db),
+) -> CitizenMediaListResponse:
+    """Retrieves all citizen-submitted media attachments across reports."""
+    query = db.query(ReportMedia).join(Report, ReportMedia.report_id == Report.id)
+    if media_type == "image":
+        query = query.filter(ReportMedia.content_type.startswith("image/"))
+    elif media_type == "video":
+        query = query.filter(ReportMedia.content_type.startswith("video/"))
+
+    total = query.count()
+    records = query.order_by(ReportMedia.created_at.desc()).offset(offset).limit(limit).all()
+
+    items = [
+        CitizenMediaSummaryItem(
+            media_id=m.id,
+            case_id=m.report_id,
+            original_filename=m.original_filename,
+            content_type=m.content_type,
+            size_bytes=m.size_bytes,
+            created_at=m.created_at,
+            report_description=m.report.description if m.report else None,
+            water_appearance=m.report.water_appearance if m.report else None,
+            flow_condition=m.report.flow_condition if m.report else None,
+            latitude=m.report.latitude if m.report else None,
+            longitude=m.report.longitude if m.report else None,
+        )
+        for m in records
+    ]
+    return CitizenMediaListResponse(items=items, total=total)
 

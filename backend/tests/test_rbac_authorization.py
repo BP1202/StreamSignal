@@ -1,7 +1,7 @@
 """
 StreamSignal — RBAC Authorization & Reviewer Identity Tests
 Verifies that:
-1. All researcher endpoints are strictly gated by X-Role: RESEARCHER.
+1. All researcher endpoints require the researcher role (OIDC in production; test shortcut in development).
 2. Citizen and anonymous requests cannot access researcher-only workspace.
 3. Human review creation strictly enforces an explicit X-Reviewer-Id header.
 4. Agent provider status endpoint correctly reports runtime governance status.

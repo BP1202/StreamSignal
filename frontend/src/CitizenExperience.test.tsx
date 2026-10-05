@@ -72,6 +72,10 @@ const mockImpact: ContributorImpactResponse = {
 describe("Citizen Experience & Product Coherence Components", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    localStorage.setItem("streamsignal_auth_role", "citizen");
+    localStorage.setItem("streamsignal_citizen_username", "BrookDragonfly-2378");
+    localStorage.setItem("streamsignal_contributor_id", "SS-C-9999");
     window.history.pushState({}, "", "/");
   });
 

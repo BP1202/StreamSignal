@@ -310,6 +310,18 @@ def test_api_evidence_gaps_returns_valid_structure():
     assert "evidence availability" in data["epistemic_notice"].lower()
 
 
+def test_citizen_evidence_coverage_returns_aggregate_without_researcher_role():
+    """Citizen home coverage uses a public aggregate endpoint, not the researcher route."""
+    with TestClient(app) as citizen_client:
+        response = citizen_client.get("/api/v1/citizen/evidence-coverage")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "total_cases_analyzed" in payload
+    assert "gaps" in payload
+    assert all(gap["affected_segment_ids"] == [] for gap in payload["gaps"])
+
+
 def test_api_evidence_gap_dimension_detail():
     """GET /research/evidence-gaps/flow_condition returns EvidenceGapDetail."""
     resp = client.get("/api/v1/research/evidence-gaps/flow_condition")

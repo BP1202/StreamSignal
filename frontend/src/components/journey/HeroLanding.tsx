@@ -20,6 +20,9 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
         </div>
 
         <div className="max-w-2xl mx-auto space-y-3">
+          <p className="text-xs sm:text-sm font-semibold text-brand-teal uppercase tracking-wider">
+            How much do we actually know about our urban water?
+          </p>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-brand-text tracking-tight leading-tight">
             Notice something unusual in a stream?
           </h1>

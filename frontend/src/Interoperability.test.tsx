@@ -204,7 +204,7 @@ describe("One Health InteroperabilitySection", () => {
     // Resolves and displays title
     await waitFor(() => {
       expect(screen.getByText(/One Health Evidence Interoperability/i)).toBeInTheDocument();
-      expect(screen.getByText(/Evidence Passport & FHIR R4 Provenance Gateway/i)).toBeInTheDocument();
+      expect(screen.getByText(/Evidence Passport & FHIR R4 Gateway/i)).toBeInTheDocument();
     });
 
     // Check dynamic resource count badges
@@ -212,7 +212,7 @@ describe("One Health InteroperabilitySection", () => {
     expect(screen.getByText("Survey QR")).toBeInTheDocument();
     expect(screen.getByText("Media Attachments")).toBeInTheDocument();
     expect(screen.getByText("Workflow Tasks")).toBeInTheDocument();
-    expect(screen.getByText("Provenance Events")).toBeInTheDocument();
+    expect(screen.queryByText("Provenance Events")).not.toBeInTheDocument();
   });
 
   it("opens Evidence Passport modal with structured sections", async () => {
@@ -240,32 +240,15 @@ describe("One Health InteroperabilitySection", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/FHIR R4 Bundle/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /FHIR R4 Bundle/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/FHIR R4 Bundle/i));
+    fireEvent.click(screen.getByRole("button", { name: /FHIR R4 Bundle/i }));
 
     // Modal appears with JSON
     expect(screen.getByText(/FHIR R4-Compatible Collection Bundle/i)).toBeInTheDocument();
     expect(screen.getByText(/Copy FHIR JSON/i)).toBeInTheDocument();
     expect(screen.getByText(/Reference Integrity: Verified/i)).toBeInTheDocument();
-  });
-
-  it("opens Provenance Trail modal with chronological event history", async () => {
-    render(
-      <InteroperabilitySection caseId="11111111-1111-1111-1111-111111111111" />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Provenance Trail/i)).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText(/Provenance Trail/i));
-
-    // Modal appears with audit trail
-    expect(screen.getByText(/FHIR Provenance Chain/i)).toBeInTheDocument();
-    expect(screen.getByText(/Researcher initiated investigation triage./i)).toBeInTheDocument();
-    expect(screen.getByText(/Copy Provenance JSON/i)).toBeInTheDocument();
   });
 
   it("handles fetch error state safely", async () => {
@@ -287,22 +270,23 @@ describe("One Health InteroperabilitySection", () => {
     });
   });
 
-  it("renders 5-stage Interoperability Journey: SignalCase -> Evidence Passport -> Evidence Lineage -> FHIR R4 -> External One Health", async () => {
+  it("renders a consistent interoperability journey without the broken lineage panel", async () => {
     render(
       <InteroperabilitySection caseId="11111111-1111-1111-1111-111111111111" />
     );
 
     await waitFor(() => {
       expect(
-        screen.getByText(/This case is packaged with its evidence history and provenance for interoperability/i)
+        screen.getByText(/This case is represented as a deterministic FHIR R4 bundle/i)
       ).toBeInTheDocument();
     });
 
-    // 5 Stages
+    // The available journey is kept focused on working views; audit data remains in the FHIR Bundle.
     expect(screen.getByText("SignalCase")).toBeInTheDocument();
     expect(screen.getByText("Evidence Passport Envelope")).toBeInTheDocument();
-    expect(screen.getByText("Evidence Lineage Audit")).toBeInTheDocument();
     expect(screen.getByText("FHIR R4 Serialization")).toBeInTheDocument();
     expect(screen.getByText("One Health Systems")).toBeInTheDocument();
+    expect(screen.queryByText("Evidence Lineage Audit")).not.toBeInTheDocument();
+    expect(screen.queryByText("Provenance Trail")).not.toBeInTheDocument();
   });
 });

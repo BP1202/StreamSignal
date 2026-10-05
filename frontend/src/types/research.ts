@@ -162,6 +162,14 @@ export interface EvidenceQualityAssessment {
   recommendations: string[];
 }
 
+export interface ResearchMediaAttachment {
+  media_id: string;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+}
+
 export interface VisualObservationItem {
   observation_id: string;
   media_id: string;
@@ -256,8 +264,28 @@ export interface ResearchCaseDetailResponse {
   lineage_count: number;
   why_surfaced: WhySurfacedReason[];
   evidence_quality: EvidenceQualityAssessment;
+  media?: ResearchMediaAttachment[];
   media_observations: MediaVisualObservationGroup[];
   contextual_evidence: PatternEchoData;
   triage: TriageDetailData;
   evidence_contract: EvidenceContractData;
+}
+
+export interface CitizenMediaSummaryItem {
+  media_id: string;
+  case_id: string;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+  report_description?: string | null;
+  water_appearance?: string | null;
+  flow_condition?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface CitizenMediaListResponse {
+  items: CitizenMediaSummaryItem[];
+  total: number;
 }

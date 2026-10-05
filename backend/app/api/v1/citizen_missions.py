@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.agent.orchestrator import EvidenceMissionAgent
 from app.core.database import get_db
+from app.core.auth import get_oidc_subject
 from app.models.contributor import Contributor
 from app.models.human_review import HumanReview
 from app.models.mission import Mission
@@ -24,6 +25,7 @@ from app.schemas.citizen_impact import (
 from app.schemas.contributor import (
     AccountUpgradeRequest,
     AccountUpgradeResponse,
+    CitizenAccessRequest,
     ContributorResponse,
 )
 from app.schemas.mission import (
@@ -33,6 +35,7 @@ from app.schemas.mission import (
     MissionRecommendationResponse,
     MissionResponse,
 )
+from app.schemas.evidence_gap import EvidenceGapListResponse
 from app.schemas.contact_request import (
     CitizenContactInitiate,
     ContactRequestResponse,
@@ -53,12 +56,36 @@ from app.services.mission_recommendation import get_recommended_citizen_missions
 router = APIRouter(prefix="/citizen", tags=["Citizen Missions & Contributor"])
 
 
+@router.get(
+    "/evidence-coverage",
+    response_model=EvidenceGapListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Aggregate Evidence Coverage",
+    description=(
+        "Returns aggregate evidence availability counts for the citizen home page. "
+        "No case identifiers, exact locations, or individual contributor data are included."
+    ),
+)
+def get_citizen_evidence_coverage(
+    db: Session = Depends(get_db),
+) -> EvidenceGapListResponse:
+    """Expose only aggregate evidence availability for public citizen-facing summaries."""
+    return analyze_evidence_gaps(db)
+
+
 def get_current_contributor(
     x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    x_citizen_username: Optional[str] = Header(None, alias="X-Citizen-Username"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     db: Session = Depends(get_db),
 ) -> Contributor:
-    """Dependency retrieving or creating a persistent contributor identity."""
-    return get_or_create_contributor(db=db, contributor_id_str=x_contributor_id)
+    """Use a verified OIDC subject for signed-in users, or a pseudonym/username for citizens."""
+    return get_or_create_contributor(
+        db=db,
+        contributor_id_str=x_contributor_id,
+        oidc_subject=get_oidc_subject(authorization),
+        preferred_display_name=x_citizen_username,
+    )
 
 
 def serialize_mission(
@@ -123,6 +150,22 @@ def get_contributor_me(
     contributor: Contributor = Depends(get_current_contributor),
 ) -> ContributorResponse:
     """Returns persistent non-identifying contributor profile."""
+    return ContributorResponse.model_validate(contributor)
+
+
+@router.post(
+    "/access",
+    response_model=ContributorResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Citizen Direct Access or Handle Resumption",
+    description="Generates a unique pseudonymous citizen identity (e.g. aqua-001) or resumes an existing handle.",
+)
+def citizen_access(
+    payload: Optional[CitizenAccessRequest] = None,
+    db: Session = Depends(get_db),
+) -> ContributorResponse:
+    preferred_name = payload.username.strip() if payload and payload.username else None
+    contributor = get_or_create_contributor(db=db, preferred_display_name=preferred_name)
     return ContributorResponse.model_validate(contributor)
 
 
@@ -299,6 +342,7 @@ def upgrade_account(
 )
 def get_mission_recommendations(
     x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     lat: Optional[float] = Query(None, description="Citizen latitude"),
     lon: Optional[float] = Query(None, description="Citizen longitude"),
     stream_segment: Optional[str] = Query(None, description="Citizen stream segment"),
@@ -309,10 +353,10 @@ def get_mission_recommendations(
       Approved MissionNeed -> Evidence Gap -> Area Match -> Contributor Eligibility -> Recommendation.
     Empty database or unmatched eligibility returns empty list. No fake missions.
     """
-    contributor = (
+    subject = get_oidc_subject(authorization)
+    contributor = get_or_create_contributor(db, oidc_subject=subject) if subject else (
         db.query(Contributor).filter(Contributor.contributor_id == x_contributor_id).first()
-        if x_contributor_id
-        else None
+        if x_contributor_id else None
     )
     recs = get_recommended_citizen_missions(
         db=db,
@@ -336,16 +380,17 @@ def get_mission_recommendations(
 )
 def list_citizen_missions(
     x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     lat: Optional[float] = Query(None, description="Citizen latitude"),
     lon: Optional[float] = Query(None, description="Citizen longitude"),
     stream_segment: Optional[str] = Query(None, description="Citizen stream segment"),
     db: Session = Depends(get_db),
 ) -> MissionListResponse:
     """Lists active, allowlisted missions for citizens, annotating recommended ones."""
-    contributor = (
+    subject = get_oidc_subject(authorization)
+    contributor = get_or_create_contributor(db, oidc_subject=subject) if subject else (
         db.query(Contributor).filter(Contributor.contributor_id == x_contributor_id).first()
-        if x_contributor_id
-        else None
+        if x_contributor_id else None
     )
     # Check recommendations via 5-stage pipeline
     recs = get_recommended_citizen_missions(

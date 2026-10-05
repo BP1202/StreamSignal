@@ -4,7 +4,7 @@ import { Info, ShieldAlert } from "lucide-react";
 export const Footer: React.FC = () => {
   return (
     <footer className="bg-brand-surface border-t border-brand-border mt-16 py-8 text-xs text-brand-secondary">
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 border-b border-brand-border pb-4">
           <div>
             <p className="font-semibold text-brand-text">StreamSignal Evidence Platform</p>

@@ -40,3 +40,9 @@ class AccountUpgradeResponse(BaseModel):
     success: bool = True
     message: str = "Account successfully upgraded to Level 2 Registered Contributor."
     contributor: ContributorResponse
+
+
+class CitizenAccessRequest(BaseModel):
+    username: Optional[str] = Field(None, max_length=64, description="Optional citizen username like aqua-001 to login/resume")
+
+    model_config = ConfigDict(extra="ignore")

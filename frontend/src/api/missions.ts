@@ -24,6 +24,15 @@ export async function fetchContributorProfile(
   });
 }
 
+export async function citizenAccess(
+  username?: string
+): Promise<ContributorProfile> {
+  return request<ContributorProfile>("/api/v1/citizen/access", {
+    method: "POST",
+    body: JSON.stringify({ username: username ? username.trim() : undefined }),
+  });
+}
+
 export async function upgradeContributorAccount(
   data: { email: string; password: string },
   contributorId: string

@@ -27,15 +27,23 @@ export async function fetchCaseContactRequests(
 export async function createResearcherContactRequest(
   caseId: string,
   payload: ContactRequestCreatePayload,
-  reviewerId: string = "Dr-Sarah-Chen-Lead-Limnologist"
+  reviewerId?: string
 ): Promise<ContactRequestItem> {
+  const activeReviewer =
+    (reviewerId && reviewerId.trim()) ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("streamsignal_reviewer_id") ||
+        localStorage.getItem("streamsignal_researcher_email")
+      : null) ||
+    "Dr-Sarah-Chen-Lead-Limnologist";
+
   return request<ContactRequestItem>(
     `/api/v1/research/evidence-cases/${caseId}/contact-requests`,
     {
       method: "POST",
       headers: {
         "X-Role": "RESEARCHER",
-        "X-Reviewer-Id": reviewerId,
+        "X-Reviewer-Id": activeReviewer,
       },
       body: JSON.stringify(payload),
     }

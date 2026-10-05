@@ -110,7 +110,7 @@ export const MissionNeedsTracker: React.FC<MissionNeedsTrackerProps> = ({
 
   return (
     <div
-      className="p-3.5 sm:p-6"
+      className="research-inline-theme p-3.5 sm:p-6"
       style={{
         background: "#0d1527",
         border: "1px solid #1e293b",

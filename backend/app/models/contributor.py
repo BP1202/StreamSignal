@@ -20,6 +20,7 @@ class Contributor(Base):
     account_level = Column(String(32), nullable=False, default="LEVEL_1_CONTRIBUTOR", index=True)
     email = Column(String(255), unique=True, index=True, nullable=True)
     hashed_password = Column(String(255), nullable=True)
+    oidc_subject = Column(String(255), unique=True, index=True, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

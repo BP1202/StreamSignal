@@ -112,7 +112,7 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
   const baselineBefore = Math.max(overall_evidence_coverage - acceptedDelta, 0);
 
   return (
-    <div className="space-y-8 text-left max-w-4xl mx-auto py-4">
+    <div className="space-y-8 text-left w-full max-w-screen-2xl mx-auto py-4">
       {/* ── 1. Contributor Header ───────────────────────────────────────── */}
       <section className="bg-white rounded-2xl border border-brand-border p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -197,66 +197,66 @@ export const CitizenImpactView: React.FC<CitizenImpactViewProps> = ({
       </section>
 
       {/* ── 3. Coverage Delta Banner ────────────────────────────────────── */}
-      <section className="bg-gradient-to-r from-brand-dark via-slate-900 to-cyan-950 rounded-2xl border border-cyan-800/80 p-4 sm:p-6 text-white space-y-4 shadow-md">
+      <section className="bg-brand-light/40 rounded-2xl border border-brand-border p-4 sm:p-6 text-brand-text space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
+            <TrendingUp className="w-5 h-5 text-brand-teal" />
             <h3 className="text-base font-bold">Your Evidence Coverage Delta</h3>
           </div>
-          <span className="text-xs font-mono font-bold text-cyan-300 bg-cyan-500/20 px-2.5 py-1 rounded border border-cyan-500/30 self-start sm:self-auto">
+          <span className="text-xs font-mono font-bold text-brand-dark bg-brand-surface px-2.5 py-1 rounded border border-brand-border self-start sm:self-auto">
             +{acceptedDelta.toFixed(2)} percentage points accepted
           </span>
         </div>
 
         {/* 3-Stage Evidence Lifecycle Separation */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs py-1 border-b border-cyan-800/60 pb-3">
-          <span className="font-semibold text-cyan-200">Evidence Lifecycle:</span>
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs py-1 border-b border-brand-border pb-3">
+          <span className="font-semibold text-brand-text">Evidence Lifecycle:</span>
+          <span className="px-2 py-0.5 rounded bg-brand-surface text-brand-secondary text-[11px] font-mono border border-brand-border">
             1. Submitted
           </span>
-          <span className="text-cyan-500">→</span>
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono">
+          <span className="text-brand-teal">→</span>
+          <span className="px-2 py-0.5 rounded bg-brand-surface text-brand-secondary text-[11px] font-mono border border-brand-border">
             2. Reviewed
           </span>
-          <span className="text-cyan-500">→</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 text-[11px] font-mono font-semibold">
+          <span className="text-brand-teal">→</span>
+          <span className="px-2 py-0.5 rounded bg-brand-light text-brand-dark border border-brand-border text-[11px] font-mono font-semibold">
             3. Accepted for Research
           </span>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-xs">
-          <div className="p-3 rounded-lg bg-slate-800/80 border border-slate-700 text-center w-full sm:flex-1">
-            <span className="text-[10px] text-slate-400 block uppercase tracking-wider">
+          <div className="p-3 rounded-lg bg-brand-surface border border-brand-border text-center w-full sm:flex-1">
+            <span className="text-[10px] text-brand-secondary block uppercase tracking-wider">
               Catchment Baseline
             </span>
-            <span className="text-base font-extrabold font-mono text-slate-300">
+            <span className="text-base font-extrabold font-mono text-brand-text">
               {baselineBefore.toFixed(2)}%
             </span>
           </div>
 
-          <ArrowRight className="w-5 h-5 text-cyan-400 shrink-0 hidden sm:block" />
-          <div className="sm:hidden text-cyan-400 font-bold text-sm">↓</div>
+          <ArrowRight className="w-5 h-5 text-brand-teal shrink-0 hidden sm:block" />
+          <div className="sm:hidden text-brand-teal font-bold text-sm">↓</div>
 
-          <div className="p-3 rounded-lg bg-cyan-900/40 border border-cyan-700 text-center w-full sm:flex-1">
-            <span className="text-[10px] text-cyan-300 block uppercase tracking-wider">
+          <div className="p-3 rounded-lg bg-brand-surface border border-brand-border text-center w-full sm:flex-1">
+            <span className="text-[10px] text-brand-secondary block uppercase tracking-wider">
               With Your Observations
             </span>
-            <span className="text-base font-extrabold font-mono text-cyan-200">
+            <span className="text-base font-extrabold font-mono text-brand-teal">
               {overall_evidence_coverage.toFixed(2)}%
             </span>
           </div>
         </div>
 
         {pendingDelta > 0 && (
-          <div className="text-xs px-3 py-2 rounded-lg bg-cyan-950/70 border border-cyan-800 text-cyan-300 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+          <div className="text-xs px-3 py-2 rounded-lg bg-brand-surface border border-brand-border text-brand-secondary flex items-center gap-2">
+            <Clock className="w-4 h-4 text-brand-teal shrink-0" />
             <span>
               <strong>Review Pending:</strong> You have submitted +{pendingDelta.toFixed(2)}% in potential evidence awaiting researcher review. Accepted coverage only increases after research verification.
             </span>
           </div>
         )}
 
-        <p className="text-[11px] text-slate-400 leading-relaxed border-t border-slate-800 pt-3">
+        <p className="text-[11px] text-brand-secondary leading-relaxed border-t border-brand-border pt-3">
           {epistemic_notice}
         </p>
       </section>

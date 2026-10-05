@@ -140,40 +140,40 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 text-left">
+    <div className="w-full max-w-screen-2xl mx-auto space-y-6 text-left">
       {/* Top Header & Breadcrumbs */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="text-xs text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1 font-medium"
+          className="text-xs text-brand-secondary hover:text-brand-teal transition-colors flex items-center gap-1 font-medium"
         >
           ← Back to Available Missions
         </button>
-        <div className="text-xs text-slate-400 font-mono">
-          Status: <strong className="text-cyan-400">{mission.status}</strong>
+        <div className="text-xs text-brand-secondary font-mono">
+          Status: <strong className="text-brand-teal">{mission.status}</strong>
         </div>
       </div>
 
       {/* Mission Title Card */}
-      <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-cyan-500 via-emerald-500 to-indigo-500 w-full" />
+      <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border shadow-xs relative overflow-hidden">
+        <div className="absolute top-0 left-0 h-1 bg-brand-teal w-full" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] tracking-wider font-bold uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            <span className="text-[10px] tracking-wider font-bold uppercase text-brand-dark bg-brand-light px-2 py-0.5 rounded border border-brand-border">
               Active Evidence Mission
             </span>
-            <h2 className="text-lg font-bold text-slate-100 mt-1">
+            <h2 className="text-lg font-bold text-brand-text mt-1">
               {mission.title}
             </h2>
-            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+            <p className="text-xs text-brand-secondary mt-1 max-w-2xl">
               {mission.purpose}
             </p>
           </div>
           <div className="flex flex-col text-right">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-brand-secondary uppercase tracking-wider font-semibold">
               Research Objective
             </span>
-            <span className="text-xs text-slate-300 font-medium max-w-xs">
+            <span className="text-xs text-brand-text font-medium max-w-xs">
               {mission.research_need}
             </span>
           </div>
@@ -181,29 +181,29 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
       </div>
 
       {/* AGENT GUIDANCE CARD */}
-      <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-indigo-500/30 shadow-lg">
+      <div className="p-5 rounded-2xl bg-brand-light/40 border border-brand-border shadow-xs">
         <div className="flex items-start gap-3.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white text-lg shadow-md shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-brand-teal flex items-center justify-center text-white text-lg shadow-xs shrink-0">
             🤖
           </div>
           <div className="space-y-1.5 flex-1">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-brand-dark uppercase tracking-wider">
                 Evidence Mission Agent Guidance
               </h3>
               {nextAction && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-200 border border-indigo-500/30">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-dark border border-brand-border">
                   {nextAction.action_type}
                 </span>
               )}
             </div>
-            <p className="text-sm font-semibold text-slate-100">
+            <p className="text-sm font-semibold text-brand-text">
               {nextAction?.user_message ||
                 "Please review the required evidence dimensions below and attach observations."}
             </p>
             {nextAction?.micro_learning && (
-              <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-800/40 text-xs text-indigo-200/90 leading-relaxed mt-2">
-                💡 <strong className="text-indigo-100">Why this matters:</strong>{" "}
+              <div className="p-3 rounded-lg bg-brand-surface border border-brand-border text-xs text-brand-secondary leading-relaxed mt-2">
+                💡 <strong className="text-brand-text">Why this matters:</strong>{" "}
                 {nextAction.micro_learning}
               </div>
             )}
@@ -211,33 +211,33 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
         </div>
 
         {/* Visible Bounded Agent Action Trail */}
-        <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
-          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+        <div className="mt-4 pt-3 border-t border-brand-border space-y-2">
+          <span className="text-[10px] font-bold text-brand-secondary block uppercase tracking-wider">
             Agent Execution Milestones
           </span>
           <div className="space-y-1.5 text-xs font-mono">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">✓</span>
-              <span className="text-slate-300">Analyzed research requirement: {mission.research_need}</span>
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Analyzed research requirement: {mission.research_need}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">✓</span>
-              <span className="text-slate-300">Selected approved template: {mission.mission_type}</span>
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Selected approved template: {mission.mission_type}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">✓</span>
-              <span className="text-slate-300">Verified input schema: SignalGuard firewall check passed</span>
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Verified input schema: SignalGuard firewall check passed</span>
             </div>
             <div className="flex items-center gap-2">
               {isReadyForSubmission ? (
                 <>
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span className="text-emerald-300">Evidence completeness satisfied: Ready for SignalCase handoff</span>
+                  <span className="text-brand-success font-bold">✓</span>
+                  <span className="text-brand-success">Evidence completeness satisfied: Ready for SignalCase handoff</span>
                 </>
               ) : (
                 <>
-                  <span className="text-cyan-400 animate-pulse font-bold">→</span>
-                  <span className="text-cyan-300">Awaiting citizen field observation: missing [{mission.missing_evidence.join(", ")}]</span>
+                  <span className="text-brand-teal animate-pulse font-bold">→</span>
+                  <span className="text-brand-dark">Awaiting citizen field observation: missing [{mission.missing_evidence.join(", ")}]</span>
                 </>
               )}
             </div>
@@ -245,9 +245,9 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
         </div>
 
         {/* Evidence Completion Status Bar */}
-        <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="mt-4 pt-4 border-t border-brand-border flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">Required Dimensions:</span>
+            <span className="text-brand-secondary">Required Dimensions:</span>
             <div className="flex items-center gap-1.5 flex-wrap">
               {mission.required_evidence.map((dim) => {
                 const isCollected =
@@ -257,8 +257,8 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
                     key={dim}
                     className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-all ${
                       isCollected
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                        : "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
+                        ? "bg-brand-light text-brand-dark border border-brand-border"
+                        : "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse"
                     }`}
                   >
                     {isCollected ? "✓" : "○"} {dim}
@@ -267,9 +267,9 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
               })}
             </div>
           </div>
-          <div className="text-slate-400 font-mono text-[11px]">
+          <div className="text-brand-secondary font-mono text-[11px]">
             Missing:{" "}
-            <strong className="text-amber-400">
+            <strong className="text-amber-700">
               {mission.missing_evidence?.length ?? 0}
             </strong>
           </div>
@@ -277,13 +277,13 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
       </div>
 
       {/* EVIDENCE COLLECTION FORM */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
-        <h3 className="text-sm font-semibold text-slate-200 border-b border-slate-800 pb-2">
+      <div className="p-6 rounded-2xl bg-brand-surface border border-brand-border shadow-xs space-y-5">
+        <h3 className="text-sm font-semibold text-brand-text border-b border-brand-border pb-2">
           Observation & Physical Documentation
         </h3>
 
         {error && (
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-brand-error text-xs">
             {error}
           </div>
         )}
@@ -291,13 +291,13 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Water Appearance */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-brand-text mb-1">
               Apparent Water Clarity / Visual Cue
             </label>
             <select
               value={waterAppearance}
               onChange={(e) => setWaterAppearance(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-2 rounded-lg bg-white border border-brand-border text-brand-text text-xs focus:outline-none focus:border-brand-teal"
             >
               <option value="">Select visual cue...</option>
               <option value="clear">Clear (High Transparency)</option>
@@ -310,7 +310,7 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
 
           {/* Flow Condition */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-brand-text mb-1">
               Stream Flow Condition
             </label>
             <div className="grid grid-cols-4 gap-2">
@@ -321,8 +321,8 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
                   onClick={() => setFlowCondition(flow.toLowerCase())}
                   className={`px-2 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
                     flowCondition.toLowerCase() === flow.toLowerCase()
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500 shadow-sm"
-                      : "bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-800"
+                      ? "bg-brand-light text-brand-dark border-brand-teal shadow-sm"
+                      : "bg-white text-brand-secondary border-brand-border hover:bg-brand-bg"
                   }`}
                 >
                   {flow}
@@ -333,12 +333,12 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
         </div>
 
         {/* Foam Observation Toggle */}
-        <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60">
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg border border-brand-border">
           <div>
-            <span className="text-xs font-semibold text-slate-200 block">
+            <span className="text-xs font-semibold text-brand-text block">
               Noticeable Foam or Surface Scum?
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-brand-secondary">
               Distinguishes persistent organic or chemical surfactant from natural turbulence.
             </span>
           </div>
@@ -348,8 +348,8 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
               onClick={() => setFoamObserved(true)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 foamObserved
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                  : "bg-slate-800 text-slate-400 border-slate-700"
+                  ? "bg-brand-light text-brand-dark border-brand-teal"
+                  : "bg-white text-brand-secondary border-brand-border"
               }`}
             >
               Yes
@@ -359,8 +359,8 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
               onClick={() => setFoamObserved(false)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 !foamObserved
-                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
-                  : "bg-slate-800 text-slate-400 border-slate-700"
+                  ? "bg-brand-light text-brand-dark border-brand-teal"
+                  : "bg-white text-brand-secondary border-brand-border"
               }`}
             >
               No
@@ -369,28 +369,28 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
         </div>
 
         {/* Photo Upload Card */}
-        <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/80 space-y-2">
+        <div className="p-4 rounded-xl bg-brand-bg border border-brand-border space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-200">
+            <label className="text-xs font-semibold text-brand-text">
               Stream Photographic Evidence
             </label>
             {photoUploaded ? (
-              <span className="text-xs text-emerald-400 font-medium">✓ Photo Attached</span>
+              <span className="text-xs text-brand-success font-medium">✓ Photo Attached</span>
             ) : (
-              <span className="text-xs text-amber-400 font-medium">Photo Required</span>
+              <span className="text-xs text-amber-700 font-medium">Photo Required</span>
             )}
           </div>
           <input
             type="file"
             accept="image/*"
             onChange={handlePhotoSimulated}
-            className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-600/20 file:text-cyan-300 hover:file:bg-cyan-600/30 cursor-pointer"
+            className="w-full text-xs text-brand-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-light file:text-brand-dark hover:file:bg-brand-light/80 cursor-pointer"
           />
         </div>
 
         {/* Description / Notes */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
+          <label className="block text-xs font-medium text-brand-text mb-1">
             Contextual Field Notes
           </label>
           <textarea
@@ -398,17 +398,17 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
             placeholder="Document any odor, weather conditions, or nearby drainage outfalls..."
-            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-cyan-500"
+            className="w-full px-3 py-2 rounded-lg bg-white border border-brand-border text-brand-text text-xs focus:outline-none focus:border-brand-teal"
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+        <div className="pt-3 border-t border-brand-border flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={handleValidate}
             disabled={validating || submitting}
-            className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-brand-light text-brand-dark border border-brand-border transition-colors disabled:opacity-50"
           >
             {validating ? "Validating..." : "🔍 Validate with Agent"}
           </button>
@@ -419,8 +419,8 @@ export const AgentGuidedMissionFlow: React.FC<Props> = ({
             disabled={submitting}
             className={`px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-lg ${
               isReadyForSubmission
-                ? "bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white animate-pulse"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                ? "bg-brand-teal hover:bg-brand-dark text-white animate-pulse"
+                : "bg-gray-100 text-brand-secondary hover:bg-gray-200"
             }`}
           >
             {submitting

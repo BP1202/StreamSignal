@@ -11,7 +11,6 @@ import {
   Share2,
   FileCheck,
   Code2,
-  GitBranch,
   Copy,
   Check,
   ExternalLink,
@@ -45,7 +44,6 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
   // Modal states
   const [isPassportModalOpen, setIsPassportModalOpen] = useState<boolean>(false);
   const [isFhirModalOpen, setIsFhirModalOpen] = useState<boolean>(false);
-  const [isProvenanceModalOpen, setIsProvenanceModalOpen] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,7 +96,6 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
         Observation: 0,
         Media: 0,
         Task: 0,
-        Provenance: 0,
         Total: 0,
       };
     }
@@ -108,7 +105,6 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       Observation: 0,
       Media: 0,
       Task: 0,
-      Provenance: 0,
     };
     for (const e of fhirBundle.entry) {
       const type = e.resource?.resourceType;
@@ -156,16 +152,16 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-sm flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-light text-brand-dark border border-brand-border px-2 py-0.5 rounded-sm flex items-center gap-1">
               <Share2 className="w-3 h-3" />
               One Health Evidence Interoperability
             </span>
-            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">
+            <span className="text-[10px] font-medium text-brand-secondary bg-brand-bg border border-brand-border px-2 py-0.5 rounded-sm">
               FHIR R4 Compatible
             </span>
           </div>
           <h3 className="text-base font-bold text-brand-text mt-1.5 flex items-center gap-2">
-            Evidence Passport & FHIR R4 Provenance Gateway
+            Evidence Passport & FHIR R4 Gateway
           </h3>
           <p className="text-xs text-brand-secondary mt-0.5">
             Standards-ready evidence serialization isolating citizen facts, machine inferences, contextual echoes, and human decisions.
@@ -177,7 +173,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <button
             type="button"
             onClick={() => setIsPassportModalOpen(true)}
-            className="text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-xs font-semibold bg-brand-teal text-white hover:bg-brand-dark px-3 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <FileCheck className="w-3.5 h-3.5" />
             <span>View Passport</span>
@@ -185,157 +181,118 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <button
             type="button"
             onClick={() => setIsFhirModalOpen(true)}
-            className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-xs font-semibold bg-brand-teal text-white hover:bg-brand-dark px-3 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Code2 className="w-3.5 h-3.5" />
             <span>FHIR R4 Bundle</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsProvenanceModalOpen(true)}
-            className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <GitBranch className="w-3.5 h-3.5 text-slate-500" />
-            <span>Provenance Trail</span>
           </button>
         </div>
       </div>
 
       {/* Evidence Interoperability Journey Callout */}
-      <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-900 via-slate-900 to-teal-950 text-white border border-indigo-700/40 shadow-xs">
+      <div className="mb-6 p-4 rounded-xl bg-brand-light/40 text-brand-text border border-brand-border shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-300 bg-indigo-950/70 border border-indigo-500/40 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-brand-dark bg-brand-light border border-brand-border px-2 py-0.5 rounded">
                 One Health Interoperability Journey
               </span>
               <span className="text-[10px] font-semibold text-teal-300 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
-                Provenanced Evidence Packaging
+                Deterministic Evidence Packaging
               </span>
             </div>
-            <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              “This case is packaged with its evidence history and provenance for interoperability.”
+            <h4 className="text-base sm:text-lg font-bold text-brand-text tracking-tight">
+              “This case is represented as a deterministic FHIR R4 bundle.”
             </h4>
-            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
-              FHIR export is not an isolated download button. Every resource is sequentially sealed from observed facts, through the Evidence Passport and immutable audit lineage, into a deterministic R4 Bundle ready for epidemiological and environmental surveillance.
+            <p className="text-xs text-brand-secondary max-w-3xl leading-relaxed">
+              Review the case evidence passport and inspect its structured FHIR representation. The bundle reflects recorded evidence; it does not establish an environmental cause or health effect.
             </p>
           </div>
         </div>
 
         {/* 5-Step Visual Stepper */}
-        <div className="mt-5 pt-4 border-t border-slate-700/60 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="mt-5 pt-4 border-t border-brand-border grid grid-cols-1 md:grid-cols-4 gap-3">
           {/* Step 1: SignalCase */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
+          <div className="bg-white border border-brand-border rounded-lg p-3 relative flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-cyan-400 font-semibold">01 · SOURCE</span>
-                <span className="text-[10px] bg-cyan-950 border border-cyan-800 text-cyan-300 px-1.5 py-0.5 rounded font-mono">
+                <span className="text-[10px] font-mono text-brand-teal font-semibold">01 · SOURCE</span>
+                <span className="text-[10px] bg-brand-light border border-brand-border text-brand-dark px-1.5 py-0.5 rounded font-mono">
                   Reported
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <div className="w-6 h-6 rounded bg-cyan-900/60 text-cyan-300 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded bg-brand-light text-brand-teal flex items-center justify-center shrink-0">
                   <Droplets className="w-3.5 h-3.5" />
                 </div>
-                <h5 className="text-xs font-bold text-white">SignalCase</h5>
+                <h5 className="text-xs font-bold text-brand-text">SignalCase</h5>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+              <p className="text-[11px] text-brand-secondary mt-1 leading-snug">
                 Citizen observations, media attachments, and spatial context.
               </p>
             </div>
-            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-slate-400">
+            <div className="mt-2 pt-2 border-t border-brand-border flex items-center justify-between text-[10px] text-brand-secondary">
               <span>Citizen Telemetry</span>
-              <span className="hidden md:inline text-cyan-400 font-bold">→</span>
+                <span className="hidden md:inline text-brand-teal font-bold">→</span>
             </div>
           </div>
 
           {/* Step 2: Evidence Passport */}
-          <div className="bg-slate-800/80 border border-indigo-700/50 rounded-lg p-3 relative flex flex-col justify-between">
+          <div className="bg-white border border-brand-border rounded-lg p-3 relative flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-indigo-300 font-semibold">02 · ENVELOPE</span>
-                <span className="text-[10px] bg-indigo-950 border border-indigo-800 text-indigo-300 px-1.5 py-0.5 rounded font-mono">
+                <span className="text-[10px] font-mono text-brand-teal font-semibold">02 · ENVELOPE</span>
+                <span className="text-[10px] bg-brand-light border border-brand-border text-brand-dark px-1.5 py-0.5 rounded font-mono">
                   v{passport.metadata.schema_version}
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <div className="w-6 h-6 rounded bg-indigo-900/60 text-indigo-300 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded bg-brand-light text-brand-teal flex items-center justify-center shrink-0">
                   <FileCheck className="w-3.5 h-3.5" />
                 </div>
-                <h5 className="text-xs font-bold text-white">Evidence Passport Envelope</h5>
+                <h5 className="text-xs font-bold text-brand-text">Evidence Passport Envelope</h5>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+              <p className="text-[11px] text-brand-secondary mt-1 leading-snug">
                 Immutable envelope sealing multi-layered facts and SignalGuard bounds.
               </p>
             </div>
-            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
+            <div className="mt-2 pt-2 border-t border-brand-border flex items-center justify-between text-[10px]">
               <button
                 type="button"
                 onClick={() => setIsPassportModalOpen(true)}
-                className="text-indigo-300 hover:text-indigo-200 underline font-medium cursor-pointer"
+                className="text-brand-teal hover:text-brand-dark underline font-medium cursor-pointer"
               >
                 Inspect Envelope
               </button>
-              <span className="hidden md:inline text-indigo-400 font-bold">→</span>
-            </div>
-          </div>
-
-          {/* Step 3: Evidence Lineage */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-amber-300 font-semibold">03 · AUDIT</span>
-                <span className="text-[10px] bg-amber-950 border border-amber-800 text-amber-300 px-1.5 py-0.5 rounded font-mono">
-                  {resourceCounts.Provenance} Events
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="w-6 h-6 rounded bg-amber-900/60 text-amber-300 flex items-center justify-center shrink-0">
-                  <GitBranch className="w-3.5 h-3.5" />
-                </div>
-                <h5 className="text-xs font-bold text-white">Evidence Lineage Audit</h5>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                Chronological chain of human decisions, transitions, and reviews.
-              </p>
-            </div>
-            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
-              <button
-                type="button"
-                onClick={() => setIsProvenanceModalOpen(true)}
-                className="text-amber-300 hover:text-amber-200 underline font-medium cursor-pointer"
-              >
-                Audit Chain
-              </button>
-              <span className="hidden md:inline text-amber-400 font-bold">→</span>
+                <span className="hidden md:inline text-brand-teal font-bold">→</span>
             </div>
           </div>
 
           {/* Step 4: FHIR R4 Bundle */}
-          <div className="bg-slate-800/80 border border-teal-700/60 rounded-lg p-3 relative flex flex-col justify-between">
+          <div className="bg-white border border-brand-border rounded-lg p-3 relative flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-teal-300 font-semibold">04 · STANDARDS</span>
-                <span className="text-[10px] bg-teal-950 border border-teal-800 text-teal-300 px-1.5 py-0.5 rounded font-mono">
+                <span className="text-[10px] font-mono text-brand-teal font-semibold">03 · STANDARDS</span>
+                <span className="text-[10px] bg-brand-light border border-brand-border text-brand-dark px-1.5 py-0.5 rounded font-mono">
                   {resourceCounts.Total} Resources
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <div className="w-6 h-6 rounded bg-teal-900/60 text-teal-300 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded bg-brand-light text-brand-teal flex items-center justify-center shrink-0">
                   <Code2 className="w-3.5 h-3.5" />
                 </div>
-                <h5 className="text-xs font-bold text-white">FHIR R4 Serialization</h5>
+                <h5 className="text-xs font-bold text-brand-text">FHIR R4 Serialization</h5>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+              <p className="text-[11px] text-brand-secondary mt-1 leading-snug">
                 Deterministic HL7 FHIR mapping with Observation & Provenance targets.
               </p>
             </div>
-            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px]">
+            <div className="mt-2 pt-2 border-t border-brand-border flex items-center justify-between text-[10px]">
               <button
                 type="button"
                 onClick={() => setIsFhirModalOpen(true)}
-                className="text-teal-300 hover:text-teal-200 underline font-medium cursor-pointer"
+                className="text-brand-teal hover:text-brand-dark underline font-medium cursor-pointer"
               >
                 View R4 JSON
               </button>
@@ -344,25 +301,25 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           </div>
 
           {/* Step 5: External One Health System */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 relative flex flex-col justify-between">
+          <div className="bg-white border border-brand-border rounded-lg p-3 relative flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-emerald-300 font-semibold">05 · TARGET</span>
-                <span className="text-[10px] bg-emerald-950 border border-emerald-800 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+                <span className="text-[10px] font-mono text-brand-teal font-semibold">04 · TARGET</span>
+                <span className="text-[10px] bg-brand-light border border-brand-border text-brand-dark px-1.5 py-0.5 rounded font-mono">
                   Surveillance
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <div className="w-6 h-6 rounded bg-emerald-900/60 text-emerald-300 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded bg-brand-light text-brand-teal flex items-center justify-center shrink-0">
                   <Globe className="w-3.5 h-3.5" />
                 </div>
-                <h5 className="text-xs font-bold text-white">One Health Systems</h5>
+                <h5 className="text-xs font-bold text-brand-text">One Health Systems</h5>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+              <p className="text-[11px] text-brand-secondary mt-1 leading-snug">
                 CDC, EPA, municipal health, and syndromic surveillance ingest nodes.
               </p>
             </div>
-            <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-emerald-300 font-mono">
+            <div className="mt-2 pt-2 border-t border-brand-border flex items-center justify-between text-[10px] text-brand-teal font-mono">
               <span>Ready for Export</span>
               <Check className="w-3 h-3 text-emerald-400" />
             </div>
@@ -371,7 +328,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
       </div>
 
       {/* Dynamic Resource Counts Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
           <span className="text-[10px] font-semibold uppercase text-slate-500 block">
             Location
@@ -379,7 +336,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <span className="text-lg font-bold text-brand-text block mt-0.5">
             {resourceCounts.Location}
           </span>
-          <span className="text-[10px] text-slate-400">Site coordinates</span>
+                <span className="text-[10px] text-brand-secondary">Site coordinates</span>
         </div>
 
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
@@ -389,7 +346,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <span className="text-lg font-bold text-brand-text block mt-0.5">
             {resourceCounts.QuestionnaireResponse}
           </span>
-          <span className="text-[10px] text-slate-400">Citizen answers</span>
+          <span className="text-[10px] text-brand-secondary">Citizen answers</span>
         </div>
 
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
@@ -399,7 +356,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <span className="text-lg font-bold text-brand-text block mt-0.5">
             {resourceCounts.Observation}
           </span>
-          <span className="text-[10px] text-slate-400">E1 + E3 + E4 signals</span>
+          <span className="text-[10px] text-brand-secondary">E1 + E3 + E4 signals</span>
         </div>
 
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
@@ -409,7 +366,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <span className="text-lg font-bold text-brand-text block mt-0.5">
             {resourceCounts.Media}
           </span>
-          <span className="text-[10px] text-slate-400">SHA-256 verified</span>
+          <span className="text-[10px] text-brand-secondary">SHA-256 verified</span>
         </div>
 
         <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
@@ -419,18 +376,9 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
           <span className="text-lg font-bold text-brand-text block mt-0.5">
             {resourceCounts.Task}
           </span>
-          <span className="text-[10px] text-slate-400">Human review requests</span>
+          <span className="text-[10px] text-brand-secondary">Human review requests</span>
         </div>
 
-        <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3">
-          <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-            Provenance Events
-          </span>
-          <span className="text-lg font-bold text-brand-text block mt-0.5">
-            {resourceCounts.Provenance}
-          </span>
-          <span className="text-[10px] text-slate-400">Lineage audit trail</span>
-        </div>
       </div>
 
       {/* Trust & Boundary Footer */}
@@ -652,7 +600,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
               <button
                 type="button"
                 onClick={() => handleCopy(JSON.stringify(passport, null, 2), "passport")}
-                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                className="text-xs font-semibold bg-brand-teal text-white hover:bg-brand-dark px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
               >
                 {copiedKey === "passport" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedKey === "passport" ? "Copied JSON" : "Copy Passport JSON"}</span>
@@ -691,7 +639,7 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
             </div>
 
             {/* Code Box */}
-            <div className="p-3 sm:p-4 bg-slate-950 overflow-y-auto flex-1 font-mono text-xs text-emerald-400 leading-relaxed">
+            <div className="p-3 sm:p-4 bg-brand-bg overflow-y-auto flex-1 font-mono text-xs text-brand-text leading-relaxed">
               <pre className="whitespace-pre-wrap break-all overflow-x-auto text-[11px] sm:text-xs">{JSON.stringify(fhirBundle, null, 2)}</pre>
             </div>
 
@@ -718,74 +666,6 @@ export const InteroperabilitySection: React.FC<InteroperabilitySectionProps> = (
         </div>
       )}
 
-      {/* ------------------------------------------------------------- */}
-      {/* 3. Provenance Trail Modal */}
-      {/* ------------------------------------------------------------- */}
-      {isProvenanceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-2">
-                <GitBranch className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                    FHIR Provenance Chain
-                  </h4>
-                  <p className="text-[11px] sm:text-xs text-slate-500">
-                    Authoritative actor attribution and activity linkage from immutable audit lineage
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsProvenanceModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-3.5 sm:p-6 overflow-y-auto space-y-4">
-              {passport.lineage.events.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No provenance events recorded yet.</p>
-              ) : (
-                passport.lineage.events.map((ev, index) => (
-                  <div key={ev.event_id} className="relative pl-6 pb-4 border-l-2 border-indigo-200 last:border-l-transparent">
-                    <span className="absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-indigo-600 ring-4 ring-white" />
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                        <span className="text-xs font-bold text-slate-800">{ev.event_type}</span>
-                        <span className="text-[10px] text-slate-400">{new Date(ev.created_at).toLocaleString()}</span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">{ev.summary}</p>
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 text-[10px] text-slate-500">
-                        <span>Actor: <strong>{ev.actor_type}</strong> ({ev.actor_id})</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50/50">
-              <span className="text-[11px] text-slate-500">
-                Total Provenance Resources: {passport.lineage.total_events}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCopy(JSON.stringify(passport.lineage, null, 2), "provenance")}
-                className="text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
-              >
-                {copiedKey === "provenance" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedKey === "provenance" ? "Copied Provenance" : "Copy Provenance JSON"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

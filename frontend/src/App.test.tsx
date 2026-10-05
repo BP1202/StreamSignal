@@ -50,9 +50,9 @@ describe("PhotoCaptureStep Component", () => {
     const handleNext = vi.fn();
     const handleBack = vi.fn();
 
-    render(
+    const { rerender } = render(
       <PhotoCaptureStep
-        mediaFile={null}
+        mediaFiles={[]}
         onSelectMedia={handleSelect}
         onNext={handleNext}
         onBack={handleBack}
@@ -60,20 +60,37 @@ describe("PhotoCaptureStep Component", () => {
     );
 
     expect(screen.getByText("Show us what you saw")).toBeInTheDocument();
-    expect(screen.getByText(/Why photo matters\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Why media matters\?/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Choose from Gallery/i)).toHaveAttribute("multiple");
+    expect(screen.getByLabelText(/^Take a Photo$/i)).toHaveAttribute("capture", "environment");
+    expect(screen.getByLabelText(/^Record a Video$/i)).toHaveAttribute("capture", "environment");
 
     // Toggle why photo matters
-    fireEvent.click(screen.getByText(/Why photo matters\?/i));
+    fireEvent.click(screen.getByText(/Why media matters\?/i));
     expect(
       screen.getByText(/Your original image becomes part of the permanent evidence record/i)
     ).toBeInTheDocument();
 
-    // Select file
-    const file = new File(["dummy content"], "river_foam.jpg", { type: "image/jpeg" });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    // Select multiple files, including a video.
+    const photo = new File(["image"], "river.jpg", { type: "image/jpeg" });
+    const video = new File(["video"], "stream.mp4", { type: "video/mp4" });
+    const fileInput = document.querySelector('input[multiple]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [photo, video] } });
 
-    expect(handleSelect).toHaveBeenCalledWith(file);
+    expect(handleSelect).toHaveBeenCalledWith([photo, video]);
+
+    rerender(
+      <PhotoCaptureStep
+        mediaFiles={[photo, video]}
+        onSelectMedia={handleSelect}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+    );
+    expect(screen.getByLabelText("Selected video preview: stream.mp4")).toBeInTheDocument();
+    expect(document.getElementById("citizen-media-gallery")).toBeInTheDocument();
+    expect(document.getElementById("citizen-media-photo-camera")).toBeInTheDocument();
+    expect(document.getElementById("citizen-media-video-camera")).toBeInTheDocument();
   });
 });
 
@@ -367,6 +384,10 @@ describe("Complete Guided Journey Integration", () => {
 
     vi.spyOn(api, "getEvidenceCase").mockResolvedValue(mockCase);
     vi.spyOn(api, "getEvidenceTriage").mockResolvedValue(mockTriage);
+
+    localStorage.setItem("streamsignal_auth_role", "citizen");
+    localStorage.setItem("streamsignal_citizen_username", "aqua-001");
+    window.history.pushState({}, "", "/citizen");
 
     render(<App />);
 

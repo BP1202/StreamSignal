@@ -44,6 +44,10 @@ def extract_media_observations(
     if cache_key in _OBSERVATION_CACHE:
         return _OBSERVATION_CACHE[cache_key]
 
+    # This service analyzes still images only. Do not label valid video as a corrupt image.
+    if not media.content_type.startswith("image/"):
+        return []
+
     if storage is None:
         storage = get_storage()
 

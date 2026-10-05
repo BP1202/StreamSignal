@@ -3,7 +3,7 @@
  * Calls the versioned backend endpoints under /api/v1/research and /api/v1/reports.
  */
 
-import { request } from "./client";
+import { request, requestBlob } from "./client";
 import {
   ResearchInboxResponse,
   ResearchCaseDetailResponse,
@@ -12,6 +12,7 @@ import {
   HumanReviewListResponse,
   EvidenceLineageListResponse,
   CitizenImpactStatus,
+  CitizenMediaListResponse,
 } from "../types/research";
 import {
   EvidencePassportResponse,
@@ -52,17 +53,34 @@ export async function fetchResearchCaseDetail(
   );
 }
 
+export async function fetchResearchCaseMedia(
+  caseId: string,
+  mediaId: string
+): Promise<Blob> {
+  return requestBlob(
+    `/api/v1/reports/${encodeURIComponent(caseId)}/media/${encodeURIComponent(mediaId)}`
+  );
+}
+
 export async function submitHumanReview(
   caseId: string,
   payload: HumanReviewCreateRequest,
-  reviewerId: string = "researcher-primary"
+  reviewerId?: string
 ): Promise<HumanReviewItem> {
+  const activeReviewer =
+    (reviewerId && reviewerId.trim()) ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("streamsignal_reviewer_id") ||
+        localStorage.getItem("streamsignal_researcher_email")
+      : null) ||
+    "REV-RESEARCHER-001";
+
   return request<HumanReviewItem>(
     `/api/v1/research/evidence-cases/${caseId}/reviews`,
     {
       method: "POST",
       headers: {
-        "X-Reviewer-Id": reviewerId,
+        "X-Reviewer-Id": activeReviewer,
       },
       body: JSON.stringify(payload),
     }
@@ -112,4 +130,19 @@ export async function fetchFHIRBundle(
     `/api/v1/research/evidence-cases/${caseId}/fhir`,
     { method: "GET" }
   );
+}
+
+export async function fetchAllCitizenMedia(params: {
+  media_type?: "image" | "video";
+  limit?: number;
+  offset?: number;
+} = {}): Promise<CitizenMediaListResponse> {
+  const query = new URLSearchParams();
+  if (params.media_type) query.set("media_type", params.media_type);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return request<CitizenMediaListResponse>(`/api/v1/research/media${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+  });
 }

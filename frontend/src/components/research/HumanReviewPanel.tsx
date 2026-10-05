@@ -12,7 +12,6 @@ import {
   ShieldAlert,
   Send,
   X,
-  FileCheck,
   Link as LinkIcon,
   HelpCircle,
   Eye,
@@ -23,7 +22,6 @@ interface HumanReviewPanelProps {
   caseDetail: ResearchCaseDetailResponse;
   onReviewRecorded: (review: HumanReviewItem) => void;
   onCancel: () => void;
-  onViewLineage?: () => void;
 }
 
 const OUTCOME_OPTIONS: {
@@ -86,7 +84,6 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
   caseDetail,
   onReviewRecorded,
   onCancel,
-  onViewLineage,
 }) => {
   const [selectedOutcome, setSelectedOutcome] =
     useState<HumanReviewOutcome | null>(null);
@@ -96,6 +93,15 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [recordedReview, setRecordedReview] =
     useState<HumanReviewItem | null>(null);
+
+  const [reviewerId, setReviewerId] = useState<string>(() => {
+    return (
+      (typeof window !== "undefined"
+        ? localStorage.getItem("streamsignal_reviewer_id") ||
+          localStorage.getItem("streamsignal_researcher_email")
+        : null) || "REV-RESEARCHER-001"
+    );
+  });
 
   const selectedOption = OUTCOME_OPTIONS.find(
     (o) => o.value === selectedOutcome
@@ -109,6 +115,7 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
     selectedOutcome !== null &&
     isRationaleValid &&
     isLinkedCaseValid &&
+    reviewerId.trim().length > 0 &&
     !isSubmitting;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,6 +131,7 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
     setError(null);
 
     try {
+      localStorage.setItem("streamsignal_reviewer_id", reviewerId.trim());
       const review = await submitHumanReview(caseDetail.case_id, {
         outcome: selectedOutcome,
         rationale: trimmedRationale,
@@ -228,16 +236,6 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          {onViewLineage && (
-            <button
-              type="button"
-              onClick={onViewLineage}
-              className="text-xs font-semibold text-brand-dark bg-brand-light border border-brand-border hover:bg-brand-light/80 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <FileCheck className="w-3.5 h-3.5" />
-              View Evidence Lineage
-            </button>
-          )}
           <button
             type="button"
             onClick={onCancel}
@@ -308,6 +306,25 @@ export const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Reviewer ID Audit Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs">
+          <label htmlFor="reviewer-id-input" className="text-gray-600 font-semibold">
+            Reviewer ID (Audit Header):
+          </label>
+          <input
+            id="reviewer-id-input"
+            type="text"
+            value={reviewerId}
+            onChange={(e) => {
+              const val = e.target.value;
+              setReviewerId(val);
+              localStorage.setItem("streamsignal_reviewer_id", val);
+            }}
+            placeholder="e.g. REV-RESEARCHER-001"
+            className="font-mono text-xs px-2.5 py-1 bg-white border border-gray-300 rounded text-brand-dark focus:outline-none focus:ring-1 focus:ring-brand-teal w-full sm:w-60"
+          />
+        </div>
+
         {/* Outcome Selector */}
         <div>
           <label className="block text-xs font-bold text-brand-text mb-2">

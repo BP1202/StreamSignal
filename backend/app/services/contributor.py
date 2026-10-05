@@ -45,11 +45,34 @@ def verify_password(stored_password: str, provided_password: str) -> bool:
 def get_or_create_contributor(
     db: Session,
     contributor_id_str: Optional[str] = None,
+    oidc_subject: Optional[str] = None,
+    preferred_display_name: Optional[str] = None,
 ) -> Contributor:
     """
-    Retrieves existing contributor by public contributor_id, or generates
-    and persists a new Level 1 contributor identity with a unique non-identifying handle.
+    Retrieves existing contributor by public contributor_id or display name, or generates
+    and persists a new Level 1 contributor identity with a unique non-identifying handle like aqua-001.
     """
+    if oidc_subject:
+        existing = (
+            db.query(Contributor)
+            .filter(Contributor.oidc_subject == oidc_subject)
+            .first()
+        )
+        if existing:
+            return existing
+        # Public pseudonymous IDs cannot prove ownership of an existing guest profile.
+        contributor_id_str = None
+
+    if preferred_display_name and preferred_display_name.strip():
+        clean_name = preferred_display_name.strip()
+        existing = (
+            db.query(Contributor)
+            .filter(Contributor.display_name == clean_name)
+            .first()
+        )
+        if existing:
+            return existing
+
     if contributor_id_str:
         existing = (
             db.query(Contributor)
@@ -59,11 +82,14 @@ def get_or_create_contributor(
         if existing:
             return existing
 
-    # Generate unique non-identifying handle and internal public ID
-    for _ in range(50):
-        rand_num = random.randint(1000, 9999)
-        c_id = f"SS-C-{rand_num}"
-        d_name = f"{random.choice(WATERSHED_AVATARS)}-{rand_num}"
+    # Generate unique non-identifying handle (e.g. aqua-001) and internal public ID
+    for _ in range(100):
+        rand_num = random.randint(1, 999)
+        c_id = f"SS-C-{random.randint(1000, 9999)}"
+        if preferred_display_name and preferred_display_name.strip():
+            d_name = preferred_display_name.strip()
+        else:
+            d_name = f"aqua-{rand_num:03d}"
 
         conflict = (
             db.query(Contributor)
@@ -76,12 +102,17 @@ def get_or_create_contributor(
             contributor = Contributor(
                 contributor_id=c_id,
                 display_name=d_name,
-                account_level="LEVEL_1_CONTRIBUTOR",
+                account_level="LEVEL_2_REGISTERED" if oidc_subject else "LEVEL_1_CONTRIBUTOR",
+                oidc_subject=oidc_subject,
             )
             db.add(contributor)
             db.commit()
             db.refresh(contributor)
             return contributor
+
+        if preferred_display_name and preferred_display_name.strip():
+            # If a user explicitly requested a specific name that already collided, try to find another
+            break
 
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

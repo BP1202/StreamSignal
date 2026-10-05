@@ -22,6 +22,7 @@ from app.schemas.research import (
     ResearchInboxItem,
     ResearchInboxResponse,
     ResearchCaseDetailResponse,
+    ResearchMediaAttachment,
     HumanReviewResponse,
     HumanReviewOutcome,
     CaseWorkflowStatus,
@@ -352,6 +353,19 @@ def get_research_case_detail(
         lineage_count=lineage_count,
         why_surfaced=why_surfaced,
         evidence_quality=quality,
+        media=[
+            ResearchMediaAttachment(
+                media_id=media.id,
+                original_filename=media.original_filename,
+                content_type=media.content_type,
+                size_bytes=media.size_bytes,
+                created_at=media.created_at,
+            )
+            for media in sorted(
+                report.media,
+                key=lambda item: (item.created_at, str(item.id)),
+            )
+        ],
         media_observations=visual_obs_res.media,
         contextual_evidence=pattern_echo,
         triage=triage,

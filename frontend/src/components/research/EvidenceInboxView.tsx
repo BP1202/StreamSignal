@@ -58,9 +58,6 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
 
   // Filters
   const [actionFilter, setActionFilter] = useState<string>("ALL");
-  const [qualityFilter, setQualityFilter] = useState<string>("ALL");
-  const [hasMedia, setHasMedia] = useState<boolean | undefined>(undefined);
-  const [hasPatternEcho, setHasPatternEcho] = useState<boolean | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const loadInbox = useCallback(async (showSpinner = true) => {
@@ -69,9 +66,6 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
     try {
       const params: any = { limit: 50, offset: 0 };
       if (actionFilter !== "ALL") params.action = actionFilter;
-      if (qualityFilter !== "ALL") params.quality_rating = qualityFilter;
-      if (hasMedia !== undefined) params.has_media = hasMedia;
-      if (hasPatternEcho !== undefined) params.has_pattern_echo = hasPatternEcho;
 
       const data = await fetchResearchInbox(params);
 
@@ -95,7 +89,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
     } finally {
       if (showSpinner) setIsLoading(false);
     }
-  }, [actionFilter, qualityFilter, hasMedia, hasPatternEcho]);
+  }, [actionFilter]);
 
   const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
@@ -188,7 +182,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="research-workspace w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
       {/* Workspace Header */}
       <div className="bg-brand-surface rounded-xl border border-brand-border p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -239,7 +233,7 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
                 <button
                   type="button"
                   onClick={reconnect}
-                  className="px-2 py-0.5 bg-brand-dark hover:bg-slate-800 text-white rounded text-[10px] font-bold transition-colors"
+                  className="px-2 py-0.5 bg-brand-dark hover:bg-brand-teal text-white rounded text-[10px] font-bold transition-colors"
                 >
                   Reconnect
                 </button>
@@ -435,52 +429,20 @@ export const EvidenceInboxView: React.FC<EvidenceInboxViewProps> = ({
           </div>
         </div>
 
-        {/* Toggle Badges (Has Media / Has Pattern Echo) */}
-        <div className="flex items-center gap-3 pt-2 border-t border-gray-100 text-xs text-brand-secondary">
-          <span className="font-semibold text-gray-500 uppercase tracking-wide text-[10px]">
-            Toggles:
-          </span>
-          <button
-            type="button"
-            onClick={() => setHasMedia((prev) => (prev === true ? undefined : true))}
-            className={`px-2.5 py-1 rounded-md border flex items-center gap-1.5 transition-colors ${
-              hasMedia === true
-                ? "bg-brand-light border-brand-teal text-brand-teal font-semibold"
-                : "bg-white border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            Has Photo Evidence
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setHasPatternEcho((prev) => (prev === true ? undefined : true))}
-            className={`px-2.5 py-1 rounded-md border flex items-center gap-1.5 transition-colors ${
-              hasPatternEcho === true
-                ? "bg-purple-50 border-purple-300 text-purple-700 font-semibold"
-                : "bg-white border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            <History className="w-3.5 h-3.5" />
-            Pattern Echo Matches
-          </button>
-
-          {(hasMedia !== undefined || hasPatternEcho !== undefined || actionFilter !== "ALL" || searchQuery) && (
+        {(actionFilter !== "ALL" || searchQuery) && (
+          <div className="flex justify-end border-t border-gray-100 pt-2">
             <button
+              type="button"
               onClick={() => {
                 setActionFilter("ALL");
-                setQualityFilter("ALL");
-                setHasMedia(undefined);
-                setHasPatternEcho(undefined);
                 setSearchQuery("");
               }}
-              className="text-[11px] text-gray-500 hover:text-gray-800 underline ml-auto"
+              className="text-[11px] text-brand-secondary hover:text-brand-text underline"
             >
               Reset filters
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Main Inbox State Handling */}

@@ -4,18 +4,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "./App";
 import { EvidenceInboxView } from "./components/research/EvidenceInboxView";
 import { SignalCaseInvestigationView } from "./components/research/SignalCaseInvestigationView";
-import { SignalGuardClaimInspector } from "./components/research/SignalGuardClaimInspector";
 import { HumanReviewPanel } from "./components/research/HumanReviewPanel";
-import { EvidenceLineageTimeline } from "./components/research/EvidenceLineageTimeline";
 import * as researchApi from "./api/research";
 import {
   ResearchInboxResponse,
   ResearchCaseDetailResponse,
-  EvidenceClaimItem,
   HumanReviewItem,
-  EvidenceLineageListResponse,
 } from "./types/research";
 import { ApiError } from "./api/client";
+import { navigateTo } from "./utils/routing";
 
 const mockInboxResponse: ResearchInboxResponse = {
   items: [
@@ -119,6 +116,7 @@ const mockCaseDetailResponse: ResearchCaseDetailResponse = {
     missing: ["stream_name", "surrounding_conditions"],
     recommendations: ["Document stream segment"],
   },
+  media: [],
   media_observations: [
     {
       media_id: "22222222-2222-2222-2222-222222222222",
@@ -194,29 +192,6 @@ const mockCaseDetailResponse: ResearchCaseDetailResponse = {
   },
 };
 
-const mockLineageResponse: EvidenceLineageListResponse = {
-  events: [
-    {
-      id: "lineage-evt-1",
-      signal_case_id: "11111111-1111-1111-1111-111111111111",
-      event_type: "HUMAN_REVIEW_RECORDED",
-      actor_type: "RESEARCHER",
-      actor_id: "R-042",
-      source_service: "research_workspace",
-      summary: "Researcher recorded decision: Request Field Verification.",
-      structured_payload_json: {
-        outcome: "REQUEST_FIELD_VERIFICATION",
-        previous_status: "AWAITING_REVIEW",
-        new_status: "FIELD_VERIFICATION_REQUESTED",
-        evidence_state_before: "E4_CORROBORATED",
-        evidence_state_after: "E4_CORROBORATED",
-      },
-      created_at: "2026-10-02T16:30:00Z",
-    },
-  ],
-  total: 1,
-};
-
 const mockRecordedReview: HumanReviewItem = {
   id: "review-1",
   case_id: "11111111-1111-1111-1111-111111111111",
@@ -289,39 +264,13 @@ describe("EvidenceInboxView Component", () => {
   });
 });
 
-describe("SignalGuardClaimInspector Component", () => {
-  it("renders claims, provenance classes, uncertainties, allowed actions, and prohibited interpretations", () => {
-    const claims: EvidenceClaimItem[] = [
-      {
-        claim_id: "claim-test-1",
-        claim: "Dense green algae scum present",
-        evidence_class: "E1_REPORTED",
-        source: "report.description",
-        support: ["citizen_text"],
-        uncertainty: ["No biological testing was conducted."],
-        allowed_actions: ["MONITOR", "EXPERT_REVIEW"],
-        prohibited_interpretations: ["POLLUTION_CONFIRMED", "TOXICITY_CONFIRMED"],
-      },
-    ];
-
-    render(<SignalGuardClaimInspector claims={claims} />);
-
-    expect(screen.getByText(/SignalGuard.*Claim Inspector/i)).toBeInTheDocument();
-    expect(screen.getByText("Dense green algae scum present")).toBeInTheDocument();
-    expect(screen.getByText(/E1 — REPORTED/i)).toBeInTheDocument();
-    expect(screen.getByText("No biological testing was conducted.")).toBeInTheDocument();
-    expect(screen.getByText(/POLLUTION CONFIRMED/i)).toBeInTheDocument();
-  });
-});
-
 describe("SignalCaseInvestigationView Component (Issue 13)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders 4 separated evidence layers, Why-This-Case callout, Start Review button, and lineage timeline", async () => {
+  it("renders citizen evidence, evidence quality, contextual evidence, and review without unreliable cue/provenance panels", async () => {
     vi.spyOn(researchApi, "fetchResearchCaseDetail").mockResolvedValue(mockCaseDetailResponse);
-    vi.spyOn(researchApi, "fetchCaseLineage").mockResolvedValue(mockLineageResponse);
     const handleBack = vi.fn();
 
     render(
@@ -342,29 +291,24 @@ describe("SignalCaseInvestigationView Component (Issue 13)", () => {
     expect(screen.getByText("High-priority expert review recommended")).toBeInTheDocument();
 
     // Layer 1: Citizen Evidence
-    expect(screen.getByText("1. What Was Reported (Citizen Evidence)")).toBeInTheDocument();
+    expect(screen.getByText("1. Reported observation")).toBeInTheDocument();
     expect(
       screen.getAllByText(/Dense green film covering water surface near bridge/i).length
     ).toBeGreaterThanOrEqual(1);
 
     // Layer 2: Evidence Quality
-    expect(screen.getByText("2. Deterministic Evidence Quality")).toBeInTheDocument();
+    expect(screen.getByText("2. Evidence completeness")).toBeInTheDocument();
     expect(screen.getByText(/Completeness Score: 67%/i)).toBeInTheDocument();
 
-    // Layer 3: Visual observations
-    expect(screen.getByText("3. Visual Evidence & Machine Observations")).toBeInTheDocument();
-    expect(screen.getByText("GREEN VISUAL REGION")).toBeInTheDocument();
+    expect(screen.queryByText(/Visual Evidence & Machine Observations/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/SignalGuard.*Claim Inspector/i)).not.toBeInTheDocument();
 
     // Layer 4: Contextual Evidence Pattern Echo
-    expect(screen.getByText("4. Contextual Evidence: Pattern Echo")).toBeInTheDocument();
+    expect(screen.getByText("3. Historical context: Pattern Echo")).toBeInTheDocument();
     expect(screen.getByText(/3 similar historical observations were found/i)).toBeInTheDocument();
     expect(screen.getByText(/Historical similarity indicates recurrence, not environmental causation/i)).toBeInTheDocument();
 
-    // Lineage timeline rendered with backend event
-    await waitFor(() => {
-      expect(screen.getByText("EVIDENCE LINEAGE AUDIT TRAIL")).toBeInTheDocument();
-      expect(screen.getByText(/Researcher recorded decision: Request Field Verification/i)).toBeInTheDocument();
-    });
+    expect(screen.queryByText(/EVIDENCE LINEAGE AUDIT TRAIL/i)).not.toBeInTheDocument();
 
     // Start Review action button exists
     const startReviewBtns = screen.getAllByRole("button", { name: /Start Review/i });
@@ -391,7 +335,6 @@ describe("SignalCaseInvestigationView Component (Issue 13)", () => {
     };
 
     vi.spyOn(researchApi, "fetchResearchCaseDetail").mockResolvedValue(reviewedCase);
-    vi.spyOn(researchApi, "fetchCaseLineage").mockResolvedValue(mockLineageResponse);
 
     render(
       <SignalCaseInvestigationView
@@ -406,6 +349,70 @@ describe("SignalCaseInvestigationView Component (Issue 13)", () => {
       expect(screen.getByText(/Recurring visual characteristics and 3 nearby corroborating reports/i)).toBeInTheDocument();
       expect(screen.getByText("Recorded by R-042")).toBeInTheDocument();
     });
+  });
+
+  it("renders the real citizen image and video from protected binary endpoints", async () => {
+    const caseWithMedia: ResearchCaseDetailResponse = {
+      ...mockCaseDetailResponse,
+      media: [
+        {
+          media_id: "photo-media-id",
+          original_filename: "water_stream.jpg",
+          content_type: "image/jpeg",
+          size_bytes: 1234,
+          created_at: "2026-10-01T12:05:00Z",
+        },
+        {
+          media_id: "video-media-id",
+          original_filename: "outfall.mp4",
+          content_type: "video/mp4",
+          size_bytes: 2048,
+          created_at: "2026-10-01T12:06:00Z",
+        },
+      ],
+    };
+    vi.spyOn(researchApi, "fetchResearchCaseDetail").mockResolvedValue(caseWithMedia);
+    vi.spyOn(researchApi, "fetchResearchCaseMedia").mockResolvedValue(new Blob(["real-media"]));
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:real-citizen-media"),
+      revokeObjectURL: vi.fn(),
+    });
+
+    render(
+      <SignalCaseInvestigationView
+        caseId={caseWithMedia.case_id}
+        onBackToInbox={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByRole("img", { name: "Citizen-submitted image: water_stream.jpg" })).toHaveAttribute("src", "blob:real-citizen-media");
+    expect(screen.getByLabelText("Citizen-submitted video: outfall.mp4")).toHaveAttribute("src", "blob:real-citizen-media");
+    expect(screen.getAllByText("Source: Citizen observation").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows an explicit retryable error for broken media", async () => {
+    vi.spyOn(researchApi, "fetchResearchCaseDetail").mockResolvedValue({
+      ...mockCaseDetailResponse,
+      media: [{
+        media_id: "broken-media-id",
+        original_filename: "missing.jpg",
+        content_type: "image/jpeg",
+        size_bytes: 120,
+        created_at: "2026-10-01T12:05:00Z",
+      }],
+    });
+    vi.spyOn(researchApi, "fetchResearchCaseMedia").mockRejectedValue(new ApiError(404, "This media file is no longer available."));
+
+    render(
+      <SignalCaseInvestigationView
+        caseId={mockCaseDetailResponse.case_id}
+        onBackToInbox={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByText("This media file is no longer available.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Retry/i })).toBeInTheDocument();
   });
 });
 
@@ -502,24 +509,19 @@ describe("HumanReviewPanel Component (Issue 13)", () => {
   });
 });
 
-describe("App Mode Switcher", () => {
-  it("allows switching between Citizen Observation and Research Workspace", async () => {
+describe("Research Workspace Route", () => {
+  it("opens the researcher workspace at its direct development route without a demo role switch", async () => {
     vi.spyOn(researchApi, "fetchResearchInbox").mockResolvedValue(mockInboxResponse);
 
     render(<App />);
 
-    expect(screen.getByText("Notice something unusual in a stream?")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to StreamSignal")).toBeInTheDocument();
 
-    // Switch to Research Workspace
-    fireEvent.click(screen.getByText("Research Workspace"));
+    fireEvent.click(screen.getByRole("button", { name: /^Researcher$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Sign In as Researcher/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Research Evidence Workspace")).toBeInTheDocument();
     });
-
-    // Switch back to Citizen Observe
-    fireEvent.click(screen.getByText("Citizen Observe"));
-
-    expect(screen.getByText("Notice something unusual in a stream?")).toBeInTheDocument();
   });
 });

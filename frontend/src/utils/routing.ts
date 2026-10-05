@@ -59,10 +59,14 @@ export function getRouteState(): AppRouteState {
     return { mode: "citizen", caseId: caseId || null, citizenTab: "observe" };
   }
 
-  if (pathname === "/citizen" || pathname === "") {
+  if (pathname === "/citizen") {
     if (queryCaseId) {
       return { mode: "citizen", caseId: queryCaseId, citizenTab: "observe" };
     }
+    return { mode: "citizen", caseId: null, citizenTab: "observe" };
+  }
+
+  if (pathname === "" || pathname === "/") {
     return { mode: "citizen", caseId: null, citizenTab: "home" };
   }
 
@@ -98,11 +102,11 @@ export function navigateTo(
     if (caseId) {
       targetUrl = `/citizen?caseId=${encodeURIComponent(caseId)}`;
     } else if (citizenTab === "observe") {
-      targetUrl = "/citizen/observe";
+      targetUrl = "/citizen";
     } else if (citizenTab === "impact") {
       targetUrl = "/citizen/impact";
     } else {
-      targetUrl = "/citizen";
+      targetUrl = "/";
     }
   }
 

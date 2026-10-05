@@ -120,6 +120,7 @@ const mockDetail: ResearchCaseDetailResponse = {
     missing: ["media"],
     recommendations: ["Attach photo"],
   },
+  media: [],
   media_observations: [],
   contextual_evidence: {
     report_id: testReportId,
@@ -159,6 +160,9 @@ const mockDetail: ResearchCaseDetailResponse = {
 describe("Production Vertical Slice — Two Surfaces & Refresh Survival", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    localStorage.setItem("streamsignal_auth_role", "citizen");
+    localStorage.setItem("streamsignal_citizen_username", "aqua-001");
     window.history.pushState({}, "", "/");
   });
 
@@ -167,7 +171,7 @@ describe("Production Vertical Slice — Two Surfaces & Refresh Survival", () => 
   });
 
   it("Browser 1 (Citizen): renders landing page with capture CTAs", () => {
-    window.history.pushState({}, "", "/citizen");
+    window.history.pushState({}, "", "/citizen/observe");
     render(<App />);
 
     expect(screen.getByText(/Notice something unusual in a stream\?/i)).toBeInTheDocument();

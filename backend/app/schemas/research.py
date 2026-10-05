@@ -236,6 +236,14 @@ class ResearchInboxResponse(BaseModel):
     offset: int = Field(..., ge=0)
 
 
+class ResearchMediaAttachment(BaseModel):
+    media_id: UUID
+    original_filename: str
+    content_type: str
+    size_bytes: int = Field(..., ge=1)
+    created_at: datetime
+
+
 class ResearchCaseDetailResponse(BaseModel):
     case_id: UUID
     observed_at: datetime
@@ -255,9 +263,31 @@ class ResearchCaseDetailResponse(BaseModel):
     lineage_count: int = 0
     why_surfaced: List[WhySurfacedReason]
     evidence_quality: EvidenceQualityResponse
+    media: List[ResearchMediaAttachment] = Field(default_factory=list)
     media_observations: List[MediaVisualObservations]
     contextual_evidence: PatternEchoResponse
     triage: TriageResponse
     evidence_contract: EvidenceContractResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CitizenMediaSummaryItem(BaseModel):
+    media_id: UUID
+    case_id: UUID
+    original_filename: str
+    content_type: str
+    size_bytes: int
+    created_at: datetime
+    report_description: Optional[str] = None
+    water_appearance: Optional[str] = None
+    flow_condition: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CitizenMediaListResponse(BaseModel):
+    items: List[CitizenMediaSummaryItem]
+    total: int

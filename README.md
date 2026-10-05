@@ -1,7 +1,8 @@
 # 🌊 StreamSignal
+### *From streams to systems: turning citizen science into actionable One Health intelligence.*
 
-> **Urban Freshwater Surveillance & One Health Evidence Platform**  
-> *Transforming citizen freshwater observations into transparent, reviewable, standards-compliant One Health evidence cases.*
+> Built for the **IEEE OneAquaHealth Global Hackathon 2026**  
+> Aligned with the EU-funded **[OneAquaHealth Project](https://www.oneaquahealth.eu/)** connecting freshwater ecosystem health and human well-being.
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20+%20Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)
@@ -11,153 +12,124 @@
 
 ---
 
-## 📌 What is StreamSignal?
-
-StreamSignal bridges the gap between everyday community freshwater sightings and professional watershed surveillance. 
-
-Instead of acting as a black-box image classifier or making unverified environmental claims, StreamSignal functions as an **auditable evidence platform**. It maintains strict epistemic separation between:
-1. **Citizen Evidence**: Raw observational text, timestamps, GPS coordinates, and media uploads.
-2. **Machine Assistance**: Automated photo quality assessments, visual cues, and spatial-temporal clustering.
-3. **Contextual Corroboration**: Weather history, rain events, and watershed coverage gaps.
-4. **Human Expert Decision**: Verified determinations by authorized researchers with immutable provenance.
+## 🚩 The Problem
+Urban freshwater ecosystems face severe stress from runoff, sewage, and industrial discharges. While community members frequently spot stream anomalies (discoloration, foam, odor, wildlife mortality):
+- **Complex apps & technical jargon** intimidate citizens, leading to low reporting rates.
+- **Unverified AI detectors** produce noisy, unreliable "hallucinated" claims without scientific rigor.
+- **Data fragmentation**: Citizen reports remain isolated in siloed apps, never reaching public health or environmental monitoring systems in standardized clinical/ecological formats.
 
 ---
 
-## 🚀 Quickstart (Run Demo Locally)
+## 💡 Our Solution
+**StreamSignal** is a transparent, provenance-grounded One Health evidence platform. It turns casual citizen observations into reviewable, standards-compliant evidence without ever replacing human scientific judgment:
+
+1. **Intuitive Citizen Flow**: Rapid, non-intrusive reporting with anonymous handles (`aqua-001`), guided visual signals, and clarifying mini-interviews.
+2. **Explainable AI Assistance**: Automated photo quality checks and spatial-temporal clustering that *assist* researchers rather than making black-box diagnoses.
+3. **Researcher Review & Audit Trail**: Limnologists review cases with mandatory rationales and verified reviewer IDs (`X-Reviewer-Id`).
+4. **HL7 FHIR R4 Interoperability**: Deterministically exports cases into standard FHIR R4 Bundles (`Observation`, `Media`, `Location`, `Provenance`) ready for health and environmental authorities.
+
+---
+
+## 🎯 Hackathon Tracks Addressed
+
+| Track | Challenge Addressed in StreamSignal |
+|---|---|
+| **Track 1: Citizen Science UX** | Intuitive mobile-ready flow, zero-password instant handles (`aqua-001`), interactive follow-up questions, and personal impact tracking. |
+| **Track 3: AI-Supported Assessment** | Human-in-the-loop AI assistance: visual cue analysis with explicit uncertainty bounds; AI is strictly barred from confirming medical or toxic claims ($E_4 \ne E_5$). |
+| **Track 7: Digital Health Standards** | Full HL7 FHIR R4 export gateway and cryptographic Evidence Passports for seamless interoperability across digital health and ecological systems. |
+
+---
+
+## ⚡ Quickstart (Run Demo in 3 Steps)
 
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running)
-- [Node.js 18+](https://nodejs.org/) (for frontend)
+- [Node.js 18+](https://nodejs.org/)
 
----
-
-### Step 1: Clone & Configure
 ```bash
+# 1. Clone & Configure
 git clone https://github.com/BP1202/StreamSignal.git
 cd StreamSignal
-
-# Create environment configuration from template
 cp .env.example .env
-```
 
----
-
-### Step 2: Start Backend & Database
-Launch the PostgreSQL database (with PostGIS) and FastAPI backend containers:
-```bash
+# 2. Start Backend & Database (Docker)
 docker compose up -d --build
-```
-*Verification:*
-- **Backend API**: [http://localhost:8000](http://localhost:8000)
-- **API Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
-- **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
----
-
-### Step 3: Start Frontend
-In a new terminal window:
-```bash
+# 3. Start Frontend (React + Vite)
 cd frontend
 npm install
 npm run dev
 ```
-Open **[http://localhost:5173](http://localhost:5173)** in your browser.
+
+👉 Open **[http://localhost:5173](http://localhost:5173)** in your browser.  
+*(Backend API & Swagger Docs available at [http://localhost:8000/docs](http://localhost:8000/docs))*
 
 ---
 
 ## 🎮 How to Test the Demo
 
-### 1. Citizen Contributor Journey
-1. Open [http://localhost:5173](http://localhost:5173).
-2. On the sign-in modal, click **"Continue without password (guest aqua-xxx)"** to receive an instant anonymous citizen handle (e.g. `aqua-001`).
-3. Click **"Report Observation"** or **"Start with photo"**.
-4. Upload an urban stream photograph (JPG/PNG).
-5. Select observed signals (e.g., surface discoloration, foam, odor) and enter a description.
-6. Provide GPS coordinates (or use the one-click *"Use current location"* button) and click **Submit**.
-7. Complete the brief 2-question clarification interview to generate your structured **SignalCase**.
+```
+┌────────────────────────────────┐       ┌────────────────────────────────┐
+│      1. Citizen Reporting      │       │     2. Researcher Review       │
+│                                │       │                                │
+│ • Click "Continue as guest"    │  ───> │ • Switch to "Research" tab     │
+│ • Upload stream photo          │       │ • Inspect photo & quality cues │
+│ • Pick signals (e.g. Foam)     │       │ • Record verified decision     │
+│ • Submit & answer 2 questions  │       │ • View live FHIR R4 Bundle     │
+└────────────────────────────────┘       └────────────────────────────────┘
+```
+
+1. **Citizen Experience**:
+   - Go to [http://localhost:5173](http://localhost:5173).
+   - Click **"Continue without password (guest aqua-xxx)"** to enter with a private citizen handle.
+   - Click **"Report Observation"**, upload a photo, select observed signals, click location, and submit.
+   - Complete the short clarifying interview to see your transparent **Evidence Case**.
+2. **Researcher Experience**:
+   - Click **"Research"** in the top navigation bar.
+   - Select the newly submitted case from the **Evidence Inbox**.
+   - Review the raw citizen photos, quality scores, and contextual weather data.
+   - Select an outcome (e.g. *"Request field verification"*), enter a rationale, and click **Record Decision**.
+   - Scroll to **One Health Interoperability** to view the live **FHIR R4 Bundle JSON**.
 
 ---
 
-### 2. Researcher & Limnologist Review
-1. Switch to the **Researcher Workspace** using the top navigation bar or sign in as Researcher.
-2. Open the **Evidence Inbox** to see incoming unreviewed citizen observations sorted by triage urgency.
-3. Select your submitted case to open the **SignalCase Investigation View**:
-   - Inspect raw citizen evidence and high-resolution media.
-   - Review automated quality metrics and contextual weather corroboration.
-4. In the **Researcher Review Panel**, select an action (e.g., *Request field verification*, *Mark related case*), enter your empirical rationale, verify your **Reviewer ID** (`X-Reviewer-Id`), and click **Record Decision**.
-5. Scroll down to **One Health Interoperability** to view or download the generated **HL7 FHIR R4 Bundle** and cryptographic **Evidence Passport**.
-
----
-
-## 🏛️ System Architecture & Data Flow
+## 🏛️ System Architecture
 
 ```text
-[ Citizen Smartphone / Web App ]
-               │
-               ▼  (POST /api/v1/reports + Media Upload)
-     [ FastAPI Backend ] 
-               ├── File signature & EXIF verification
-               ├── PostGIS geospatial indexing
-               └── Deterministic triage scoring
-               │
-               ▼
-      [ PostgreSQL + PostGIS ]
-               │
-               ▼
-[ Researcher Review Portal ]
-               ├── Inspect citizen evidence & cues
-               ├── Record auditable decision (X-Reviewer-Id)
-               └── Append immutable EvidenceLineageEvent
-               │
-               ▼
-   [ HL7 FHIR R4 / Evidence Passport ]
-  (Ready for Public Health & Environmental Agencies)
+Citizen Observation (Photos, GPS, Signals)
+             │
+             ▼
+     FastAPI Backend  ───>  PostgreSQL + PostGIS (Spatial Indexing)
+             │
+             ├── Deterministic Quality & Visual Cue Heuristics
+             ├── Real-time WebSocket Broadcast
+             ▼
+Researcher Review Portal (Human-in-the-Loop Audit)
+             │
+             ▼
+HL7 FHIR R4 Bundle & Cryptographic Evidence Passport
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 🧪 Automated Tests
 
-| Component | Technologies |
-|---|---|
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons |
-| **Backend** | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0 |
-| **Database** | PostgreSQL 16 with PostGIS & pgvector |
-| **Interoperability** | HL7 FHIR R4 (`Observation`, `Media`, `Location`, `Provenance`) |
-| **Auth & Audit** | RBAC, OIDC / Auth0 support, explicit `X-Reviewer-Id` audit provenance |
-| **Containerization** | Docker, Docker Compose |
-
----
-
-## 🧪 Running Tests
-
-### Backend Test Suite (264 Tests)
 ```bash
+# Backend pytest suite (264 tests passing)
 docker compose exec backend pytest
-```
 
-### Frontend Test Suite (93 Tests)
-```bash
-cd frontend
-npm test -- --run
-```
-
-### Frontend Production Build
-```bash
-cd frontend
-npm run build
+# Frontend vitest suite (93 tests passing)
+cd frontend && npm test -- --run
 ```
 
 ---
 
-## 🔒 Security & Privacy Commitments
-
-- **Decoupled Citizen Identity**: Community members are identified through non-identifying pseudonyms (`aqua-001`, `SS-C-1001`), protecting privacy while preserving evidence attribution.
-- **Strict Media Validation**: All uploads are verified by magic byte file signatures and MIME validation. Server disk paths are strictly redacted.
-- **Mandatory Audit Headers**: Review operations strictly enforce `X-Reviewer-Id` to prevent unattributed scientific determinations.
-- **Zero Hallucinated Claims**: AI agents and automated heuristics cannot alter human review outcomes or declare water toxicity without verified human confirmation.
+## 🔒 One Health Privacy & Ethics
+- **Non-identifying Citizen Handles**: Contributor identities use pseudonyms (`aqua-001`), protecting citizen privacy while preserving evidence attribution.
+- **Safe Media Storage**: Magic-byte verification prevents malicious uploads; local storage paths are never leaked.
+- **Scientific Integrity**: AI suggests and surfaces information, but only accredited human reviewers make definitive case determinations.
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.

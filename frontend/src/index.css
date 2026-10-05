@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-teal: #0D7C7C;
+  --color-brand-dark: #075E63;
+  --color-brand-light: #D9F1EF;
+  --color-brand-accent: #27B3B0;
+  --color-brand-bg: #F7FAFA;
+  --color-brand-surface: #FFFFFF;
+  --color-brand-text: #172525;
+  --color-brand-secondary: #607272;
+  --color-brand-border: #DDE8E7;
+  --color-brand-success: #2E8B67;
+  --color-brand-warning: #D99A2B;
+  --color-brand-error: #C94C4C;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #F7FAFA;
+  color: #172525;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure pre and code blocks never overflow mobile containers */
+pre, code, kbd, samp {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Accessible focus ring */
+*:focus-visible {
+  outline: 2px solid #0D7C7C;
+  outline-offset: 2px;
+}
+
+/* Transitional theme normalization for researcher panels that still use inline styles. */
+.research-inline-theme {
+  color: var(--color-brand-text) !important;
+  background-color: var(--color-brand-surface) !important;
+  background-image: none !important;
+  border-color: var(--color-brand-border) !important;
+}
+
+.research-inline-theme [style]:not([style*="position: fixed"]) {
+  color: var(--color-brand-text) !important;
+  background-color: var(--color-brand-surface) !important;
+  background-image: none !important;
+  border-color: var(--color-brand-border) !important;
+}
+
+.research-inline-theme [style*="width:"][style*="%"] {
+  background-color: var(--color-brand-teal) !important;
+}
+
+.research-inline-theme [style*="position: fixed"] {
+  background-color: rgb(23 37 37 / 45%) !important;
+}

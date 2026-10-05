@@ -1,8 +1,14 @@
+from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, UploadFile, File, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Path, UploadFile, File, Response, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.config import get_settings
+from app.core.auth import get_oidc_subject, require_researcher_role
 from app.models.report import Report
+from app.models.media import ReportMedia
+from app.services.contributor import get_or_create_contributor
+from app.services.storage import get_storage
 from app.schemas.report import ReportCreate, ReportResponse, ReportListResponse
 from app.schemas.evidence_quality import EvidenceQualityResponse
 from app.schemas.media import ReportMediaResponse
@@ -27,6 +33,9 @@ from app.services.evidence_contract import assemble_evidence_contract
 from app.services.media_observation import extract_report_media_observations
 from app.services.contextual_evidence import evaluate_pattern_echo
 from app.services.triage import evaluate_evidence_triage
+from app.schemas.research import CitizenImpactStatusResponse
+from app.services.review import get_citizen_impact_status
+from app.services.realtime import connection_manager, RealtimeEventType
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -40,14 +49,39 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 )
 def create_report(
     report_in: ReportCreate,
+    x_contributor_id: Optional[str] = Header(None, alias="X-Contributor-Id"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     db: Session = Depends(get_db),
 ) -> Report:
     """Create a new citizen evidence report with server-managed SUBMITTED status."""
     report_data = report_in.model_dump()
-    db_report = Report(**report_data, status="SUBMITTED")
+    contributor_uuid = None
+    oidc_subject = get_oidc_subject(authorization)
+    if x_contributor_id or oidc_subject:
+        contributor = get_or_create_contributor(
+            db=db,
+            contributor_id_str=x_contributor_id,
+            oidc_subject=oidc_subject,
+        )
+        contributor_uuid = contributor.id
+
+    db_report = Report(**report_data, status="SUBMITTED", contributor_id=contributor_uuid)
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
+
+    # Publish SIGNAL_CASE_CREATED to research workspace strictly post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.SIGNAL_CASE_CREATED,
+        case_id=db_report.id,
+        report_id=db_report.id,
+        payload={
+            "title": f"Observation #{str(db_report.id)[:8].upper()}",
+            "description": db_report.description,
+            "media_count": len(db_report.media) if db_report.media else 0,
+        },
+    )
+
     return db_report
 
 
@@ -138,8 +172,8 @@ def get_report_evidence_quality(
     status_code=status.HTTP_201_CREATED,
     summary="Upload Citizen Media Evidence",
     description=(
-        "Securely ingests image evidence (JPEG, PNG, WebP up to 10MB) for an existing report. "
-        "Validates actual binary content, verifies pixel decodability, enforces decompression limits, "
+        "Securely ingests image evidence (JPEG, PNG, WebP) or video evidence (MP4, QuickTime, WebM) up to 10MB per file. "
+        "Validates actual binary content, verifies image decodability, enforces upload limits, "
         "calculates a SHA-256 checksum, and persists structured metadata in PostgreSQL."
     ),
 )
@@ -149,14 +183,113 @@ async def upload_report_media(
     db: Session = Depends(get_db),
 ) -> ReportMediaResponse:
     """Upload and attach validated image evidence to an observation report."""
-    file_bytes = await file.read()
+    file_bytes = await file.read(get_settings().MAX_UPLOAD_SIZE_BYTES + 1)
     media_record = ingest_report_media(
         report_id=report_id,
         file_bytes=file_bytes,
         original_filename=file.filename,
         db=db,
     )
+
+    # Publish EVIDENCE_UPDATED event post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.EVIDENCE_UPDATED,
+        case_id=report_id,
+        report_id=report_id,
+        payload={"update_type": "MEDIA_UPLOADED", "media_id": str(media_record.id)},
+    )
+
     return media_record
+
+
+@router.get(
+    "/{report_id}/media/{media_id}",
+    dependencies=[Depends(require_researcher_role)],
+    summary="Retrieve Citizen Media Evidence Binary",
+    description=(
+        "Retrieves stored image or video evidence for an authorized researcher. "
+        "Enforces report/media ownership, researcher authorization, and IDOR boundaries "
+        "and path confinement without exposing internal filesystem paths."
+    ),
+    responses={
+        200: {"content": {"image/*": {}, "video/*": {}}, "description": "Binary media stream"},
+        206: {"content": {"video/*": {}}, "description": "Partial video stream"},
+        401: {"description": "Researcher authentication required"},
+        403: {"description": "Researcher role required"},
+        404: {"description": "Media file or report not found"},
+    },
+)
+def get_report_media_binary(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    media_id: UUID = Path(..., description="Unique UUID identifier of the media record"),
+    range_header: Optional[str] = Header(None, alias="Range"),
+    db: Session = Depends(get_db),
+):
+    """Safely serves authorized media, including byte ranges requested by HTML video."""
+    media_record = (
+        db.query(ReportMedia)
+        .filter(ReportMedia.id == media_id, ReportMedia.report_id == report_id)
+        .first()
+    )
+    if not media_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media evidence not found or IDOR boundary violation",
+        )
+
+    storage = get_storage()
+    try:
+        content_bytes = storage.read(media_record.storage_key)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media evidence binary not found in storage",
+        )
+
+    headers = {
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Accept-Ranges": "bytes",
+        "ETag": f'"{media_record.sha256}"',
+        "Vary": "Authorization",
+    }
+    if range_header:
+        try:
+            unit, interval = range_header.split("=", 1)
+            if unit.strip().lower() != "bytes" or "," in interval:
+                raise ValueError("Unsupported range")
+            start_text, end_text = interval.split("-", 1)
+            total = len(content_bytes)
+            if start_text:
+                start = int(start_text)
+                end = int(end_text) if end_text else total - 1
+            else:
+                suffix_length = int(end_text)
+                if suffix_length <= 0:
+                    raise ValueError("Invalid suffix range")
+                start = max(total - suffix_length, 0)
+                end = total - 1
+            if start >= total or end < start:
+                raise ValueError("Unsatisfiable range")
+            end = min(end, total - 1)
+        except (ValueError, AttributeError):
+            raise HTTPException(
+                status_code=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                detail="Requested media byte range is not satisfiable",
+                headers={"Content-Range": f"bytes */{len(content_bytes)}"},
+            )
+
+        headers["Content-Range"] = f"bytes {start}-{end}/{len(content_bytes)}"
+        headers["Content-Length"] = str(end - start + 1)
+        return Response(
+            content=content_bytes[start : end + 1],
+            status_code=status.HTTP_206_PARTIAL_CONTENT,
+            media_type=media_record.content_type,
+            headers=headers,
+        )
+
+    headers["Content-Length"] = str(len(content_bytes))
+    return Response(content=content_bytes, media_type=media_record.content_type, headers=headers)
 
 
 @router.get(
@@ -212,6 +345,14 @@ def submit_report_evidence_interview_answers(
     )
 
     recalculated_quality = assess_evidence_quality(updated_report)
+
+    # Publish EVIDENCE_UPDATED event post-commit
+    connection_manager.publish_event(
+        event_type=RealtimeEventType.EVIDENCE_UPDATED,
+        case_id=updated_report.id,
+        report_id=updated_report.id,
+        payload={"update_type": "INTERVIEW_ANSWERED", "updated_fields": updated_fields},
+    )
 
     return EvidenceInterviewAnswersResponse(
         report_id=updated_report.id,
@@ -363,3 +504,20 @@ def get_report_evidence_triage(
             detail=f"Report with id '{report_id}' not found",
         )
     return evaluate_evidence_triage(report=db_report, db=db)
+
+
+@router.get(
+    "/{report_id}/impact-status",
+    response_model=CitizenImpactStatusResponse,
+    summary="Retrieve Non-Sensitive Citizen Impact Status",
+    description=(
+        "Returns non-sensitive impact status suitable for citizen tracking. "
+        "Strictly excludes researcher identity, internal reviewer rationales, and private case linkages."
+    ),
+)
+def get_report_impact_status(
+    report_id: UUID = Path(..., description="Unique UUID identifier of the report"),
+    db: Session = Depends(get_db),
+) -> CitizenImpactStatusResponse:
+    """Retrieve safe, non-sensitive impact status for a citizen observation report."""
+    return get_citizen_impact_status(db=db, case_id=report_id)

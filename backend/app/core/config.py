@@ -34,8 +34,16 @@ class Settings(BaseSettings):
     # Media Evidence Storage configuration
     MEDIA_STORAGE_PATH: str = "media_storage"
     MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit
+    MAX_MEDIA_FILES_PER_REPORT: int = 5
     ALLOWED_IMAGE_FORMATS: List[str] = ["JPEG", "PNG", "WEBP"]
     MAX_IMAGE_PIXELS: int = 25_000_000  # 25 MP decompression bomb safeguard
+
+    # OIDC access-token validation. Empty values fail closed outside development.
+    OIDC_ISSUER: str = ""
+    OIDC_AUDIENCE: str = ""
+    OIDC_JWKS_URL: str = ""
+    OIDC_ROLE_CLAIM: str = "https://streamsignal.app/roles"
+    OIDC_RESEARCHER_ROLE: str = "RESEARCHER"
 
     # PostgreSQL configuration
     POSTGRES_USER: str = "streamsignal_user"

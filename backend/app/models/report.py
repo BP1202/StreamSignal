@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Text, Float, Boolean, DateTime
+from sqlalchemy import Column, String, Text, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -25,6 +25,12 @@ class Report(Base):
     litter_observed = Column(Boolean, nullable=False, default=False)
     dead_wildlife_observed = Column(Boolean, nullable=False, default=False)
     status = Column(String(50), nullable=False, default="SUBMITTED", index=True)
+    contributor_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("contributors.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
@@ -35,3 +41,7 @@ class Report(Base):
 
     # Relationships
     media = relationship("ReportMedia", back_populates="report", cascade="all, delete-orphan")
+    reviews = relationship("HumanReview", back_populates="report", cascade="all, delete-orphan", foreign_keys="HumanReview.report_id")
+    lineage_events = relationship("EvidenceLineageEvent", back_populates="report", cascade="all, delete-orphan", foreign_keys="EvidenceLineageEvent.signal_case_id")
+    contact_requests = relationship("ContactRequest", back_populates="report", cascade="all, delete-orphan", foreign_keys="ContactRequest.signal_case_id")
+    contributor = relationship("Contributor", back_populates="reports", foreign_keys=[contributor_id])

@@ -1,7 +1,7 @@
 import math
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.report import Report
 from app.schemas.contextual_evidence import (
@@ -75,6 +75,7 @@ def evaluate_pattern_echo(
     # 2. Bounded database query: strictly historical (observed_at < current), within time window & spatial box
     candidate_reports: List[Report] = (
         db.query(Report)
+        .options(joinedload(Report.media))
         .filter(
             Report.id != report.id,
             Report.observed_at < report.observed_at,

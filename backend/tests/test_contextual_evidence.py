@@ -1,9 +1,18 @@
 import io
+import random
 import uuid
 from datetime import datetime, timedelta, timezone
 import pytest
 from PIL import Image
 from fastapi.testclient import TestClient
+
+
+def get_unique_base_coords() -> tuple[float, float]:
+    """Generate fresh coordinates per test to avoid collision with previous runs in DB."""
+    return (
+        round(random.uniform(10.0, 40.0), 4),
+        round(random.uniform(10.0, 40.0), 4),
+    )
 
 
 def create_green_jpeg() -> bytes:
@@ -71,8 +80,7 @@ def test_spatial_proximity_filtering(client: TestClient):
     """
     Test 4: Reports within search radius are candidates; reports outside radius are excluded.
     """
-    base_lat = 52.2000
-    base_lon = 11.2000
+    base_lat, base_lon = get_unique_base_coords()
     current_time = datetime(2026, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
 
     # Current report
@@ -135,8 +143,7 @@ def test_temporal_window_and_future_exclusion(client: TestClient):
     Test 5: Recent historical reports within window are included;
     reports older than historical window (e.g. >30 days) and future reports are strictly excluded.
     """
-    base_lat = 53.3000
-    base_lon = 12.3000
+    base_lat, base_lon = get_unique_base_coords()
     current_time = datetime(2026, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
 
     cur_res = client.post(
@@ -225,8 +232,7 @@ def test_structured_signals_and_negative_boolean_rule(client: TestClient):
     generate transparent matched_signals and explanations.
     False boolean values (e.g. litter_observed=False) do NOT count as a similarity match.
     """
-    base_lat = 55.5000
-    base_lon = 14.5000
+    base_lat, base_lon = get_unique_base_coords()
     current_time = datetime(2026, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
 
     cur_res = client.post(
@@ -294,8 +300,7 @@ def test_shared_visual_observations_contribute_to_similarity(client: TestClient)
     visual media sharing an observation (e.g. GREEN_VISUAL_REGION), it is included
     in matched_signals and explanations.
     """
-    base_lat = 56.6000
-    base_lon = 15.6000
+    base_lat, base_lon = get_unique_base_coords()
     current_time = datetime(2026, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
 
     cur_res = client.post(

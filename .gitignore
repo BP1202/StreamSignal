@@ -60,3 +60,8 @@ scratch/
 *.swo
 *~
 .DS_Store
+
+# Frontend / Node
+node_modules/
+dist/
+dist-ssr/

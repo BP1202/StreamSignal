@@ -1,11 +1,19 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Dict, Any
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
+from app.core.auth import require_researcher_role
 from app.api.v1.router import api_router as api_v1_router
 from app.api.v1.health import router as health_router
+from app.api.v1.realtime import router as realtime_router
+from app.api.v1.research import router as research_router
+from app.api.v1.evidence_gaps import router as evidence_gaps_router
+from app.api.v1.mission_needs import router as mission_needs_router
+from app.api.v1.citizen_missions import router as citizen_missions_router
+from app.services.realtime import connection_manager
 from app.core.database import Base
 
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +27,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting %s v%s...", settings.APP_NAME, settings.VERSION)
     logger.info("Environment: %s", settings.ENVIRONMENT)
     logger.info("Connecting to Database at: %s:%s", settings.POSTGRES_HOST, settings.POSTGRES_PORT)
+    connection_manager.register_loop(asyncio.get_running_loop())
     yield
     logger.info("Shutting down %s...", settings.APP_NAME)
 
@@ -49,6 +58,46 @@ def create_application() -> FastAPI:
 
     # Direct top-level health routes for infrastructure and orchestrator probes (/health)
     app_instance.include_router(health_router, prefix="/health", tags=["Health"])
+
+    # Direct top-level researcher routes with RBAC verification (/research/...)
+    app_instance.include_router(research_router)
+    app_instance.include_router(
+        evidence_gaps_router,
+        prefix="/research",
+        tags=["Evidence Gaps"],
+        dependencies=[Depends(require_researcher_role)],
+    )
+    app_instance.include_router(
+        mission_needs_router,
+        prefix="/research",
+        tags=["Mission Needs"],
+        dependencies=[Depends(require_researcher_role)],
+    )
+
+    # Direct top-level citizen routes (/citizen/...)
+    app_instance.include_router(citizen_missions_router)
+
+    # Top-level WebSocket routes (/ws/research, /ws/citizen/{report_id})
+    app_instance.include_router(realtime_router)
+
+    from fastapi.responses import JSONResponse
+    from fastapi import Request
+
+    @app_instance.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        # Do not intercept standard HTTPExceptions
+        from fastapi import HTTPException
+        if isinstance(exc, HTTPException):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers or {},
+            )
+        logger.error("Internal server error on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An internal server error occurred. Sensitive diagnostic details are withheld."},
+        )
 
     @app_instance.get("/", tags=["Root"], summary="Service Root")
     def root() -> Dict[str, Any]:

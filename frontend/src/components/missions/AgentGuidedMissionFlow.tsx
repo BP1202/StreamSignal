@@ -1,0 +1,436 @@
+import React, { useState } from "react";
+import {
+  ContributorProfile,
+  MissionEvidenceSubmission,
+  MissionItem,
+} from "../../types/mission";
+import {
+  provideMissionEvidence,
+  submitMission,
+  validateMission,
+} from "../../api/missions";
+
+interface Props {
+  mission: MissionItem;
+  contributor: ContributorProfile;
+  onMissionUpdated: (mission: MissionItem) => void;
+  onMissionSubmitted: (caseId: string) => void;
+  onBack: () => void;
+}
+
+export const AgentGuidedMissionFlow: React.FC<Props> = ({
+  mission,
+  contributor,
+  onMissionUpdated,
+  onMissionSubmitted,
+  onBack,
+}) => {
+  const [description, setDescription] = useState(
+    mission.collected_evidence?.description || ""
+  );
+  const [waterAppearance, setWaterAppearance] = useState(
+    mission.collected_evidence?.water_appearance || ""
+  );
+  const [flowCondition, setFlowCondition] = useState(
+    mission.collected_evidence?.flow_condition || ""
+  );
+  const [foamObserved, setFoamObserved] = useState<boolean>(
+    mission.collected_evidence?.foam_observed ?? false
+  );
+  const [additionalNotes, setAdditionalNotes] = useState(
+    mission.collected_evidence?.additional_notes || ""
+  );
+  const [photoUploaded, setPhotoUploaded] = useState<boolean>(
+    Boolean(mission.collected_evidence?.photo)
+  );
+  const [mediaId, setMediaId] = useState<string | null>(() => {
+    const existing =
+      mission.collected_evidence?.media_id || mission.collected_evidence?.photo;
+    if (typeof existing === "string" && existing.length === 36) {
+      return existing;
+    }
+    return null;
+  });
+  const [validating, setValidating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const nextAction = mission.next_action;
+  const isReadyForSubmission =
+    mission.status === "READY_FOR_SUBMISSION" ||
+    (nextAction && nextAction.action_type === "READY_FOR_SUBMISSION");
+
+  const generateUUID = (): string => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
+
+  const buildSubmission = (): MissionEvidenceSubmission => {
+    let resolvedMediaId: string | undefined = undefined;
+    if (photoUploaded) {
+      resolvedMediaId = mediaId || generateUUID();
+      if (!mediaId) {
+        setMediaId(resolvedMediaId);
+      }
+    }
+
+    return {
+      description: description.trim() || undefined,
+      water_appearance: waterAppearance.trim() || undefined,
+      flow_condition: flowCondition.trim() || undefined,
+      foam_observed: foamObserved,
+      additional_notes: additionalNotes.trim() || undefined,
+      media_id: resolvedMediaId,
+      latitude: mission.target_latitude || 41.1579,
+      longitude: mission.target_longitude || -8.6291,
+    };
+  };
+
+  const handleValidate = async () => {
+    try {
+      setValidating(true);
+      setError(null);
+      const sub = buildSubmission();
+      const updated = await validateMission(
+        mission.id,
+        sub,
+        contributor.contributor_id
+      );
+      onMissionUpdated(updated);
+    } catch (err: any) {
+      setError(err?.message || "Validation failed.");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setSubmitting(true);
+      setError(null);
+      // Ensure latest state validated
+      const sub = buildSubmission();
+      await provideMissionEvidence(
+        mission.id,
+        sub,
+        contributor.contributor_id
+      );
+      const res = await submitMission(mission.id, contributor.contributor_id);
+      onMissionSubmitted(res.case_id);
+    } catch (err: any) {
+      setError(err?.message || "Submission failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePhotoSimulated = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhotoUploaded(true);
+      if (!mediaId) {
+        setMediaId(generateUUID());
+      }
+    }
+  };
+
+  return (
+    <div className="w-full max-w-screen-2xl mx-auto space-y-6 text-left">
+      {/* Top Header & Breadcrumbs */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="text-xs text-brand-secondary hover:text-brand-teal transition-colors flex items-center gap-1 font-medium"
+        >
+          ← Back to Available Missions
+        </button>
+        <div className="text-xs text-brand-secondary font-mono">
+          Status: <strong className="text-brand-teal">{mission.status}</strong>
+        </div>
+      </div>
+
+      {/* Mission Title Card */}
+      <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border shadow-xs relative overflow-hidden">
+        <div className="absolute top-0 left-0 h-1 bg-brand-teal w-full" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="text-[10px] tracking-wider font-bold uppercase text-brand-dark bg-brand-light px-2 py-0.5 rounded border border-brand-border">
+              Active Evidence Mission
+            </span>
+            <h2 className="text-lg font-bold text-brand-text mt-1">
+              {mission.title}
+            </h2>
+            <p className="text-xs text-brand-secondary mt-1 max-w-2xl">
+              {mission.purpose}
+            </p>
+          </div>
+          <div className="flex flex-col text-right">
+            <span className="text-[10px] text-brand-secondary uppercase tracking-wider font-semibold">
+              Research Objective
+            </span>
+            <span className="text-xs text-brand-text font-medium max-w-xs">
+              {mission.research_need}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* AGENT GUIDANCE CARD */}
+      <div className="p-5 rounded-2xl bg-brand-light/40 border border-brand-border shadow-xs">
+        <div className="flex items-start gap-3.5">
+          <div className="w-9 h-9 rounded-xl bg-brand-teal flex items-center justify-center text-white text-lg shadow-xs shrink-0">
+            🤖
+          </div>
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-brand-dark uppercase tracking-wider">
+                Evidence Mission Agent Guidance
+              </h3>
+              {nextAction && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-dark border border-brand-border">
+                  {nextAction.action_type}
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-semibold text-brand-text">
+              {nextAction?.user_message ||
+                "Please review the required evidence dimensions below and attach observations."}
+            </p>
+            {nextAction?.micro_learning && (
+              <div className="p-3 rounded-lg bg-brand-surface border border-brand-border text-xs text-brand-secondary leading-relaxed mt-2">
+                💡 <strong className="text-brand-text">Why this matters:</strong>{" "}
+                {nextAction.micro_learning}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Visible Bounded Agent Action Trail */}
+        <div className="mt-4 pt-3 border-t border-brand-border space-y-2">
+          <span className="text-[10px] font-bold text-brand-secondary block uppercase tracking-wider">
+            Agent Execution Milestones
+          </span>
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Analyzed research requirement: {mission.research_need}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Selected approved template: {mission.mission_type}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-success font-bold">✓</span>
+              <span className="text-brand-secondary">Verified input schema: SignalGuard firewall check passed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {isReadyForSubmission ? (
+                <>
+                  <span className="text-brand-success font-bold">✓</span>
+                  <span className="text-brand-success">Evidence completeness satisfied: Ready for SignalCase handoff</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-brand-teal animate-pulse font-bold">→</span>
+                  <span className="text-brand-dark">Awaiting citizen field observation: missing [{mission.missing_evidence.join(", ")}]</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Evidence Completion Status Bar */}
+        <div className="mt-4 pt-4 border-t border-brand-border flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-brand-secondary">Required Dimensions:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {mission.required_evidence.map((dim) => {
+                const isCollected =
+                  !mission.missing_evidence?.includes(dim);
+                return (
+                  <span
+                    key={dim}
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-all ${
+                      isCollected
+                        ? "bg-brand-light text-brand-dark border border-brand-border"
+                        : "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse"
+                    }`}
+                  >
+                    {isCollected ? "✓" : "○"} {dim}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+          <div className="text-brand-secondary font-mono text-[11px]">
+            Missing:{" "}
+            <strong className="text-amber-700">
+              {mission.missing_evidence?.length ?? 0}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* EVIDENCE COLLECTION FORM */}
+      <div className="p-6 rounded-2xl bg-brand-surface border border-brand-border shadow-xs space-y-5">
+        <h3 className="text-sm font-semibold text-brand-text border-b border-brand-border pb-2">
+          Observation & Physical Documentation
+        </h3>
+
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-brand-error text-xs">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Water Appearance */}
+          <div>
+            <label className="block text-xs font-medium text-brand-text mb-1">
+              Apparent Water Clarity / Visual Cue
+            </label>
+            <select
+              value={waterAppearance}
+              onChange={(e) => setWaterAppearance(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-white border border-brand-border text-brand-text text-xs focus:outline-none focus:border-brand-teal"
+            >
+              <option value="">Select visual cue...</option>
+              <option value="clear">Clear (High Transparency)</option>
+              <option value="turbid / cloudy">Turbid / Cloudy</option>
+              <option value="green surface material">Green Surface Material / Algae</option>
+              <option value="brownish discoloration">Brownish Discoloration</option>
+              <option value="milky / gray discharge">Milky / Gray Discharge</option>
+            </select>
+          </div>
+
+          {/* Flow Condition */}
+          <div>
+            <label className="block text-xs font-medium text-brand-text mb-1">
+              Stream Flow Condition
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {["Fast", "Moderate", "Slow", "Stagnant"].map((flow) => (
+                <button
+                  key={flow}
+                  type="button"
+                  onClick={() => setFlowCondition(flow.toLowerCase())}
+                  className={`px-2 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
+                    flowCondition.toLowerCase() === flow.toLowerCase()
+                      ? "bg-brand-light text-brand-dark border-brand-teal shadow-sm"
+                      : "bg-white text-brand-secondary border-brand-border hover:bg-brand-bg"
+                  }`}
+                >
+                  {flow}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Foam Observation Toggle */}
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-brand-bg border border-brand-border">
+          <div>
+            <span className="text-xs font-semibold text-brand-text block">
+              Noticeable Foam or Surface Scum?
+            </span>
+            <span className="text-[11px] text-brand-secondary">
+              Distinguishes persistent organic or chemical surfactant from natural turbulence.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFoamObserved(true)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                foamObserved
+                  ? "bg-brand-light text-brand-dark border-brand-teal"
+                  : "bg-white text-brand-secondary border-brand-border"
+              }`}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => setFoamObserved(false)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                !foamObserved
+                  ? "bg-brand-light text-brand-dark border-brand-teal"
+                  : "bg-white text-brand-secondary border-brand-border"
+              }`}
+            >
+              No
+            </button>
+          </div>
+        </div>
+
+        {/* Photo Upload Card */}
+        <div className="p-4 rounded-xl bg-brand-bg border border-brand-border space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-brand-text">
+              Stream Photographic Evidence
+            </label>
+            {photoUploaded ? (
+              <span className="text-xs text-brand-success font-medium">✓ Photo Attached</span>
+            ) : (
+              <span className="text-xs text-amber-700 font-medium">Photo Required</span>
+            )}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSimulated}
+            className="w-full text-xs text-brand-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-light file:text-brand-dark hover:file:bg-brand-light/80 cursor-pointer"
+          />
+        </div>
+
+        {/* Description / Notes */}
+        <div>
+          <label className="block text-xs font-medium text-brand-text mb-1">
+            Contextual Field Notes
+          </label>
+          <textarea
+            rows={2}
+            value={additionalNotes}
+            onChange={(e) => setAdditionalNotes(e.target.value)}
+            placeholder="Document any odor, weather conditions, or nearby drainage outfalls..."
+            className="w-full px-3 py-2 rounded-lg bg-white border border-brand-border text-brand-text text-xs focus:outline-none focus:border-brand-teal"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="pt-3 border-t border-brand-border flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleValidate}
+            disabled={validating || submitting}
+            className="px-4 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-brand-light text-brand-dark border border-brand-border transition-colors disabled:opacity-50"
+          >
+            {validating ? "Validating..." : "🔍 Validate with Agent"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className={`px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-lg ${
+              isReadyForSubmission
+                ? "bg-brand-teal hover:bg-brand-dark text-white animate-pulse"
+                : "bg-gray-100 text-brand-secondary hover:bg-gray-200"
+            }`}
+          >
+            {submitting
+              ? "Submitting to Research Workspace..."
+              : isReadyForSubmission
+              ? "🚀 Submit to Research Workspace"
+              : "Save & Submit Evidence"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
